@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:file:./data/testbase;NON_KEYWORDS=user;INIT=CREATE SCHEMA IF NOT EXISTS estoque
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
