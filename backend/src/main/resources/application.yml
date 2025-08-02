@@ -4,5 +4,3 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog-master.xml
-    default-schema: estoque
-    enabled: false

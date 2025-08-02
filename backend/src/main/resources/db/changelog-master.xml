@@ -8,7 +8,6 @@
       http://www.liquibase.org/xml/ns/pro
       http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
 
-    <!--include file="db/changelog/202410231415_create_sector.xml" relativeToChangelogFile="false"/>
-    <include file="db/changelog/202410231422_create_product.xml" relativeToChangelogFile="false"/-->
+    <include file="db/changelog/202508021328_create_user.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
