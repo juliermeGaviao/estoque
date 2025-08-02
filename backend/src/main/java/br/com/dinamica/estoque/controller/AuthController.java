@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.Set;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.AuthRequest;
 import br.com.dinamica.estoque.dto.AuthResponse;
-import br.com.dinamica.estoque.model.Usuario;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.service.impl.JwtService;
 import jakarta.validation.Valid;
@@ -32,9 +34,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody @Valid AuthRequest req) {
-        var token = new UsernamePasswordAuthenticationToken(req.nomeUsuario(), req.senha());
-        String jwt = this.jwtService.gerarToken(req.nomeUsuario());
+    public AuthResponse login(@RequestBody @Valid AuthRequest request) {
+        var token = new UsernamePasswordAuthenticationToken(request.nomeUsuario(), request.senha());
+        String jwt = this.jwtService.gerarToken(request.nomeUsuario());
 
         this.authManager.authenticate(token);
 
@@ -42,8 +44,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public void register(@RequestBody @Valid AuthRequest req) {
-        var usuario = new Usuario(null, "Novo Usuário", req.nomeUsuario(), this.encoder.encode(req.senha()));
+    public void register(@RequestBody @Valid AuthRequest request) {
+        var usuario = new Usuario(null, "Novo Usuário", request.nomeUsuario(), this.encoder.encode(request.senha()), Set.of());
 
         this.usuarioRepository.save(usuario);
     }

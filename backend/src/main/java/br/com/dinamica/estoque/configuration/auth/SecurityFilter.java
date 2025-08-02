@@ -7,7 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import br.com.dinamica.estoque.service.impl.JwtService;
-import br.com.dinamica.estoque.service.impl.UsuarioDetailsServiceImpl;
+import br.com.dinamica.estoque.service.impl.UserDetailsServiceImpl;
 
 import java.io.IOException;
 
@@ -18,29 +18,29 @@ public class SecurityFilter extends GenericFilter {
 
     private final transient JwtService jwtService;
     
-    private final transient UsuarioDetailsServiceImpl usuarioDetailsService;
+    private final transient UserDetailsServiceImpl userDetailsService;
 
-    public SecurityFilter(JwtService jwtService, UsuarioDetailsServiceImpl usuarioDetailsService) {
+    public SecurityFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
         this.jwtService = jwtService;
-        this.usuarioDetailsService = usuarioDetailsService;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        var request = (HttpServletRequest) req;
-        var token = getToken(request);
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        var token = getToken((HttpServletRequest) request);
 
         if (token != null) {
             var subject = this.jwtService.getSubject(token);
 
             if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                var usuario = this.usuarioDetailsService.loadUserByUsername(subject);
+                var usuario = this.userDetailsService.loadUserByUsername(subject);
                 var auth = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
 
-        chain.doFilter(req, res);
+        chain.doFilter(request, response);
     }
 
     private String getToken(HttpServletRequest request) {
