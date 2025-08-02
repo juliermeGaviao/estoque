@@ -9,5 +9,7 @@
       http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
 
     <include file="db/changelog/202508021328_create_user.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202508021437_create_profile.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202508021442_create_user_profile.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

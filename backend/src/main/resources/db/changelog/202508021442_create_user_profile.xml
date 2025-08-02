@@ -6,30 +6,26 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
       http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
 
-	<changeSet id="202508021328" author="julierme">
+	<changeSet id="202508021442" author="julierme">
 
-		<createTable tableName="USUARIO">
+		<createTable tableName="USUARIO_PERFIL">
 
 			<column name="ID" type="bigint" autoIncrement="true">
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="NOME" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="ID_USUARIO" type="bigint">
+                <constraints nullable="false" foreignKeyName="FK_USUARIO" references="USUARIO(ID)"/>
+            </column>
 
-			<column name="NOME_USUARIO" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
-
-			<column name="SENHA" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="ID_PERFIL" type="bigint">
+                <constraints nullable="false" foreignKeyName="FK_PERFIL" references="PERFIL(ID)"/>
+            </column>
 
 		</createTable>
 
 	    <rollback>
-	        <dropTable tableName="USUARIO"/>
+	        <dropTable tableName="USUARIO_PERFIL"/>
 	    </rollback>
 
 	</changeSet>
