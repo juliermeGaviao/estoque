@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.Date;
 import java.util.Set;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public void register(@RequestBody @Valid AuthRequest request) {
-        var usuario = new Usuario(null, "Novo Usuário", request.nomeUsuario(), this.encoder.encode(request.senha()), Set.of());
+        var usuario = new Usuario(null, "Novo Usuário", request.nomeUsuario(), this.encoder.encode(request.senha()), new Date(), new Date(), Set.of());
 
         this.usuarioRepository.save(usuario);
     }

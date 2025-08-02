@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.entity;
 
+import java.util.Date;
+
 import org.springframework.security.core.GrantedAuthority;
 
 import jakarta.persistence.Column;
@@ -25,6 +27,12 @@ public class Perfil implements GrantedAuthority {
 
     @Column(name = "nome", nullable = false)
     private String nome;
+
+    @Column(name = "data_criacao", nullable = false)
+    private Date dataCriacao;
+
+    @Column(name = "data_alteracao", nullable = false)
+    private Date dataAlteracao;
 
     @Override
     public String getAuthority() {

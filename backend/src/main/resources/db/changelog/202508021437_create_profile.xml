@@ -8,20 +8,28 @@
 
 	<changeSet id="202508021437" author="julierme">
 
-		<createTable tableName="PERFIL">
+		<createTable tableName="perfil">
 
-			<column name="ID" type="bigint" autoIncrement="true">
+			<column name="id" type="bigint" autoIncrement="true">
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="NOME" type="varchar(255)">
+			<column name="nome" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
 
 		</createTable>
 
 	    <rollback>
-	        <dropTable tableName="PERFIL"/>
+	        <dropTable tableName="perfil"/>
 	    </rollback>
 
 	</changeSet>

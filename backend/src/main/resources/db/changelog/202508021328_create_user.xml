@@ -8,28 +8,36 @@
 
 	<changeSet id="202508021328" author="julierme">
 
-		<createTable tableName="USUARIO">
+		<createTable tableName="usuario">
 
-			<column name="ID" type="bigint" autoIncrement="true">
+			<column name="id" type="bigint" autoIncrement="true">
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="NOME" type="varchar(255)">
+			<column name="nome" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
 
-			<column name="NOME_USUARIO" type="varchar(255)">
+			<column name="nome_usuario" type="varchar(255)">
 				<constraints nullable="false" unique="true"/>
 			</column>
 
-			<column name="SENHA" type="varchar(255)">
+			<column name="senha" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
 
 		</createTable>
 
 	    <rollback>
-	        <dropTable tableName="USUARIO"/>
+	        <dropTable tableName="usuario"/>
 	    </rollback>
 
 	</changeSet>
