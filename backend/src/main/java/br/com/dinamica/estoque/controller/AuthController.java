@@ -36,8 +36,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody @Valid AuthRequest request) {
-        var token = new UsernamePasswordAuthenticationToken(request.nomeUsuario(), request.senha());
-        String jwt = this.jwtService.gerarToken(request.nomeUsuario());
+        var token = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
+        String jwt = this.jwtService.gerarToken(request.email());
 
         this.authManager.authenticate(token);
 
@@ -46,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public void register(@RequestBody @Valid AuthRequest request) {
-        var usuario = new Usuario(null, "Novo Usuário", request.nomeUsuario(), this.encoder.encode(request.senha()), new Date(), new Date(), Set.of());
+        var usuario = new Usuario(null, request.email(), this.encoder.encode(request.senha()), new Date(), new Date(), Set.of());
 
         this.usuarioRepository.save(usuario);
     }

@@ -35,11 +35,8 @@ public class Usuario implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome", nullable = false)
-    private String nome;
-
-    @Column(name = "nome_usuario", unique = true, nullable = false)
-    private String nomeUsuario;
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
 
     @Column(nullable = false)
     private String senha;
@@ -60,7 +57,7 @@ public class Usuario implements UserDetails {
     }
 
     @Override public String getPassword() { return this.senha; }
-    @Override public String getUsername() { return this.nomeUsuario; }
+    @Override public String getUsername() { return this.email; }
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }

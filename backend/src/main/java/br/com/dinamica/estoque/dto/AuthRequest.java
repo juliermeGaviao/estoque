@@ -1,4 +1,4 @@
 package br.com.dinamica.estoque.dto;
 
-public record AuthRequest(String nomeUsuario, String senha) {
+public record AuthRequest(String email, String senha) {
 }

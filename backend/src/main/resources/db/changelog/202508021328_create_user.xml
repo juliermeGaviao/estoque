@@ -14,11 +14,7 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="nome" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
-
-			<column name="nome_usuario" type="varchar(255)">
+			<column name="email" type="varchar(255)">
 				<constraints nullable="false" unique="true"/>
 			</column>
 
