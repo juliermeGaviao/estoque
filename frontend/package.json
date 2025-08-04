@@ -9,12 +9,13 @@
     },
     "dependencies": {
         "@primeuix/themes": "^1.0.0",
+        "@primevue/themes": "^4.3.7",
         "chart.js": "3.3.2",
         "primeicons": "^7.0.0",
-        "primevue": "^4.3.1",
+        "primevue": "^4.3.7",
         "tailwindcss-primeui": "^0.5.0",
         "vue": "^3.4.34",
-        "vue-router": "^4.4.0"
+        "vue-router": "^4.5.1"
     },
     "devDependencies": {
         "@primevue/auto-import-resolver": "^4.3.1",

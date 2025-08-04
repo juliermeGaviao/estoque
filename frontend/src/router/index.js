@@ -1,5 +1,6 @@
-import AppLayout from '@/layout/AppLayout.vue';
-import { createRouter, createWebHistory } from 'vue-router';
+import AppLayout from '@/layout/AppLayout.vue'
+import { createRouter, createWebHistory } from 'vue-router'
+import { isAuthenticated } from '../service/auth'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -7,6 +8,7 @@ const router = createRouter({
         {
             path: '/',
             component: AppLayout,
+            meta: { requiresAuth: true },
             children: [
                 {
                     path: '/',
@@ -133,6 +135,14 @@ const router = createRouter({
             component: () => import('@/views/pages/auth/Error.vue')
         }
     ]
-});
+})
 
-export default router;
+router.beforeEach((to, _, next) => {
+  if (to.meta.requiresAuth && !isAuthenticated()) {
+    next('/auth/login')
+  } else {
+    next()
+  }
+})
+
+export default router
