@@ -1,6 +1,6 @@
 <script setup>
 import FloatingConfigurator from '@/components/FloatingConfigurator.vue'
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../../util/api'
 import { login, sha256Hex } from '../../../util/auth'
