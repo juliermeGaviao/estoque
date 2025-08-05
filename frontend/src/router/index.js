@@ -1,6 +1,6 @@
 import AppLayout from '@/layout/AppLayout.vue'
 import { createRouter, createWebHistory } from 'vue-router'
-import { isAuthenticated } from '../service/auth'
+import { isAuthenticated } from '../util/auth'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -137,7 +137,7 @@ const router = createRouter({
     ]
 })
 
-router.beforeEach((to, _, next) => {
+router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated()) {
     next('/auth/login')
   } else {

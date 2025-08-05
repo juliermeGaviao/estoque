@@ -32,6 +32,11 @@
 
 		</createTable>
 
+		<insert tableName="usuario_perfil">
+			<column name="id_usuario">1</column>
+			<column name="id_perfil">1</column>
+		</insert>
+
 	    <rollback>
 	        <dropTable tableName="usuario_perfil"/>
 	    </rollback>

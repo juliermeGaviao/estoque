@@ -5,7 +5,6 @@ import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -24,11 +23,7 @@ public class JwtService {
 	}
 
 	public String getSubject(String token) {
-		try {
-			return Jwts.parserBuilder().setSigningKey(this.jwtSecret.getBytes()).build().parseClaimsJws(token).getBody().getSubject();
-		} catch (JwtException e) {
-			return null;
-		}
+		return Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(this.jwtSecret.getBytes())).build().parseClaimsJws(token).getBody().getSubject();
 	}
 
 }

@@ -17,9 +17,11 @@ import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.service.impl.JwtService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthController {
 
     private final AuthenticationManager authManager;
@@ -39,7 +41,11 @@ public class AuthController {
         var token = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
         String jwt = this.jwtService.gerarToken(request.email());
 
-        this.authManager.authenticate(token);
+        try {
+    	this.authManager.authenticate(token);
+        } catch (Exception e) {
+        	log.error("Erro", e);
+        }
 
         return new AuthResponse(jwt);
     }

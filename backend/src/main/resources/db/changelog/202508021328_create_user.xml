@@ -32,6 +32,11 @@
 
 		</createTable>
 
+		<insert tableName="usuario">
+			<column name="email">julierme.gaviao@gmail.com</column>
+			<column name="senha">4dbd936ab6869b4496e58c8dc4ce82a8421fdf0253b25df6c49b5f0d524ca2a3</column>
+		</insert>
+
 	    <rollback>
 	        <dropTable tableName="usuario"/>
 	    </rollback>

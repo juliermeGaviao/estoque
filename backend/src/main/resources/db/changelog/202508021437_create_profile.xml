@@ -28,6 +28,10 @@
 
 		</createTable>
 
+		<insert tableName="perfil">
+			<column name="nome">admin</column>
+		</insert>
+
 	    <rollback>
 	        <dropTable tableName="perfil"/>
 	    </rollback>
