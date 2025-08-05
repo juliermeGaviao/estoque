@@ -169,12 +169,13 @@ function getPresetExt() {
 
 function updateColors(type, color) {
     if (type === 'primary') {
-        layoutConfig.primary = color.name;
+      layoutConfig.primary = color.name
+      localStorage.setItem('primary-color', color)
     } else if (type === 'surface') {
-        layoutConfig.surface = color.name;
+      layoutConfig.surface = color.name
     }
 
-    applyTheme(type, color);
+    applyTheme(type, color)
 }
 
 function applyTheme(type, color) {
@@ -195,6 +196,13 @@ function onPresetChange() {
 
 function onMenuModeChange() {
     layoutConfig.menuMode = menuMode.value;
+}
+
+const primaryColor = localStorage.getItem('primary-color')
+if (primaryColor) {
+  applyTheme('primary', primaryColor)
+} else {
+  applyTheme('primary', primaryColors.value[0])
 }
 </script>
 
