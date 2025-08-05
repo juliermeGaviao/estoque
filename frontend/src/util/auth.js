@@ -1,18 +1,20 @@
 import api from './api'
 
 export function isAuthenticated() {
-  return !!localStorage.getItem('token')
+  return !!localStorage.getItem('token') || !!sessionStorage.getItem('token')
 }
 
-export function login(response) {
-  localStorage.setItem('token', response.token)
+export function login(response, remember) {
+  const storage = remember ? localStorage : sessionStorage
+
+  storage.setItem('token', response.token)
 
   api.defaults.headers.common['Authorization'] = `Bearer ${response.token}`
 }
 
 export function logout() {
   localStorage.removeItem('token')
-
+  sessionStorage.removeItem('token')
   delete api.defaults.headers.common['Authorization']
 }
 

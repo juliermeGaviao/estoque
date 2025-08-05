@@ -26,8 +26,7 @@ const doLogin = async () => {
     senha: hashedPassword
   })
 
-  login(response.data)
-  await nextTick()
+  login(response.data, checked.value)
 
   router.push('/')
 }
