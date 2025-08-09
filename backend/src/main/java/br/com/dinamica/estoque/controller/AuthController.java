@@ -41,11 +41,7 @@ public class AuthController {
         var token = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
         String jwt = this.jwtService.gerarToken(request.email());
 
-        try {
     	this.authManager.authenticate(token);
-        } catch (Exception e) {
-        	log.error("Erro", e);
-        }
 
         return new AuthResponse(jwt);
     }
