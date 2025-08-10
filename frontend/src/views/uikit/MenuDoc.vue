@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const menu = ref(null);
-const contextMenu = ref(null);
+const menu = ref(null)
+const contextMenu = ref(null)
 
 const nestedMenuitems = ref([
     {
@@ -79,9 +79,9 @@ const nestedMenuitems = ref([
         label: 'Quit',
         icon: 'pi pi-fw pi-sign-out'
     }
-]);
-const breadcrumbHome = ref({ icon: 'pi pi-home', to: '/' });
-const breadcrumbItems = ref([{ label: 'Computer' }, { label: 'Notebook' }, { label: 'Accessories' }, { label: 'Backpacks' }, { label: 'Item' }]);
+])
+const breadcrumbHome = ref({ icon: 'pi pi-home', to: '/' })
+const breadcrumbItems = ref([{ label: 'Computer' }, { label: 'Notebook' }, { label: 'Accessories' }, { label: 'Backpacks' }, { label: 'Item' }])
 const tieredMenuItems = ref([
     {
         label: 'Customers',
@@ -160,7 +160,7 @@ const tieredMenuItems = ref([
         label: 'Quit',
         icon: 'pi pi-fw pi-sign-out'
     }
-]);
+])
 const overlayMenuItems = ref([
     {
         label: 'Save',
@@ -181,7 +181,7 @@ const overlayMenuItems = ref([
         label: 'Home',
         icon: 'pi pi-home'
     }
-]);
+])
 const menuitems = ref([
     {
         label: 'Customers',
@@ -209,7 +209,7 @@ const menuitems = ref([
             }
         ]
     }
-]);
+])
 const contextMenuItems = ref([
     {
         label: 'Save',
@@ -230,7 +230,7 @@ const contextMenuItems = ref([
         label: 'Options',
         icon: 'pi pi-cog'
     }
-]);
+])
 const megamenuItems = ref([
     {
         label: 'Fashion',
@@ -338,7 +338,7 @@ const megamenuItems = ref([
             ]
         ]
     }
-]);
+])
 const panelMenuitems = ref([
     {
         label: 'Customers',
@@ -410,14 +410,14 @@ const panelMenuitems = ref([
             }
         ]
     }
-]);
+])
 
 function toggleMenu(event) {
-    menu.value.toggle(event);
+    menu.value.toggle(event)
 }
 
 function onContextRightClick(event) {
-    contextMenu.value.show(event);
+    contextMenu.value.show(event)
 }
 </script>
 

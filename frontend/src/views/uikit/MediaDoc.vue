@@ -1,10 +1,10 @@
 <script setup>
-import { PhotoService } from '@/service/PhotoService';
-import { ProductService } from '@/service/ProductService';
-import { onMounted, ref } from 'vue';
+import { PhotoService } from '@/service/PhotoService'
+import { ProductService } from '@/service/ProductService'
+import { onMounted, ref } from 'vue'
 
-const products = ref([]);
-const images = ref([]);
+const products = ref([])
+const images = ref([])
 const galleriaResponsiveOptions = ref([
     {
         breakpoint: '1024px',
@@ -22,7 +22,7 @@ const galleriaResponsiveOptions = ref([
         breakpoint: '560px',
         numVisible: 1
     }
-]);
+])
 const carouselResponsiveOptions = ref([
     {
         breakpoint: '1024px',
@@ -39,26 +39,26 @@ const carouselResponsiveOptions = ref([
         numVisible: 1,
         numScroll: 1
     }
-]);
+])
 
 onMounted(() => {
-    ProductService.getProductsSmall().then((data) => (products.value = data));
-    PhotoService.getImages().then((data) => (images.value = data));
-});
+    ProductService.getProductsSmall().then((data) => (products.value = data))
+    PhotoService.getImages().then((data) => (images.value = data))
+})
 
 function getSeverity(status) {
     switch (status) {
         case 'INSTOCK':
-            return 'success';
+            return 'success'
 
         case 'LOWSTOCK':
-            return 'warning';
+            return 'warning'
 
         case 'OUTOFSTOCK':
-            return 'danger';
+            return 'danger'
 
         default:
-            return null;
+            return null
     }
 }
 </script>

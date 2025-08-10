@@ -1,36 +1,36 @@
 <script setup>
-import { CountryService } from '@/service/CountryService';
-import { NodeService } from '@/service/NodeService';
-import { onMounted, ref } from 'vue';
+import { CountryService } from '@/service/CountryService'
+import { NodeService } from '@/service/NodeService'
+import { onMounted, ref } from 'vue'
 
-const floatValue = ref(null);
-const autoValue = ref(null);
-const selectedAutoValue = ref(null);
-const autoFilteredValue = ref([]);
-const calendarValue = ref(null);
-const inputNumberValue = ref(null);
-const sliderValue = ref(50);
-const ratingValue = ref(null);
-const colorValue = ref('#1976D2');
-const radioValue = ref(null);
-const checkboxValue = ref([]);
-const switchValue = ref(false);
+const floatValue = ref(null)
+const autoValue = ref(null)
+const selectedAutoValue = ref(null)
+const autoFilteredValue = ref([])
+const calendarValue = ref(null)
+const inputNumberValue = ref(null)
+const sliderValue = ref(50)
+const ratingValue = ref(null)
+const colorValue = ref('#1976D2')
+const radioValue = ref(null)
+const checkboxValue = ref([])
+const switchValue = ref(false)
 const listboxValues = ref([
     { name: 'New York', code: 'NY' },
     { name: 'Rome', code: 'RM' },
     { name: 'London', code: 'LDN' },
     { name: 'Istanbul', code: 'IST' },
     { name: 'Paris', code: 'PRS' }
-]);
-const listboxValue = ref(null);
+])
+const listboxValue = ref(null)
 const dropdownValues = ref([
     { name: 'New York', code: 'NY' },
     { name: 'Rome', code: 'RM' },
     { name: 'London', code: 'LDN' },
     { name: 'Istanbul', code: 'IST' },
     { name: 'Paris', code: 'PRS' }
-]);
-const dropdownValue = ref(null);
+])
+const dropdownValue = ref(null)
 const multiselectValues = ref([
     { name: 'Australia', code: 'AU' },
     { name: 'Brazil', code: 'BR' },
@@ -42,32 +42,32 @@ const multiselectValues = ref([
     { name: 'Japan', code: 'JP' },
     { name: 'Spain', code: 'ES' },
     { name: 'United States', code: 'US' }
-]);
+])
 
-const multiselectValue = ref(null);
-const toggleValue = ref(false);
-const selectButtonValue = ref(null);
-const selectButtonValues = ref([{ name: 'Option 1' }, { name: 'Option 2' }, { name: 'Option 3' }]);
-const knobValue = ref(50);
-const inputGroupValue = ref(false);
-const treeSelectNodes = ref(null);
-const selectedNode = ref(null);
+const multiselectValue = ref(null)
+const toggleValue = ref(false)
+const selectButtonValue = ref(null)
+const selectButtonValues = ref([{ name: 'Option 1' }, { name: 'Option 2' }, { name: 'Option 3' }])
+const knobValue = ref(50)
+const inputGroupValue = ref(false)
+const treeSelectNodes = ref(null)
+const selectedNode = ref(null)
 
 onMounted(() => {
-    CountryService.getCountries().then((data) => (autoValue.value = data));
-    NodeService.getTreeNodes().then((data) => (treeSelectNodes.value = data));
-});
+    CountryService.getCountries().then((data) => (autoValue.value = data))
+    NodeService.getTreeNodes().then((data) => (treeSelectNodes.value = data))
+})
 
 function searchCountry(event) {
     setTimeout(() => {
         if (!event.query.trim().length) {
-            autoFilteredValue.value = [...autoValue.value];
+            autoFilteredValue.value = [...autoValue.value]
         } else {
             autoFilteredValue.value = autoValue.value.filter((country) => {
-                return country.name.toLowerCase().startsWith(event.query.toLowerCase());
-            });
+                return country.name.toLowerCase().startsWith(event.query.toLowerCase())
+            })
         }
-    }, 250);
+    }, 250)
 }
 </script>
 

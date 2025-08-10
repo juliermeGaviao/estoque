@@ -1,21 +1,21 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { computed, ref, watch } from 'vue';
-import AppFooter from './AppFooter.vue';
-import AppSidebar from './AppSidebar.vue';
-import AppTopbar from './AppTopbar.vue';
+import { useLayout } from '@/layout/composables/layout'
+import { computed, ref, watch } from 'vue'
+import AppFooter from './AppFooter.vue'
+import AppSidebar from './AppSidebar.vue'
+import AppTopbar from './AppTopbar.vue'
 
-const { layoutConfig, layoutState, isSidebarActive } = useLayout();
+const { layoutConfig, layoutState, isSidebarActive } = useLayout()
 
-const outsideClickListener = ref(null);
+const outsideClickListener = ref(null)
 
 watch(isSidebarActive, (newVal) => {
     if (newVal) {
-        bindOutsideClickListener();
+        bindOutsideClickListener()
     } else {
-        unbindOutsideClickListener();
+        unbindOutsideClickListener()
     }
-});
+})
 
 const containerClass = computed(() => {
     return {
@@ -24,34 +24,34 @@ const containerClass = computed(() => {
         'layout-static-inactive': layoutState.staticMenuDesktopInactive && layoutConfig.menuMode === 'static',
         'layout-overlay-active': layoutState.overlayMenuActive,
         'layout-mobile-active': layoutState.staticMenuMobileActive
-    };
-});
+    }
+})
 
 function bindOutsideClickListener() {
     if (!outsideClickListener.value) {
         outsideClickListener.value = (event) => {
             if (isOutsideClicked(event)) {
-                layoutState.overlayMenuActive = false;
-                layoutState.staticMenuMobileActive = false;
-                layoutState.menuHoverActive = false;
+                layoutState.overlayMenuActive = false
+                layoutState.staticMenuMobileActive = false
+                layoutState.menuHoverActive = false
             }
-        };
-        document.addEventListener('click', outsideClickListener.value);
+        }
+        document.addEventListener('click', outsideClickListener.value)
     }
 }
 
 function unbindOutsideClickListener() {
     if (outsideClickListener.value) {
-        document.removeEventListener('click', outsideClickListener);
-        outsideClickListener.value = null;
+        document.removeEventListener('click', outsideClickListener)
+        outsideClickListener.value = null
     }
 }
 
 function isOutsideClicked(event) {
-    const sidebarEl = document.querySelector('.layout-sidebar');
-    const topbarEl = document.querySelector('.layout-menu-button');
+    const sidebarEl = document.querySelector('.layout-sidebar')
+    const topbarEl = document.querySelector('.layout-menu-button')
 
-    return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target));
+    return !(sidebarEl.isSameNode(event.target) || sidebarEl.contains(event.target) || topbarEl.isSameNode(event.target) || topbarEl.contains(event.target))
 }
 </script>
 

@@ -27,9 +27,9 @@ const events = ref([
         icon: 'pi pi-check',
         color: '#607D8B'
     }
-]);
+])
 
-const horizontalEvents = ref(['2020', '2021', '2022', '2023']);
+const horizontalEvents = ref(['2020', '2021', '2022', '2023'])
 </script>
 
 <template>

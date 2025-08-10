@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const items = ref([
     {
@@ -17,13 +17,13 @@ const items = ref([
         label: 'Home',
         icon: 'pi pi-home'
     }
-]);
+])
 
-const loading = ref([false, false, false]);
+const loading = ref([false, false, false])
 
 function load(index) {
-    loading.value[index] = true;
-    setTimeout(() => (loading.value[index] = false), 1000);
+    loading.value[index] = true
+    setTimeout(() => (loading.value[index] = false), 1000)
 }
 </script>
 

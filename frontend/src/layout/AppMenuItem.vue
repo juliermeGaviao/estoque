@@ -1,11 +1,11 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { onBeforeMount, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useLayout } from '@/layout/composables/layout'
+import { onBeforeMount, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
-const route = useRoute();
+const route = useRoute()
 
-const { layoutState, setActiveMenuItem, toggleMenu } = useLayout();
+const { layoutState, setActiveMenuItem, toggleMenu } = useLayout()
 
 const props = defineProps({
     item: {
@@ -24,47 +24,47 @@ const props = defineProps({
         type: String,
         default: null
     }
-});
+})
 
-const isActiveMenu = ref(false);
-const itemKey = ref(null);
+const isActiveMenu = ref(false)
+const itemKey = ref(null)
 
 onBeforeMount(() => {
-    itemKey.value = props.parentItemKey ? props.parentItemKey + '-' + props.index : String(props.index);
+    itemKey.value = props.parentItemKey ? props.parentItemKey + '-' + props.index : String(props.index)
 
-    const activeItem = layoutState.activeMenuItem;
+    const activeItem = layoutState.activeMenuItem
 
-    isActiveMenu.value = activeItem === itemKey.value || activeItem ? activeItem.startsWith(itemKey.value + '-') : false;
-});
+    isActiveMenu.value = activeItem === itemKey.value || activeItem ? activeItem.startsWith(itemKey.value + '-') : false
+})
 
 watch(
     () => layoutState.activeMenuItem,
     (newVal) => {
-        isActiveMenu.value = newVal === itemKey.value || newVal.startsWith(itemKey.value + '-');
+        isActiveMenu.value = newVal === itemKey.value || newVal.startsWith(itemKey.value + '-')
     }
-);
+)
 
 function itemClick(event, item) {
     if (item.disabled) {
-        event.preventDefault();
-        return;
+        event.preventDefault()
+        return
     }
 
     if ((item.to || item.url) && (layoutState.staticMenuMobileActive || layoutState.overlayMenuActive)) {
-        toggleMenu();
+        toggleMenu()
     }
 
     if (item.command) {
-        item.command({ originalEvent: event, item: item });
+        item.command({ originalEvent: event, item: item })
     }
 
-    const foundItemKey = item.items ? (isActiveMenu.value ? props.parentItemKey : itemKey) : itemKey.value;
+    const foundItemKey = item.items ? (isActiveMenu.value ? props.parentItemKey : itemKey) : itemKey.value
 
-    setActiveMenuItem(foundItemKey);
+    setActiveMenuItem(foundItemKey)
 }
 
 function checkActiveRoute(item) {
-    return route.path === item.to;
+    return route.path === item.to
 }
 </script>
 

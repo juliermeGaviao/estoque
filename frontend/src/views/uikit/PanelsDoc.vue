@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const items = ref([
     {
@@ -18,16 +18,16 @@ const items = ref([
         label: 'Home Page',
         icon: 'pi pi-home'
     }
-]);
+])
 const cardMenu = ref([
     { label: 'Save', icon: 'pi pi-fw pi-check' },
     { label: 'Update', icon: 'pi pi-fw pi-refresh' },
     { label: 'Delete', icon: 'pi pi-fw pi-trash' }
-]);
-const menuRef = ref(null);
+])
+const menuRef = ref(null)
 
 function toggle() {
-    menuRef.value.toggle(event);
+    menuRef.value.toggle(event)
 }
 </script>
 

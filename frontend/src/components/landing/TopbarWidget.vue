@@ -1,12 +1,12 @@
 <script setup>
 function smoothScroll(id) {
-    document.body.click();
-    const element = document.getElementById(id);
+    document.body.click()
+    const element = document.getElementById(id)
     if (element) {
         element.scrollIntoView({
             behavior: 'smooth',
             block: 'start'
-        });
+        })
     }
 }
 </script>

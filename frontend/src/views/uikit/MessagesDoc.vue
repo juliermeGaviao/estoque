@@ -1,26 +1,26 @@
 <script setup>
-import { useToast } from 'primevue/usetoast';
-import { ref } from 'vue';
+import { useToast } from 'primevue/usetoast'
+import { ref } from 'vue'
 
-const toast = useToast();
-const message = ref([]);
-const username = ref(null);
-const email = ref(null);
+const toast = useToast()
+const message = ref([])
+const username = ref(null)
+const email = ref(null)
 
 function showSuccess() {
-    toast.add({ severity: 'success', summary: 'Success Message', detail: 'Message Detail', life: 3000 });
+    toast.add({ severity: 'success', summary: 'Success Message', detail: 'Message Detail', life: 3000 })
 }
 
 function showInfo() {
-    toast.add({ severity: 'info', summary: 'Info Message', detail: 'Message Detail', life: 3000 });
+    toast.add({ severity: 'info', summary: 'Info Message', detail: 'Message Detail', life: 3000 })
 }
 
 function showWarn() {
-    toast.add({ severity: 'warn', summary: 'Warn Message', detail: 'Message Detail', life: 3000 });
+    toast.add({ severity: 'warn', summary: 'Warn Message', detail: 'Message Detail', life: 3000 })
 }
 
 function showError() {
-    toast.add({ severity: 'error', summary: 'Error Message', detail: 'Message Detail', life: 3000 });
+    toast.add({ severity: 'error', summary: 'Error Message', detail: 'Message Detail', life: 3000 })
 }
 </script>
 

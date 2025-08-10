@@ -136,7 +136,7 @@ const model = ref([
             }
         ]
     }
-]);
+])
 </script>
 
 <template>

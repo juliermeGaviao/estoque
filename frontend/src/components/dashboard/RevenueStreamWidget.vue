@@ -1,14 +1,14 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { onMounted, ref, watch } from 'vue';
+import { useLayout } from '@/layout/composables/layout'
+import { onMounted, ref, watch } from 'vue'
 
-const { getPrimary, getSurface, isDarkTheme } = useLayout();
+const { getPrimary, getSurface, isDarkTheme } = useLayout()
 
-const chartData = ref(null);
-const chartOptions = ref(null);
+const chartData = ref(null)
+const chartOptions = ref(null)
 
 function setChartData() {
-    const documentStyle = getComputedStyle(document.documentElement);
+    const documentStyle = getComputedStyle(document.documentElement)
 
     return {
         labels: ['Q1', 'Q2', 'Q3', 'Q4'],
@@ -40,13 +40,13 @@ function setChartData() {
                 barThickness: 32
             }
         ]
-    };
+    }
 }
 
 function setChartOptions() {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const borderColor = documentStyle.getPropertyValue('--surface-border');
-    const textMutedColor = documentStyle.getPropertyValue('--text-color-secondary');
+    const documentStyle = getComputedStyle(document.documentElement)
+    const borderColor = documentStyle.getPropertyValue('--surface-border')
+    const textMutedColor = documentStyle.getPropertyValue('--text-color-secondary')
 
     return {
         maintainAspectRatio: false,
@@ -74,18 +74,18 @@ function setChartOptions() {
                 }
             }
         }
-    };
+    }
 }
 
 watch([getPrimary, getSurface, isDarkTheme], () => {
-    chartData.value = setChartData();
-    chartOptions.value = setChartOptions();
-});
+    chartData.value = setChartData()
+    chartOptions.value = setChartOptions()
+})
 
 onMounted(() => {
-    chartData.value = setChartData();
-    chartOptions.value = setChartOptions();
-});
+    chartData.value = setChartData()
+    chartOptions.value = setChartOptions()
+})
 </script>
 
 <template>

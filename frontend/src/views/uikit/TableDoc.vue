@@ -1,18 +1,18 @@
 <script setup>
-import { CustomerService } from '@/service/CustomerService';
-import { ProductService } from '@/service/ProductService';
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-import { onBeforeMount, reactive, ref } from 'vue';
+import { CustomerService } from '@/service/CustomerService'
+import { ProductService } from '@/service/ProductService'
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api'
+import { onBeforeMount, reactive, ref } from 'vue'
 
-const customers1 = ref(null);
-const customers2 = ref(null);
-const customers3 = ref(null);
-const filters1 = ref(null);
-const loading1 = ref(null);
-const balanceFrozen = ref(false);
-const products = ref(null);
-const expandedRows = ref([]);
-const statuses = reactive(['unqualified', 'qualified', 'new', 'negotiation', 'renewal', 'proposal']);
+const customers1 = ref(null)
+const customers2 = ref(null)
+const customers3 = ref(null)
+const filters1 = ref(null)
+const loading1 = ref(null)
+const balanceFrozen = ref(false)
+const products = ref(null)
+const expandedRows = ref([])
+const statuses = reactive(['unqualified', 'qualified', 'new', 'negotiation', 'renewal', 'proposal'])
 const representatives = reactive([
     { name: 'Amy Elsner', image: 'amyelsner.png' },
     { name: 'Anna Fali', image: 'annafali.png' },
@@ -24,74 +24,74 @@ const representatives = reactive([
     { name: 'Onyama Limba', image: 'onyamalimba.png' },
     { name: 'Stephen Shaw', image: 'stephenshaw.png' },
     { name: 'XuXue Feng', image: 'xuxuefeng.png' }
-]);
+])
 
 function getOrderSeverity(order) {
     switch (order.status) {
         case 'DELIVERED':
-            return 'success';
+            return 'success'
 
         case 'CANCELLED':
-            return 'danger';
+            return 'danger'
 
         case 'PENDING':
-            return 'warn';
+            return 'warn'
 
         case 'RETURNED':
-            return 'info';
+            return 'info'
 
         default:
-            return null;
+            return null
     }
 }
 
 function getSeverity(status) {
     switch (status) {
         case 'unqualified':
-            return 'danger';
+            return 'danger'
 
         case 'qualified':
-            return 'success';
+            return 'success'
 
         case 'new':
-            return 'info';
+            return 'info'
 
         case 'negotiation':
-            return 'warn';
+            return 'warn'
 
         case 'renewal':
-            return null;
+            return null
     }
 }
 
 function getStockSeverity(product) {
     switch (product.inventoryStatus) {
         case 'INSTOCK':
-            return 'success';
+            return 'success'
 
         case 'LOWSTOCK':
-            return 'warn';
+            return 'warn'
 
         case 'OUTOFSTOCK':
-            return 'danger';
+            return 'danger'
 
         default:
-            return null;
+            return null
     }
 }
 
 onBeforeMount(() => {
-    ProductService.getProductsWithOrdersSmall().then((data) => (products.value = data));
+    ProductService.getProductsWithOrdersSmall().then((data) => (products.value = data))
     CustomerService.getCustomersLarge().then((data) => {
-        customers1.value = data;
-        loading1.value = false;
-        customers1.value.forEach((customer) => (customer.date = new Date(customer.date)));
-    });
-    CustomerService.getCustomersLarge().then((data) => (customers2.value = data));
-    CustomerService.getCustomersMedium().then((data) => (customers3.value = data));
+        customers1.value = data
+        loading1.value = false
+        customers1.value.forEach((customer) => (customer.date = new Date(customer.date)))
+    })
+    CustomerService.getCustomersLarge().then((data) => (customers2.value = data))
+    CustomerService.getCustomersMedium().then((data) => (customers3.value = data))
 
-    initFilters1();
-});
+    initFilters1()
+})
 
 function initFilters1() {
     filters1.value = {
@@ -104,19 +104,19 @@ function initFilters1() {
         status: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
         activity: { value: [0, 100], matchMode: FilterMatchMode.BETWEEN },
         verified: { value: null, matchMode: FilterMatchMode.EQUALS }
-    };
+    }
 }
 
 function expandAll() {
-    expandedRows.value = products.value.reduce((acc, p) => (acc[p.id] = true) && acc, {});
+    expandedRows.value = products.value.reduce((acc, p) => (acc[p.id] = true) && acc, {})
 }
 
 function collapseAll() {
-    expandedRows.value = null;
+    expandedRows.value = null
 }
 
 function formatCurrency(value) {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
 function formatDate(value) {
@@ -124,20 +124,20 @@ function formatDate(value) {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
-    });
+    })
 }
 
 function calculateCustomerTotal(name) {
-    let total = 0;
+    let total = 0
     if (customers3.value) {
         for (let customer of customers3.value) {
             if (customer.representative.name === name) {
-                total++;
+                total++
             }
         }
     }
 
-    return total;
+    return total
 }
 </script>
 

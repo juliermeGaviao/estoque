@@ -243,10 +243,10 @@ export const CountryService = {
             { name: 'Yemen', code: 'YE' },
             { name: 'Zambia', code: 'ZM' },
             { name: 'Zimbabwe', code: 'ZW' }
-        ];
+        ]
     },
 
     getCountries() {
-        return Promise.resolve(this.getData());
+        return Promise.resolve(this.getData())
     }
-};
+}

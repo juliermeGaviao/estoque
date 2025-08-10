@@ -9001,23 +9001,23 @@ export const CustomerService = {
                 },
                 balance: 88090
             }
-        ];
+        ]
     },
 
     getCustomersSmall() {
-        return Promise.resolve(this.getData().slice(0, 10));
+        return Promise.resolve(this.getData().slice(0, 10))
     },
 
     getCustomersMedium() {
-        return Promise.resolve(this.getData().slice(0, 50));
+        return Promise.resolve(this.getData().slice(0, 50))
     },
 
     getCustomersLarge() {
-        return Promise.resolve(this.getData().slice(0, 200));
+        return Promise.resolve(this.getData().slice(0, 200))
     },
 
     getCustomersXLarge() {
-        return Promise.resolve(this.getData());
+        return Promise.resolve(this.getData())
     },
 
     getCustomers(params) {
@@ -9025,8 +9025,8 @@ export const CustomerService = {
             ? Object.keys(params)
                   .map((k) => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
                   .join('&')
-            : '';
+            : ''
 
-        return fetch('https://www.primefaces.org/data/customers?' + queryParams).then((res) => res.json());
+        return fetch('https://www.primefaces.org/data/customers?' + queryParams).then((res) => res.json())
     }
-};
+}

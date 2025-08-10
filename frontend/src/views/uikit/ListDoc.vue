@@ -1,34 +1,34 @@
 <script setup>
-import { ProductService } from '@/service/ProductService';
-import { onMounted, ref } from 'vue';
+import { ProductService } from '@/service/ProductService'
+import { onMounted, ref } from 'vue'
 
-const products = ref(null);
-const picklistProducts = ref(null);
-const orderlistProducts = ref(null);
-const options = ref(['list', 'grid']);
-const layout = ref('list');
+const products = ref(null)
+const picklistProducts = ref(null)
+const orderlistProducts = ref(null)
+const options = ref(['list', 'grid'])
+const layout = ref('list')
 
 onMounted(() => {
     ProductService.getProductsSmall().then((data) => {
-        products.value = data.slice(0, 6);
-        picklistProducts.value = [data, []];
-        orderlistProducts.value = data;
-    });
-});
+        products.value = data.slice(0, 6)
+        picklistProducts.value = [data, []]
+        orderlistProducts.value = data
+    })
+})
 
 function getSeverity(product) {
     switch (product.inventoryStatus) {
         case 'INSTOCK':
-            return 'success';
+            return 'success'
 
         case 'LOWSTOCK':
-            return 'warning';
+            return 'warning'
 
         case 'OUTOFSTOCK':
-            return 'danger';
+            return 'danger'
 
         default:
-            return null;
+            return null
     }
 }
 </script>

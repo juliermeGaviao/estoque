@@ -1,28 +1,28 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { onMounted, ref, watch } from 'vue';
+import { useLayout } from '@/layout/composables/layout'
+import { onMounted, ref, watch } from 'vue'
 
-const { getPrimary, getSurface, isDarkTheme } = useLayout();
-const lineData = ref(null);
-const pieData = ref(null);
-const polarData = ref(null);
-const barData = ref(null);
-const radarData = ref(null);
-const lineOptions = ref(null);
-const pieOptions = ref(null);
-const polarOptions = ref(null);
-const barOptions = ref(null);
-const radarOptions = ref(null);
+const { getPrimary, getSurface, isDarkTheme } = useLayout()
+const lineData = ref(null)
+const pieData = ref(null)
+const polarData = ref(null)
+const barData = ref(null)
+const radarData = ref(null)
+const lineOptions = ref(null)
+const pieOptions = ref(null)
+const polarOptions = ref(null)
+const barOptions = ref(null)
+const radarOptions = ref(null)
 
 onMounted(() => {
-    setColorOptions();
-});
+    setColorOptions()
+})
 
 function setColorOptions() {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--text-color');
-    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-    const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+    const documentStyle = getComputedStyle(document.documentElement)
+    const textColor = documentStyle.getPropertyValue('--text-color')
+    const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary')
+    const surfaceBorder = documentStyle.getPropertyValue('--surface-border')
 
     barData.value = {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
@@ -40,7 +40,7 @@ function setColorOptions() {
                 data: [28, 48, 40, 19, 86, 27, 90]
             }
         ]
-    };
+    }
     barOptions.value = {
         plugins: {
             legend: {
@@ -72,7 +72,7 @@ function setColorOptions() {
                 }
             }
         }
-    };
+    }
 
     pieData.value = {
         labels: ['A', 'B', 'C'],
@@ -83,7 +83,7 @@ function setColorOptions() {
                 hoverBackgroundColor: [documentStyle.getPropertyValue('--p-indigo-400'), documentStyle.getPropertyValue('--p-purple-400'), documentStyle.getPropertyValue('--p-teal-400')]
             }
         ]
-    };
+    }
 
     pieOptions.value = {
         plugins: {
@@ -94,7 +94,7 @@ function setColorOptions() {
                 }
             }
         }
-    };
+    }
 
     lineData.value = {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
@@ -116,7 +116,7 @@ function setColorOptions() {
                 tension: 0.4
             }
         ]
-    };
+    }
 
     lineOptions.value = {
         plugins: {
@@ -146,7 +146,7 @@ function setColorOptions() {
                 }
             }
         }
-    };
+    }
 
     polarData.value = {
         datasets: [
@@ -157,7 +157,7 @@ function setColorOptions() {
             }
         ],
         labels: ['Indigo', 'Purple', 'Teal', 'Orange']
-    };
+    }
 
     polarOptions.value = {
         plugins: {
@@ -174,7 +174,7 @@ function setColorOptions() {
                 }
             }
         }
-    };
+    }
 
     radarData.value = {
         labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
@@ -198,7 +198,7 @@ function setColorOptions() {
                 data: [28, 48, 40, 19, 96, 27, 100]
             }
         ]
-    };
+    }
 
     radarOptions.value = {
         plugins: {
@@ -215,16 +215,16 @@ function setColorOptions() {
                 }
             }
         }
-    };
+    }
 }
 
 watch(
     [getPrimary, getSurface, isDarkTheme],
     () => {
-        setColorOptions();
+        setColorOptions()
     },
     { immediate: true }
-);
+)
 </script>
 
 <template>

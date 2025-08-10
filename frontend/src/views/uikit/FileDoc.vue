@@ -1,12 +1,12 @@
 <script setup>
-import { useToast } from 'primevue/usetoast';
-import { ref } from 'vue';
+import { useToast } from 'primevue/usetoast'
+import { ref } from 'vue'
 
-const toast = useToast();
-const fileupload = ref();
+const toast = useToast()
+const fileupload = ref()
 
 function upload() {
-    fileupload.value.upload();
+    fileupload.value.upload()
 }
 
 function onUpload() {

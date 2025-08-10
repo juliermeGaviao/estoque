@@ -65,7 +65,7 @@ export const NodeService = {
                     }
                 ]
             }
-        ];
+        ]
     },
 
     getTreeTableNodesData() {
@@ -418,14 +418,14 @@ export const NodeService = {
                     }
                 ]
             }
-        ];
+        ]
     },
 
     getTreeTableNodes() {
-        return Promise.resolve(this.getTreeTableNodesData());
+        return Promise.resolve(this.getTreeTableNodesData())
     },
 
     getTreeNodes() {
-        return Promise.resolve(this.getTreeNodesData());
+        return Promise.resolve(this.getTreeNodesData())
     }
-};
+}
