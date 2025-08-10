@@ -36,7 +36,6 @@ const doLogin = async () => {
       toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Falha de comunicação. Tente mais tarde', life: 5000 })
     }
   }
-  console.log(erro)
 }
 
 </script>

@@ -1,26 +1,26 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { $t, updatePreset, updateSurfacePalette } from '@primeuix/themes';
-import Aura from '@primeuix/themes/aura';
-import Lara from '@primeuix/themes/lara';
-import Nora from '@primeuix/themes/nora';
-import { ref } from 'vue';
+import { useLayout } from '@/layout/composables/layout'
+import { $t, updatePreset, updateSurfacePalette } from '@primeuix/themes'
+import Aura from '@primeuix/themes/aura'
+import Lara from '@primeuix/themes/lara'
+import Nora from '@primeuix/themes/nora'
+import { ref } from 'vue'
 
-const { layoutConfig, isDarkTheme } = useLayout();
+const { layoutConfig, isDarkTheme } = useLayout()
 
 const presets = {
     Aura,
     Lara,
     Nora
-};
-const preset = ref(layoutConfig.preset);
-const presetOptions = ref(Object.keys(presets));
+}
+const preset = ref(layoutConfig.preset)
+const presetOptions = ref(Object.keys(presets))
 
-const menuMode = ref(layoutConfig.menuMode);
+const menuMode = ref(layoutConfig.menuMode)
 const menuModeOptions = ref([
     { label: 'Static', value: 'static' },
     { label: 'Overlay', value: 'overlay' }
-]);
+])
 
 const primaryColors = ref([
     { name: 'noir', palette: {} },
@@ -40,7 +40,7 @@ const primaryColors = ref([
     { name: 'fuchsia', palette: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75', 950: '#4a044e' } },
     { name: 'pink', palette: { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843', 950: '#500724' } },
     { name: 'rose', palette: { 50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337', 950: '#4c0519' } }
-]);
+])
 
 const surfaces = ref([
     {
@@ -75,10 +75,10 @@ const surfaces = ref([
         name: 'ocean',
         palette: { 0: '#ffffff', 50: '#fbfcfc', 100: '#F7F9F8', 200: '#EFF3F2', 300: '#DADEDD', 400: '#B1B7B6', 500: '#828787', 600: '#5F7274', 700: '#415B61', 800: '#29444E', 900: '#183240', 950: '#0c1920' }
     }
-]);
+])
 
 function getPresetExt() {
-    const color = primaryColors.value.find((c) => c.name === layoutConfig.primary);
+    const color = primaryColors.value.find((c) => c.name === layoutConfig.primary)
 
     if (color.name === 'noir') {
         return {
@@ -127,7 +127,7 @@ function getPresetExt() {
                     }
                 }
             }
-        };
+        }
     } else {
         return {
             semantic: {
@@ -163,7 +163,7 @@ function getPresetExt() {
                     }
                 }
             }
-        };
+        }
     }
 }
 
@@ -180,22 +180,22 @@ function updateColors(type, color) {
 
 function applyTheme(type, color) {
     if (type === 'primary') {
-        updatePreset(getPresetExt());
+        updatePreset(getPresetExt())
     } else if (type === 'surface') {
-        updateSurfacePalette(color.palette);
+        updateSurfacePalette(color.palette)
     }
 }
 
 function onPresetChange() {
-    layoutConfig.preset = preset.value;
-    const presetValue = presets[preset.value];
-    const surfacePalette = surfaces.value.find((s) => s.name === layoutConfig.surface)?.palette;
+    layoutConfig.preset = preset.value
+    const presetValue = presets[preset.value]
+    const surfacePalette = surfaces.value.find((s) => s.name === layoutConfig.surface)?.palette
 
-    $t().preset(presetValue).preset(getPresetExt()).surfacePalette(surfacePalette).use({ useDefaultOptions: true });
+    $t().preset(presetValue).preset(getPresetExt()).surfacePalette(surfacePalette).use({ useDefaultOptions: true })
 }
 
 function onMenuModeChange() {
-    layoutConfig.menuMode = menuMode.value;
+    layoutConfig.menuMode = menuMode.value
 }
 
 const primaryColor = localStorage.getItem('primary-color')
@@ -204,6 +204,8 @@ if (primaryColor) {
 } else {
   applyTheme('primary', primaryColors.value[0])
 }
+
+console.log(layoutConfig.darkTheme)
 </script>
 
 <template>
