@@ -205,7 +205,6 @@ if (primaryColor) {
   applyTheme('primary', primaryColors.value[0])
 }
 
-console.log(layoutConfig.darkTheme)
 </script>
 
 <template>
