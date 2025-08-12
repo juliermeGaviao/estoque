@@ -1,10 +1,14 @@
 package br.com.dinamica.estoque.controller;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,22 +32,28 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder encoder;
+    private final UserDetailsService userDetailsService;
 
-    public AuthController(AuthenticationManager authManager, JwtService jwtService, UsuarioRepository usuarioRepository, PasswordEncoder encoder) {
+    public AuthController(AuthenticationManager authManager, JwtService jwtService, UsuarioRepository usuarioRepository, PasswordEncoder encoder, UserDetailsService userDetailsService) {
         this.authManager = authManager;
         this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.encoder = encoder;
+        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody @Valid AuthRequest request) {
         var token = new UsernamePasswordAuthenticationToken(request.email(), request.senha());
-        String jwt = this.jwtService.gerarToken(request.email());
 
     	this.authManager.authenticate(token);
 
-        return new AuthResponse(jwt);
+        String jwt = this.jwtService.gerarToken(request.email());
+
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.email());
+        List<String> perfis = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+
+        return new AuthResponse(jwt, perfis.toArray(new String[0]));
     }
 
     @PostMapping("/register")
