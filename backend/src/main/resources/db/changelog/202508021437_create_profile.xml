@@ -32,6 +32,10 @@
 			<column name="nome">admin</column>
 		</insert>
 
+		<insert tableName="perfil">
+			<column name="nome">vendedor</column>
+		</insert>
+
 	    <rollback>
 	        <dropTable tableName="perfil"/>
 	    </rollback>
