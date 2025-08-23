@@ -1,21 +1,21 @@
 import api from './api'
 
 export function isAuthenticated() {
-  return !!localStorage.getItem('token') || !!sessionStorage.getItem('token')
+  return !!localStorage.getItem('userId') || !!sessionStorage.getItem('userId')
 }
 
 export function login(response, remember) {
   const storage = remember ? localStorage : sessionStorage
 
-  storage.setItem('token', response.token)
+  storage.setItem('userId', response.id)
   storage.setItem('perfis', response.perfis)
 
   api.defaults.headers.common['Authorization'] = `Bearer ${response.token}`
 }
 
 export function logout() {
-  localStorage.removeItem('token')
-  sessionStorage.removeItem('token')
+  localStorage.removeItem('userId')
+  sessionStorage.removeItem('userId')
   localStorage.removeItem('perfis')
   sessionStorage.removeItem('perfis')
   delete api.defaults.headers.common['Authorization']

@@ -7,7 +7,6 @@ import java.util.Set;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,10 +49,10 @@ public class AuthController {
 
         String jwt = this.jwtService.gerarToken(request.email());
 
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(request.email());
-        List<String> perfis = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+        Usuario usuario = (Usuario) this.userDetailsService.loadUserByUsername(request.email());
+        List<String> perfis = usuario.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
 
-        return new AuthResponse(jwt, perfis.toArray(new String[0]));
+        return new AuthResponse(usuario.getId(), jwt, perfis.toArray(new String[0]));
     }
 
     @PostMapping("/register")

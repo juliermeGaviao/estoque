@@ -1,0 +1,5 @@
+
+
+export function getUserDetails(id) {
+  
+}
