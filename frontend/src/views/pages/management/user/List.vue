@@ -17,19 +17,29 @@ const loadUsers = async () => {
   loading.value = true
 
   try {
-    const response = await api.get('/user/list', {
-      params: {
-        page: page.value,
-        size: size.value,
-        sort: sortField.value ? `${sortField.value},${sortOrder.value === 1 ? 'asc' : 'desc'}` : null,
-        email: email.value || undefined
+    let params = {
+      page: page.value,
+      size: size.value
+    }
+
+    if (sortField.value) {
+      params.sort = sortField.value
+
+      if (sortOrder) {
+        params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
       }
-    })
+    }
+
+    if (email.value) {
+      params.email = email.value
+    }
+
+    const response = await api.get('/user/list', { params: params })
 
     users.value = response.data.content
     totalRecords.value = response.data.totalElements
-  } catch (err) {
-    console.error('Erro ao carregar usuários', err)
+  } catch (error) {
+    console.error('Erro ao carregar usuários', error)
   } finally {
     loading.value = false
   }
@@ -50,7 +60,12 @@ const onSort = (event) => {
 }
 
 const onFilter = () => {
-  page.value = 0 // volta para primeira página
+  page.value = 0
+  loadUsers()
+}
+
+const onClear = () => {
+  email.value = null
   loadUsers()
 }
 
@@ -84,7 +99,7 @@ const deleteUser = async (user) => {
 
   try {
     await api.delete(`/user/${user.id}`)
-    // recarregar tabela após remoção
+
     loadUsers()
   } catch (err) {
     console.error('Erro ao remover usuário', err)
@@ -95,38 +110,28 @@ const deleteUser = async (user) => {
 
 <template>
   <div class="card">
-    <h2 class="mb-4">Lista de Usuários</h2>
+    <h3 class="mb-4">Lista de Usuários</h3>
 
-    <div class="flex gap-4 mb-10">
-      <InputText v-model="email" placeholder="Filtrar por email" class="p-inputtext-sm" />
-      <Button label="Buscar" icon="pi pi-search" @click="onFilter" />
+    <div class="flex align-items-center gap-4 w-full mb-10">
+      <InputText v-model="email" placeholder="Filtrar por email" class="p-inputtext-sm flex-1" @keyup.enter="onFilter"/>
+      <Button label="Buscar" icon="pi pi-search" @click="onFilter" raised/>
+      <Button label="Limpar" icon="pi pi-times" severity="secondary" @click="onClear" raised/>
     </div>
 
-    <DataTable
-      :value="users"
-      :lazy="true"
-      :paginator="true"
-      :rows="size"
-      :totalRecords="totalRecords"
-      :loading="loading"
-      :first="page * size"
-      @page="onPage"
-      @sort="onSort"
-      :sortField="sortField"
-      :sortOrder="sortOrder"
-      responsiveLayout="scroll"
-      stripedRows
-    >
+    <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
+      :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+      :rowsPerPageOptions="[10, 20, 50, 100]">
+
       <Column field="id" header="Id" sortable />
       <Column field="email" header="Email" sortable />
 
-      <Column header="Data de Criação" sortable>
+      <Column header="Data de Criação" field="dataCriacao" sortable>
         <template #body="slotProps">
           {{ formatDate(slotProps.data.dataCriacao) }}
         </template>
       </Column>
 
-      <Column header="Data de Alteração" sortable>
+      <Column header="Data de Alteração" field="dataAlteracao" sortable>
         <template #body="slotProps">
           {{ formatDate(slotProps.data.dataAlteracao) }}
         </template>

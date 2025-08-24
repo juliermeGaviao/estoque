@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.service.impl.JwtService;
 import br.com.dinamica.estoque.service.impl.UserDetailsServiceImpl;
@@ -31,6 +32,7 @@ public class SecurityFilter extends GenericFilter {
     }
 
     @Override
+    @Transactional
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         var token = getToken((HttpServletRequest) request);
 

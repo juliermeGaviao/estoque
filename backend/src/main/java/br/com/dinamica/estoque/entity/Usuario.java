@@ -47,7 +47,7 @@ public class Usuario implements UserDetails {
     @Column(name = "data_alteracao", nullable = false)
     private Date dataAlteracao;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "usuario_perfil", joinColumns = @JoinColumn(name = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "id_perfil"))
     private Set<Perfil> perfis = new HashSet<>();
 
