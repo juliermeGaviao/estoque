@@ -16,7 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class SecurityConfig {
 
     private final SecurityFilter securityFilter;
-    private String corsEndpoint;
+    private final String corsEndpoint;
 
     public SecurityConfig(SecurityFilter securityFilter, @Value("${cors.allowed-origins}") String corsEndpoint) {
         this.securityFilter = securityFilter;
@@ -25,7 +25,9 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
+        return http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll().anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
@@ -35,14 +37,13 @@ public class SecurityConfig {
     @Bean
     WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
-
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // aplica a todos os endpoints
-                        .allowedOrigins(corsEndpoint) // origem do frontend Vite
+                registry.addMapping("/**")
+                        .allowedOrigins(corsEndpoint)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
-                        .allowCredentials(true); // se estiver usando cookies ou auth
+                        .allowCredentials(true);
             }
         };
     }
@@ -56,5 +57,4 @@ public class SecurityConfig {
     SHA256PasswordEncoder passwordEncoder() {
         return new SHA256PasswordEncoder();
     }
-
 }
