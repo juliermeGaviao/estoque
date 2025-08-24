@@ -1,6 +1,9 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../../../../util/api'
+
+const router = useRouter()
 
 const users = ref([])
 const totalRecords = ref(0)
@@ -13,7 +16,7 @@ const sortOrder = ref(null)
 
 const email = ref('')
 
-const loadUsers = async () => {
+async function loadUsers() {
   loading.value = true
 
   try {
@@ -47,29 +50,29 @@ const loadUsers = async () => {
 
 onMounted(loadUsers)
 
-const onPage = (event) => {
+function onPage(event) {
   page.value = event.page
   size.value = event.rows
   loadUsers()
 }
 
-const onSort = (event) => {
+function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
   loadUsers()
 }
 
-const onFilter = () => {
+function onFilter() {
   page.value = 0
   loadUsers()
 }
 
-const onClear = () => {
+function onClear() {
   email.value = null
   loadUsers()
 }
 
-const formatDate = isoString => {
+function formatDate(isoString) {
   if (!isoString) return ''
 
   const date = new Date(isoString)
@@ -90,11 +93,15 @@ const formatDate = isoString => {
   return `${data} ${hora}`
 }
 
-const editUser = (user) => {
-  console.log('Editar usuário', user)
+function editUser(user) {
+  if (user && user.id) {
+    router.push(`/management/user/edit?id=${user.id}`)
+  } else {
+    router.push('/management/user/edit')
+  }
 }
 
-const deleteUser = async (user) => {
+async function deleteUser(user) {
   if (!confirm(`Deseja realmente remover o usuário ${user.email}?`)) return
 
   try {
@@ -114,8 +121,8 @@ const deleteUser = async (user) => {
 
     <div class="flex align-items-center gap-4 w-full mb-10">
       <InputText v-model="email" placeholder="Filtrar por email" class="p-inputtext-sm flex-1" @keyup.enter="onFilter"/>
-      <Button label="Buscar" icon="pi pi-search" @click="onFilter" raised/>
       <Button label="Limpar" icon="pi pi-times" severity="secondary" @click="onClear" raised/>
+      <Button label="Buscar" icon="pi pi-search" @click="onFilter" raised/>
     </div>
 
     <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
@@ -140,28 +147,13 @@ const deleteUser = async (user) => {
       <Column :bodyStyle="{ textAlign: 'center' }">
         <template #header>
           <div style="width: 100%; display: flex; justify-content: center;">
-            <Button
-              icon="pi pi-plus"
-              class="p-button-sm p-button-text p-mr-2"
-              @click="editUser(null)"
-              title="Novo Usuário"
-            />
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
           </div>
         </template>
 
         <template #body="slotProps">
-          <Button
-            icon="pi pi-pencil"
-            class="p-button-sm p-button-text p-mr-2"
-            @click="editUser(slotProps.data)"
-            title="Editar"
-          />
-          <Button
-            icon="pi pi-trash"
-            class="p-button-sm p-button-text p-button-danger"
-            @click="deleteUser(slotProps.data)"
-            title="Remover"
-          />
+          <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
+          <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="deleteUser(slotProps.data)" title="Remover"/>
         </template>
       </Column>
     </DataTable>

@@ -25,7 +25,7 @@ public class Perfil implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome", nullable = false)
+    @Column(name = "nome", nullable = false, length = 255)
     private String nome;
 
     @Column(name = "data_criacao", nullable = false)

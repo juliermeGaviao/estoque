@@ -19,6 +19,11 @@ const router = createRouter({
                     path: '/management/user',
                     name: 'userCRUD',
                     component: () => import('@/views/pages/management/user/List.vue')
+                },
+                {
+                    path: '/management/user/edit',
+                    name: 'userEdit',
+                    component: () => import('@/views/pages/management/user/InsertEdit.vue')
                 }
             ]
         },
