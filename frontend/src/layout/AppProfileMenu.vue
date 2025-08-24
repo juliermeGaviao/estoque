@@ -16,7 +16,7 @@ const items = computed(() => [
   temPerfil('admin') && {
     label: 'Gestão de Usuários',
     icon: 'pi pi-users',
-    command: () => { router.push('/') }
+    command: () => { router.push('/management/user') }
   },
   {
     label: 'Sair',

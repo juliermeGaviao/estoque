@@ -53,7 +53,7 @@ public class UserController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> listUsers(
-			@RequestParam String email,
+			@RequestParam(required = false) String email,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
