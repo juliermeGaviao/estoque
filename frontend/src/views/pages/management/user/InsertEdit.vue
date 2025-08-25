@@ -36,7 +36,7 @@ async function loadUser(id) {
   }
 }
 
-async function saveUser() {
+async function save() {
   try {
     await api.post('/user', user.value)
     alert('Usuário salvo com sucesso!')
@@ -47,7 +47,7 @@ async function saveUser() {
   }
 }
 
-function clearForm() {
+function clear() {
   user.value.email = ''
   user.value.perfis = []
 }
@@ -66,28 +66,33 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="card">
-    <h3 class="mb-4">{{ route.params.id ? 'Editar Usuário' : 'Inserir Usuário' }}</h3>
-
-    <div class="flex items-center gap-2 mb-4">
-      <label for="email" class="flex items-center">Email</label>
-      <InputText id="email" v-model="user.email" placeholder="Digite o email" maxlength="255" style="width: 600px"/>
-    </div>
-
-    <div class="flex gap-2 mb-4">
-      <label for="">Perfis</label>
-      <div v-for="perfil in profiles" :key="perfil.id" class="flex gap-2 mr-1">
-        <Checkbox v-model="user.perfis" :value="perfil.id" :inputId="'perfil' + perfil.id"/>
-        <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+  <Card>
+    <template #title><h3>{{ route.params.id ? 'Editar Usuário' : 'Inserir Usuário' }}</h3></template>
+    <template #content>
+      <div class="grid flex">
+        <div class="col-1 flex items-center">Email</div>
+        <div class="col-11">
+          <InputText id="email" v-model="user.email" placeholder="Digite o email" maxlength="255" fluid/>
+        </div>
+        <div class="col-1 flex items-center">Senha</div>
+        <div class="col-11">
+          <Password id="senha" v-model="user.senha" placeholder="Digite a senha" toggleMask fluid/>
+        </div>
+        <div class="col-1 flex items-center">Confirmação</div>
+        <div class="col-11">
+          <Password id="confirmSenha" v-model="user.confirmarSenha" placeholder="Confirme a senha" toggleMask fluid/>
+        </div>
+        <div class="col-1 flex items-center">Perfis</div>
+        <div class="col-11 flex flex-wrap gap-4">
+          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+            <Checkbox v-model="user.perfis" :value="perfil.id" :inputId="'perfil' + perfil.id"/>
+            <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+          </div>
+        </div>
+        <div class="col-1 col-offset-9"><Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" class="w-full"/></div>
+        <div class="col-1"><Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" class="w-full"/></div>
+        <div class="col-1"><Button label="Salvar" icon="pi pi-save" @click="save" class="w-full"/></div>
       </div>
-    </div>
-
-    <div class="flex w-full mb-4">
-      <div class="ml-auto flex gap-2">
-        <Button label="Limpar" icon="pi pi-times" @click="clearForm" severity="secondary"/>
-        <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary"/>
-        <Button label="Salvar" icon="pi pi-save" @click="saveUser"/>
-      </div>
-    </div>
-  </div>
+    </template>
+  </Card>
 </template>

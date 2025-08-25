@@ -116,55 +116,47 @@ async function deleteUser(user) {
 </script>
 
 <template>
-  <div class="card">
-    <h3 class="mb-4">Lista de Usuários</h3>
+  <Card>
+    <template #title><h3>Lista de Usuários</h3></template>
+    <template #content>
+      <div class="grid flex mb-4">
+        <div class="col-10 flex items-center"><InputText v-model="email" placeholder="Filtrar por email" class="w-full" @keyup.enter="onFilter"/></div>
+        <div class="col-1"><Button label="Limpar" icon="pi pi-times" severity="secondary" class="w-full" @click="onClear" raised/></div>
+        <div class="col-1"><Button label="Buscar" icon="pi pi-search" class="w-full" @click="onFilter" raised/></div>
+      </div>
 
-    <div class="flex align-items-center gap-4 w-full mb-10">
-      <InputText v-model="email" placeholder="Filtrar por email" class="p-inputtext-sm flex-1" @keyup.enter="onFilter"/>
-      <Button label="Limpar" icon="pi pi-times" severity="secondary" @click="onClear" raised/>
-      <Button label="Buscar" icon="pi pi-search" @click="onFilter" raised/>
-    </div>
+      <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[10, 20, 50, 100]">
 
-    <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
-      :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-      :rowsPerPageOptions="[10, 20, 50, 100]">
+        <Column field="id" header="Id" sortable />
+        <Column field="email" header="Email" sortable />
 
-      <Column field="id" header="Id" sortable />
-      <Column field="email" header="Email" sortable />
+        <Column header="Data de Criação" field="dataCriacao" sortable>
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.dataCriacao) }}
+          </template>
+        </Column>
 
-      <Column header="Data de Criação" field="dataCriacao" sortable>
-        <template #body="slotProps">
-          {{ formatDate(slotProps.data.dataCriacao) }}
-        </template>
-      </Column>
+        <Column header="Data de Alteração" field="dataAlteracao" sortable>
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.dataAlteracao) }}
+          </template>
+        </Column>
 
-      <Column header="Data de Alteração" field="dataAlteracao" sortable>
-        <template #body="slotProps">
-          {{ formatDate(slotProps.data.dataAlteracao) }}
-        </template>
-      </Column>
+        <Column :bodyStyle="{ textAlign: 'center' }">
+          <template #header>
+            <div style="width: 100%; display: flex; justify-content: center;">
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
+            </div>
+          </template>
 
-      <Column :bodyStyle="{ textAlign: 'center' }">
-        <template #header>
-          <div style="width: 100%; display: flex; justify-content: center;">
-            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
-          </div>
-        </template>
-
-        <template #body="slotProps">
-          <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
-          <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="deleteUser(slotProps.data)" title="Remover"/>
-        </template>
-      </Column>
-    </DataTable>
-  </div>
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="deleteUser(slotProps.data)" title="Remover"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
 </template>
-
-<style scoped>
-.card {
-  padding: 1.5rem;
-  background: var(--surface-card);
-  border-radius: var(--border-radius);
-  box-shadow: var(--card-shadow);
-}
-</style>
