@@ -77,18 +77,9 @@ function formatDate(isoString) {
 
   const date = new Date(isoString)
 
-  const data = date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  const data = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-  const hora = date.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
+  const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
 
   return `${data} ${hora}`
 }
@@ -112,18 +103,19 @@ async function deleteUser(user) {
     console.error('Erro ao remover usuário', err)
   }
 }
-
 </script>
 
 <template>
   <Card>
     <template #title><h3>Lista de Usuários</h3></template>
     <template #content>
-      <div class="grid flex mb-4">
-        <div class="col-10 flex items-center"><InputText v-model="email" placeholder="Filtrar por email" class="w-full" @keyup.enter="onFilter"/></div>
-        <div class="col-1"><Button label="Limpar" icon="pi pi-times" severity="secondary" class="w-full" @click="onClear" raised/></div>
-        <div class="col-1"><Button label="Buscar" icon="pi pi-search" class="w-full" @click="onFilter" raised/></div>
-      </div>
+      <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
+        <FormField class="flex-1">
+          <InputText v-model="email" type="text" placeholder="Filtrar por email" fluid/>
+        </FormField>
+        <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
+        <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
+      </Form>
 
       <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
         :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows

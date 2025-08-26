@@ -10,6 +10,8 @@ const userId = route.params.id
 const user = ref({
   id: null,
   email: '',
+  senha: '',
+  confirmarSenha: '',
   perfis: []
 })
 
@@ -69,30 +71,34 @@ onMounted(() => {
   <Card>
     <template #title><h3>{{ route.params.id ? 'Editar Usuário' : 'Inserir Usuário' }}</h3></template>
     <template #content>
-      <div class="grid flex">
-        <div class="col-1 flex items-center">Email</div>
-        <div class="col-11">
-          <InputText id="email" v-model="user.email" placeholder="Digite o email" maxlength="255" fluid/>
-        </div>
-        <div class="col-1 flex items-center">Senha</div>
-        <div class="col-11">
-          <Password id="senha" v-model="user.senha" placeholder="Digite a senha" toggleMask fluid/>
-        </div>
-        <div class="col-1 flex items-center">Confirmação</div>
-        <div class="col-11">
-          <Password id="confirmSenha" v-model="user.confirmarSenha" placeholder="Confirme a senha" toggleMask fluid/>
-        </div>
-        <div class="col-1 flex items-center">Perfis</div>
-        <div class="col-11 flex flex-wrap gap-4">
-          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-            <Checkbox v-model="user.perfis" :value="perfil.id" :inputId="'perfil' + perfil.id"/>
-            <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+      <Form class="grid flex flex-column gap-4" @submit="save" @reset="clear">
+        <FormField class="flex items-center gap-4">
+          <label class="w-36" for="email">Email</label>
+          <InputText id="email" v-model="user.email" placeholder="Digite o email" maxlength="255" class="flex-1" fluid/>
+        </FormField>
+        <FormField class="flex items-center gap-4">
+          <label class="w-36" for="senha">Senha</label>
+          <Password id="senha" v-model="user.senha" placeholder="Digite a senha" toggleMask class="flex-1" fluid/>
+        </FormField>
+        <FormField class="flex items-center gap-4">
+          <label class="w-36" for="confirmarSenha">Confirmação</label>
+          <Password id="confirmarSenha" v-model="user.confirmarSenha" placeholder="Confirme a senha" toggleMask class="flex-1" fluid/>
+        </FormField>
+        <FormField class="flex items-start gap-4">
+          <label class="w-36" for="">Perfis</label>
+          <div class="flex flex-wrap gap-4 flex-1">
+            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+              <Checkbox v-model="user.perfis" :value="perfil.id" :inputId="'perfil' + perfil.id" />
+              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+            </div>
           </div>
-        </div>
-        <div class="col-1 col-offset-9"><Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" class="w-full"/></div>
-        <div class="col-1"><Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" class="w-full"/></div>
-        <div class="col-1"><Button label="Salvar" icon="pi pi-save" @click="save" class="w-full"/></div>
-      </div>
+        </FormField>
+        <FormField class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" severity="secondary" />
+          <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" />
+          <Button label="Salvar" icon="pi pi-save" type="submit"/>
+        </FormField>
+      </Form>
     </template>
   </Card>
 </template>
