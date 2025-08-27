@@ -10,24 +10,12 @@
 
 		<createTable tableName="usuario_perfil">
 
-			<column name="id" type="bigint" autoIncrement="true">
-				<constraints primaryKey="true" nullable="false"/>
-			</column>
-
             <column name="id_usuario" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_usuario" references="usuario(id)"/>
             </column>
 
             <column name="id_perfil" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_perfil" references="perfil(id)"/>
-            </column>
-
-            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-
-            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
             </column>
 
 		</createTable>

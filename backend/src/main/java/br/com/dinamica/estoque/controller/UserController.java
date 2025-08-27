@@ -29,6 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserController {
 
+	private static final String USER_NOT_FOUND = "Usuário não encontrado: ";
+
 	private ProfileService profileService;
 
 	private UserService userService;
@@ -43,7 +45,7 @@ public class UserController {
 		try {
 			return ResponseEntity.ok(this.profileService.getProfiles());
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao recuperar lista de perfis.");
 		}
 	}
 
@@ -52,7 +54,8 @@ public class UserController {
 		try {
 			return ResponseEntity.ok(this.userService.getUser(id));
 		} catch (NoSuchElementException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário de id (" + id + ") não encontrado.");
+			log.error(USER_NOT_FOUND + id, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_NOT_FOUND + id);
 		}
 	}
 
@@ -71,22 +74,38 @@ public class UserController {
 			Page<UserListDto> usuarios = this.userService.list(email, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(usuarios));
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			log.error("Erro ao listar usuários", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao recuperar lista de usuários.");
 		}
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> createEditUser(@RequestBody UserRequestDTO dto) {
+	public ResponseEntity<Object> save(@RequestBody UserRequestDTO dto) {
 		try {
 			return ResponseEntity.ok(this.userService.save(dto));
 		} catch (NoSuchElementException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário de id (" + dto.id() + ") não encontrado.");
+			log.error(USER_NOT_FOUND + dto.getId(), e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_NOT_FOUND + dto.getId());
 		} catch (DataIntegrityViolationException | ConstraintViolationException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail " + dto.email());
+			log.error("Existe outro usuário com o e-mail " + dto.getEmail(), e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail " + dto.getEmail());
 		} catch (RuntimeException e) {
+			log.error("Erro ao salvar usuário", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar usuário.");
+		}
+	}
+
+	@PostMapping("/password")
+	public ResponseEntity<Object> password(@RequestBody UserRequestDTO dto) {
+		try {
+			return ResponseEntity.ok(this.userService.changePassword(dto));
+		} catch (NoSuchElementException e) {
+			log.error(USER_NOT_FOUND + dto.getId(), e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_NOT_FOUND + dto.getId());
+		} catch (RuntimeException e) {
+			log.error("Erro ao trocar a senha do usuário", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao trocar a senha do usuário.");
 		}
 	}
 

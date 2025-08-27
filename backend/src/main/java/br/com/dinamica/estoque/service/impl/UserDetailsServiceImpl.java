@@ -72,21 +72,35 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
         Usuario usuario = new Usuario();
         Date agora = DateUtil.now();
 
-        if (dto.id() != null) {
-        	usuario = this.usuarioRepository.findById(dto.id()).orElseThrow();
+        if (dto.getId() != null) {
+        	usuario = this.usuarioRepository.findById(dto.getId()).orElseThrow();
         } else {
         	usuario.setDataCriacao(agora);
         }
 
-        usuario.setEmail(dto.email());
-        usuario.setSenha(passwordEncoder.encode(dto.senha()));
+        usuario.setEmail(dto.getEmail());
+
+        if (dto.getSenha() != null) {
+        	usuario.setSenha(this.passwordEncoder.encode(dto.getSenha()));
+        }
+
         usuario.setDataAlteracao(agora);
 
-        Set<Perfil> perfis = dto.perfis().stream().map(perfilRepository::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+        Set<Perfil> perfis = dto.getPerfis().stream().map(this.perfilRepository::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
 
         usuario.setPerfis(perfis);
 
         usuario = this.usuarioRepository.saveAndFlush(usuario);
+
+        return this.modelMapper.map(usuario, UserDto.class);
+    }
+
+    @Override
+    public UserDto changePassword(UserRequestDTO dto) {
+    	Usuario usuario = this.usuarioRepository.findById(dto.getId()).orElseThrow();
+
+    	usuario.setSenha(this.passwordEncoder.encode(dto.getSenha()));
+    	usuario.setDataAlteracao(DateUtil.now());
 
         return this.modelMapper.map(usuario, UserDto.class);
     }

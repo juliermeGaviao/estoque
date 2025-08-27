@@ -17,4 +17,6 @@ public interface UserService {
 
 	UserDto save(UserRequestDTO dto);
 
+	UserDto changePassword(UserRequestDTO dto);
+
 }

@@ -56,7 +56,7 @@ onMounted(() => {
   loadUsers()
 
   if (route.query.saved === 'true') {
-    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado/atualizado com sucesso', life: 10000 })
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado com sucesso', life: 10000 })
 
     route.query.saved = undefined
   }
@@ -100,7 +100,7 @@ function editUser(user) {
   if (user && user.id) {
     router.push(`/management/user/edit?id=${user.id}`)
   } else {
-    router.push('/management/user/edit')
+    router.push('/management/user/insert')
   }
 }
 
@@ -121,7 +121,7 @@ async function deleteUser(user) {
   <Card>
     <template #title><h3>Lista de Usuários</h3></template>
     <template #content>
-      <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
+      <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
         <FloatLabel variant="on">
           <label for="email">E-mail</label>
           <InputText id="email" v-model="email" autocomplete="off" fluid/>
