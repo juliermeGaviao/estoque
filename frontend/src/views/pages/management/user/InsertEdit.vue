@@ -1,57 +1,102 @@
 <script setup>
+import { zodResolver } from '@primevue/forms/resolvers/zod'
+import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { z } from 'zod'
 import api from '../../../../util/api'
+import { sha256Hex } from '../../../../util/auth'
 
 const router = useRouter()
 const route = useRoute()
-const userId = route.params.id
+const userId = route.query.id
 
-const user = ref({
-  id: null,
+const toast = useToast()
+
+const formRef = ref(null)
+const initialValues = ref({
   email: '',
   senha: '',
   confirmarSenha: '',
-  perfis: []
+  perfis: [2]
 })
+
+const resolver = zodResolver(
+  z.object({
+    email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
+    senha: z.string().min(1, { message: 'Senha é obrigatória.' }).min(8, { message: 'Senha deve ter no mínimo 8 caracteres.' }),
+    confirmarSenha: z.string().min(1, { message: 'Confirmação de senha é obrigatória.' }),
+    perfis: z.array(z.number()).optional()
+  }).refine(data => data.senha === data.confirmarSenha, {
+    message: 'As senhas não coincidem.',
+    path: ['confirmarSenha']
+  })
+)
 
 const profiles = ref([])
 
 async function loadProfiles() {
   try {
     const res = await api.get('/user/profiles')
+
     profiles.value = res.data
   } catch (error) {
-    console.error('Erro ao carregar perfis:', error)
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error, life: 5000 })
   }
 }
 
 async function loadUser(id) {
   try {
     const res = await api.get('/user/get', { params: { id } })
-    user.value.id = res.data.id
-    user.value.email = res.data.email
 
-    user.value.perfis = res.data.perfis.map(p => p.id)
+    if (formRef.value) {
+      formRef.value.setValues({
+        email: res.data.email,
+        senha: '',
+        confirmarSenha: '',
+        perfis: res.data.perfis.map(p => p.id)
+      })
+    }
+
+    initialValues.value = {
+      email: res.data.email,
+      senha: '',
+      confirmarSenha: '',
+      perfis: res.data.perfis.map(p => p.id)
+    }
   } catch (error) {
-    console.error('Erro ao carregar usuário:', error)
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error, life: 5000 })
   }
 }
 
-async function save() {
+const save = async ({ valid, values }) => {
+  if (!valid) return
+
+  let params = { ... values }
+
+  if (userId) {
+    params['id'] = parseInt(userId)
+  }
+
+  delete params.confirmarSenha
+
   try {
-    await api.post('/user', user.value)
-    alert('Usuário salvo com sucesso!')
-    clearForm()
+    params.senha = await sha256Hex(params.senha)
+    const response = await api.post('/user', params)
+
+    if (response.status === 200) {
+      router.push({ path: '/management/user', query: { saved: 'true' } })
+    }
   } catch (error) {
-    console.error('Erro ao salvar usuário:', error)
-    alert('Erro ao salvar usuário')
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de carga de usuário terminou com o erro: ' + error, life: 5000 })
   }
 }
 
-function clear() {
-  user.value.email = ''
-  user.value.perfis = []
+function clear(values) {
+  values.email = ''
+  values.senha = ''
+  values.confirmarSenha = ''
+  values.perfis = []
 }
 
 function cancel() {
@@ -63,41 +108,56 @@ onMounted(() => {
 
   if (userId) {
     loadUser(userId)
-  }
+  } 
 })
 </script>
 
 <template>
   <Card>
-    <template #title><h3>{{ route.params.id ? 'Editar Usuário' : 'Inserir Usuário' }}</h3></template>
+    <template #title>
+      <h3>{{ route.params.id ? 'Editar Usuário' : 'Inserir Usuário' }}</h3>
+    </template>
+
     <template #content>
-      <Form class="grid flex flex-column gap-4" @submit="save" @reset="clear">
-        <FormField class="flex items-center gap-4">
-          <label class="w-36" for="email">Email</label>
-          <InputText id="email" v-model="user.email" placeholder="Digite o email" maxlength="255" class="flex-1" fluid/>
+      <Form ref="formRef" :resolver :initialValues @submit="save" @reset="clear" class="grid flex flex-column gap-4">
+        <FormField v-slot="$field" name="email" initialValue="">
+          <FloatLabel variant="on" class="flex-1">
+            <InputText id="email" maxlength="255" autocomplete="off" fluid/>
+            <label for="email">E-mail</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
-        <FormField class="flex items-center gap-4">
-          <label class="w-36" for="senha">Senha</label>
-          <Password id="senha" v-model="user.senha" placeholder="Digite a senha" toggleMask class="flex-1" fluid/>
+
+        <FormField v-slot="$field" name="senha" initialValue="">
+          <FloatLabel variant="on" class="flex-1">
+            <Password inputId="senha" toggleMask fluid :feedback="false"/>
+            <label for="senha">Senha</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
-        <FormField class="flex items-center gap-4">
-          <label class="w-36" for="confirmarSenha">Confirmação</label>
-          <Password id="confirmarSenha" v-model="user.confirmarSenha" placeholder="Confirme a senha" toggleMask class="flex-1" fluid/>
+
+        <FormField v-slot="$field" name="confirmarSenha" initialValue="">
+          <FloatLabel variant="on" class="flex-1">
+            <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
+            <label for="confirmarSenha">Confirmação da senha</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
-        <FormField class="flex items-start gap-4">
-          <label class="w-36" for="">Perfis</label>
-          <div class="flex flex-wrap gap-4 flex-1">
-            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-              <Checkbox v-model="user.perfis" :value="perfil.id" :inputId="'perfil' + perfil.id" />
-              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
-            </div>
+
+        <FormField name="perfis" class="flex items-start gap-4">
+          <div classes="label">Perfis:</div>
+          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+            <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
+            <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
           </div>
         </FormField>
+
         <FormField class="flex justify-end gap-2">
-          <Button label="Limpar" icon="pi pi-times" severity="secondary" />
-          <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" />
-          <Button label="Salvar" icon="pi pi-save" type="submit"/>
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
         </FormField>
+
       </Form>
     </template>
   </Card>

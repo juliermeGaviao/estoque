@@ -1,9 +1,13 @@
 <script setup>
+import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../../../../util/api'
 
 const router = useRouter()
+const route = useRoute()
+
+const toast = useToast()
 
 const users = ref([])
 const totalRecords = ref(0)
@@ -48,7 +52,15 @@ async function loadUsers() {
   }
 }
 
-onMounted(loadUsers)
+onMounted(() => {
+  loadUsers()
+
+  if (route.query.saved === 'true') {
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado/atualizado com sucesso', life: 5000 })
+
+    route.query.saved = undefined
+  }
+})
 
 function onPage(event) {
   page.value = event.page
@@ -110,9 +122,11 @@ async function deleteUser(user) {
     <template #title><h3>Lista de Usuários</h3></template>
     <template #content>
       <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
-        <FormField class="flex-1">
-          <InputText v-model="email" type="text" placeholder="Filtrar por email" fluid/>
-        </FormField>
+        <FloatLabel variant="on">
+          <label for="email">E-mail</label>
+          <InputText id="email" v-model="email" autocomplete="off" fluid/>
+        </FloatLabel>
+
         <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
         <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
       </Form>

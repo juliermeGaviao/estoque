@@ -1,6 +1,10 @@
 package br.com.dinamica.estoque.service.impl;
 
+import java.util.Date;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -11,21 +15,32 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import br.com.dinamica.estoque.configuration.auth.SHA256PasswordEncoder;
 import br.com.dinamica.estoque.dto.UserDto;
 import br.com.dinamica.estoque.dto.UserListDto;
+import br.com.dinamica.estoque.dto.UserRequestDTO;
+import br.com.dinamica.estoque.entity.Perfil;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.repository.PerfilRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.service.UserService;
+import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 
     private UsuarioRepository usuarioRepository;
 
+    private PerfilRepository perfilRepository;
+
+    private SHA256PasswordEncoder passwordEncoder;
+    
 	private ModelMapper modelMapper;
 
-    public UserDetailsServiceImpl(UsuarioRepository usuarioRepository, ModelMapper modelMapper) {
+    public UserDetailsServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, SHA256PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
         this.usuarioRepository = usuarioRepository;
+        this.perfilRepository = perfilRepository;
+        this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
     }
 
@@ -51,4 +66,27 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 
         return this.usuarioRepository.findAll(specification, pageable).map(usuario -> this.modelMapper.map(usuario, UserListDto.class));
     }
+
+    @Override
+    public UserDto save(UserRequestDTO dto) {
+        Usuario usuario = new Usuario();
+        Date agora = DateUtil.now();
+
+        if (dto.id() != null) {
+        	usuario = this.usuarioRepository.findById(dto.id()).orElseThrow();
+        } else {
+        	usuario.setDataCriacao(agora);
+        }
+
+        usuario.setEmail(dto.email());
+        usuario.setSenha(passwordEncoder.encode(dto.senha()));
+        usuario.setDataAlteracao(agora);
+
+        Set<Perfil> perfis = dto.perfis().stream().map(perfilRepository::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+
+        usuario.setPerfis(perfis);
+
+        return this.modelMapper.map(this.usuarioRepository.save(usuario), UserDto.class);
+    }
+
 }
