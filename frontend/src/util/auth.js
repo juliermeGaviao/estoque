@@ -4,6 +4,14 @@ export function isAuthenticated() {
   return !!localStorage.getItem('userId') || !!sessionStorage.getItem('userId')
 }
 
+export function getUserId() {
+  const result = localStorage.getItem('userId')
+
+  if (result) return result
+
+  return sessionStorage.getItem('userId')
+}
+
 export function login(response, remember) {
   const storage = remember ? localStorage : sessionStorage
 

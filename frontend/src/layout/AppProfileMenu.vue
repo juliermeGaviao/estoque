@@ -1,8 +1,8 @@
 <script setup>
-import { logout, temPerfil } from '@/util/auth'
 import TieredMenu from 'primevue/tieredmenu'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getUserId, logout, temPerfil } from '../util/auth'
 
 const router = useRouter()
 const menu = ref()
@@ -11,7 +11,7 @@ const items = computed(() => [
   {
     label: 'Minha Conta',
     icon: 'pi pi-cog',
-    command: () => { router.push('/') }
+    command: () => { router.push(`/management/user/edit?id=${getUserId()}`) }
   },
   temPerfil('admin') && {
     label: 'Gestão de Usuários',
