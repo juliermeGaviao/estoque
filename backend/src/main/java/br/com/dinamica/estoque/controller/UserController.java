@@ -78,13 +78,13 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> createUser(@RequestBody UserRequestDTO dto) {
+	public ResponseEntity<Object> createEditUser(@RequestBody UserRequestDTO dto) {
 		try {
 			return ResponseEntity.ok(this.userService.save(dto));
 		} catch (NoSuchElementException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário de id (" + dto.id() + ") não encontrado.");
 		} catch (DataIntegrityViolationException | ConstraintViolationException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail: " + dto.email());
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail " + dto.email());
 		} catch (RuntimeException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar usuário.");
 		}

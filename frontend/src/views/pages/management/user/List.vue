@@ -56,7 +56,7 @@ onMounted(() => {
   loadUsers()
 
   if (route.query.saved === 'true') {
-    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado/atualizado com sucesso', life: 5000 })
+    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado/atualizado com sucesso', life: 10000 })
 
     route.query.saved = undefined
   }

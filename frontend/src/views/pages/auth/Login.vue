@@ -14,7 +14,7 @@ const router = useRouter()
 
 const doLogin = async () => {
   if (!email.value || !password.value) {
-    toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Usuário e senha são obrigatórios', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Usuário e senha são obrigatórios', life: 10000 })
     return
   }
 
@@ -31,9 +31,9 @@ const doLogin = async () => {
     router.push('/')
   } catch (error) {
     if (error.status === 403) {
-      toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Usuário ou senha inválidos', life: 5000 })
+      toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Usuário ou senha inválidos', life: 10000 })
     } else {
-      toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Falha de comunicação. Tente mais tarde', life: 5000 })
+      toast.add({ severity: 'error', summary: 'Falha de Autenticação', detail: 'Falha de comunicação. Tente mais tarde', life: 10000 })
     }
   }
 }

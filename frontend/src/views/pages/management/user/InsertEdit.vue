@@ -41,7 +41,7 @@ async function loadProfiles() {
 
     profiles.value = res.data
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
@@ -65,7 +65,7 @@ async function loadUser(id) {
       perfis: res.data.perfis.map(p => p.id)
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
@@ -88,7 +88,7 @@ const save = async ({ valid, values }) => {
       router.push({ path: '/management/user', query: { saved: 'true' } })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de carga de usuário terminou com o erro: ' + error, life: 5000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de carga de usuário terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 

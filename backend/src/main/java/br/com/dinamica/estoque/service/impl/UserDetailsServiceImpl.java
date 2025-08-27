@@ -86,7 +86,9 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 
         usuario.setPerfis(perfis);
 
-        return this.modelMapper.map(this.usuarioRepository.save(usuario), UserDto.class);
+        usuario = this.usuarioRepository.saveAndFlush(usuario);
+
+        return this.modelMapper.map(usuario, UserDto.class);
     }
 
 }
