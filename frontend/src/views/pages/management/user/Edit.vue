@@ -36,18 +36,25 @@ const resolverPassword = zodResolver(
 )
 
 const profiles = ref([])
+const loading = ref(false)
 
 async function loadProfiles() {
+  loading.value = true
+
   try {
     const res = await api.get('/user/profiles')
 
     profiles.value = res.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
 async function loadUser(id) {
+  loading.value = true
+
   try {
     const res = await api.get('/user/get', { params: { id } })
 
@@ -64,11 +71,15 @@ async function loadUser(id) {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
 const save = async ({ valid, values }) => {
   if (!valid) return
+
+  loading.value = true
 
   let params = { ... values }
 
@@ -82,11 +93,15 @@ const save = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de alteração de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
 const changePassword = async ({ valid, values }) => {
   if (!valid) return
+
+  loading.value = true
 
   let params = { ... values }
 
@@ -96,6 +111,7 @@ const changePassword = async ({ valid, values }) => {
 
   try {
     params.senha = await sha256Hex(params.senha)
+
     const response = await api.post('/user/password', params)
 
     if (response.status === 200) {
@@ -103,6 +119,8 @@ const changePassword = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de troca de senha terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -128,62 +146,64 @@ onMounted(() => {
 </script>
 
 <template>
-  <Card class="mb-4">
-    <template #title><h3>Editar Usuário</h3></template>
+  <BlockUI :blocked="loading" fullScreen>
+    <Card class="mb-4">
+      <template #title><h3>Editar Usuário</h3></template>
 
-    <template #content>
-      <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" @reset="clearUser" class="grid flex flex-column gap-4">
-        <FormField v-slot="$field" name="email" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <InputText id="email" maxlength="255" autocomplete="off" fluid/>
-            <label for="email">E-mail</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+      <template #content>
+        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" @reset="clearUser" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="email" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <InputText id="email" maxlength="255" autocomplete="off" fluid/>
+              <label for="email">E-mail</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField name="perfis" class="flex items-start gap-4">
-          <div classes="label">Perfis:</div>
-          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-            <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
-            <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
-          </div>
-        </FormField>
+          <FormField name="perfis" class="flex items-start gap-4">
+            <div classes="label">Perfis:</div>
+            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+              <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
+              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+            </div>
+          </FormField>
 
-        <FormField class="flex justify-end gap-4">
-          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-        </FormField>
-      </Form>
-    </template>
-  </Card>
-  <Card class="mb-6">
-    <template #title><h3>Senha de acesso</h3></template>
-    <template #content>
-      <Form :resolver="resolverPassword" @submit="changePassword" @reset="clearPassword" class="grid flex flex-column gap-4">
-        <FormField v-slot="$field" name="senha" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <Password inputId="senha" toggleMask fluid :feedback="false"/>
-            <label for="senha">Senha</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+          <FormField class="flex justify-end gap-4">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </FormField>
+        </Form>
+      </template>
+    </Card>
+    <Card class="mb-6">
+      <template #title><h3>Senha de acesso</h3></template>
+      <template #content>
+        <Form :resolver="resolverPassword" @submit="changePassword" @reset="clearPassword" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="senha" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <Password inputId="senha" toggleMask fluid :feedback="false"/>
+              <label for="senha">Senha</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField v-slot="$field" name="confirmarSenha" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
-            <label for="confirmarSenha">Confirmação da senha</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+          <FormField v-slot="$field" name="confirmarSenha" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
+              <label for="confirmarSenha">Confirmação da senha</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField class="flex justify-end gap-4">
-          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-        </FormField>
-      </Form>
-    </template>
-  </Card>
-  <div class="flex justify-end mt-4">
-    <Button label="Voltar" icon="pi pi-replay" @click="cancel" severity="secondary" raised/>
-  </div>
+          <FormField class="flex justify-end gap-4">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </FormField>
+        </Form>
+      </template>
+    </Card>
+    <div class="flex justify-end mt-4">
+      <Button label="Voltar" icon="pi pi-replay" @click="cancel" severity="secondary" raised/>
+    </div>
+  </BlockUI>
 </template>

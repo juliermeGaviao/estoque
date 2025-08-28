@@ -1,13 +1,14 @@
 <script setup>
-import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import api from '../../../../util/api'
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from 'primevue/usetoast';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import api from '../../../../util/api';
 
 const router = useRouter()
-const route = useRoute()
 
 const toast = useToast()
+const confirm = useConfirm()
 
 const users = ref([])
 const totalRecords = ref(0)
@@ -46,21 +47,13 @@ async function loadUsers() {
     users.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    console.error('Erro ao carregar usuários', error)
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuários', detail: 'Requisição de lista de usuários terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
 }
 
-onMounted(() => {
-  loadUsers()
-
-  if (route.query.saved === 'true') {
-    toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado com sucesso', life: 10000 })
-
-    route.query.saved = undefined
-  }
-})
+onMounted(loadUsers)
 
 function onPage(event) {
   page.value = event.page
@@ -97,72 +90,93 @@ function formatDate(isoString) {
 }
 
 function editUser(user) {
-  if (user && user.id) {
+  if (user?.id) {
     router.push(`/management/user/edit?id=${user.id}`)
   } else {
     router.push('/management/user/insert')
   }
 }
 
-async function deleteUser(user) {
-  if (!confirm(`Deseja realmente remover o usuário ${user.email}?`)) return
+const confirmDelete = user => {
+  confirm.require({
+    message: 'Deseja remover o usuário?',
+    header: "Remover Usuário",
+    icon: 'pi pi-info-circle',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      raised: true
+    },
+    acceptProps: {
+      label: 'Remover',
+      severity: 'danger',
+      raised: true
+    },
+    accept: async () => {
+      try {
+        await api.delete(`/user?id=${user.id}`)
 
-  try {
-    await api.delete(`/user/${user.id}`)
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário removido com sucesso', life: 10000 })
 
-    loadUsers()
-  } catch (err) {
-    console.error('Erro ao remover usuário', err)
-  }
+        loadUsers()
+      } catch (error) {
+        toast.add({ severity: 'error', summary: 'Falha de Remoção de Usuário', detail: 'Requisição de remoção de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+      }
+    }
+  })
 }
 </script>
 
 <template>
-  <Card>
-    <template #title><h3>Lista de Usuários</h3></template>
-    <template #content>
-      <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
-        <FloatLabel variant="on">
-          <label for="email">E-mail</label>
-          <InputText id="email" v-model="email" autocomplete="off" fluid/>
-        </FloatLabel>
+  <ConfirmDialog></ConfirmDialog>
+  <BlockUI :blocked="loading" fullScreen>
+    <Card>
+      <template #title><h3>Lista de Usuários</h3></template>
+      <template #content>
+        <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
+          <FloatLabel variant="on">
+            <label for="email">E-mail</label>
+            <InputText id="email" v-model="email" autocomplete="off" fluid/>
+          </FloatLabel>
 
-        <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
-        <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
-      </Form>
+          <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
+          <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
+        </Form>
 
-      <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords" :loading="loading"
-        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-        :rowsPerPageOptions="[10, 20, 50, 100]">
+        <DataTable :value="users" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+          :rowsPerPageOptions="[10, 20, 50, 100]">
 
-        <Column field="id" header="Id" sortable />
-        <Column field="email" header="Email" sortable />
+          <Column field="id" header="Id" sortable/>
+          <Column field="email" header="Email" sortable/>
+          <Column field="perfis" header="Perfis"/>
 
-        <Column header="Data de Criação" field="dataCriacao" sortable>
-          <template #body="slotProps">
-            {{ formatDate(slotProps.data.dataCriacao) }}
-          </template>
-        </Column>
+          <Column header="Data de Criação" field="dataCriacao" sortable>
+            <template #body="slotProps">
+              {{ formatDate(slotProps.data.dataCriacao) }}
+            </template>
+          </Column>
 
-        <Column header="Data de Alteração" field="dataAlteracao" sortable>
-          <template #body="slotProps">
-            {{ formatDate(slotProps.data.dataAlteracao) }}
-          </template>
-        </Column>
+          <Column header="Data de Alteração" field="dataAlteracao" sortable>
+            <template #body="slotProps">
+              {{ formatDate(slotProps.data.dataAlteracao) }}
+            </template>
+          </Column>
 
-        <Column :bodyStyle="{ textAlign: 'center' }">
-          <template #header>
-            <div style="width: 100%; display: flex; justify-content: center;">
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
-            </div>
-          </template>
+          <Column :bodyStyle="{ textAlign: 'center' }">
+            <template #header>
+              <div style="width: 100%; display: flex; justify-content: center;">
+                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
+              </div>
+            </template>
 
-          <template #body="slotProps">
-            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
-            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="deleteUser(slotProps.data)" title="Remover"/>
-          </template>
-        </Column>
-      </DataTable>
-    </template>
-  </Card>
+            <template #body="slotProps">
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" title="Remover"/>
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
+  </BlockUI>
 </template>

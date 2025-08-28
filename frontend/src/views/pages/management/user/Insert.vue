@@ -8,7 +8,6 @@ import api from '../../../../util/api'
 import { sha256Hex } from '../../../../util/auth'
 
 const router = useRouter()
-
 const toast = useToast()
 
 const initialValues = ref({
@@ -31,19 +30,26 @@ const resolver = zodResolver(
 )
 
 const profiles = ref([])
+const loading = ref(false)
 
 async function loadProfiles() {
+  loading.value = true
+
   try {
     const res = await api.get('/user/profiles')
 
     profiles.value = res.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
 const save = async ({ valid, values }) => {
   if (!valid) return
+
+  loading.value = true
 
   let params = { ... values }
 
@@ -54,10 +60,13 @@ const save = async ({ valid, values }) => {
     const response = await api.post('/user', params)
 
     if (response.status === 200) {
-      router.push({ path: '/management/user', query: { saved: 'true' } })
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário cadastrado com sucesso', life: 10000 })
+      cancel()
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de carga de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -78,50 +87,52 @@ onMounted(() => {
 </script>
 
 <template>
-  <Card>
-    <template #title><h3>Inserir Usuário</h3></template>
+  <BlockUI :blocked="loading" fullScreen>
+    <Card>
+      <template #title><h3>Inserir Usuário</h3></template>
 
-    <template #content>
-      <Form :resolver :initialValues @submit="save" @reset="clear" class="grid flex flex-column gap-4">
-        <FormField v-slot="$field" name="email" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <InputText id="email" maxlength="255" autocomplete="off" fluid/>
-            <label for="email">E-mail</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+      <template #content>
+        <Form :resolver :initialValues @submit="save" @reset="clear" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="email" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <InputText id="email" maxlength="255" autocomplete="off" fluid/>
+              <label for="email">E-mail</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField v-slot="$field" name="senha" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <Password inputId="senha" toggleMask fluid :feedback="false"/>
-            <label for="senha">Senha</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+          <FormField v-slot="$field" name="senha" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <Password inputId="senha" toggleMask fluid :feedback="false"/>
+              <label for="senha">Senha</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField v-slot="$field" name="confirmarSenha" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
-            <label for="confirmarSenha">Confirmação da senha</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
+          <FormField v-slot="$field" name="confirmarSenha" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
+              <label for="confirmarSenha">Confirmação da senha</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
 
-        <FormField name="perfis" class="flex items-start gap-4">
-          <div classes="label">Perfis:</div>
-          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-            <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
-            <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
-          </div>
-        </FormField>
+          <FormField name="perfis" class="flex items-start gap-4">
+            <div classes="label">Perfis:</div>
+            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+              <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
+              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+            </div>
+          </FormField>
 
-        <FormField class="flex justify-end gap-2">
-          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-          <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-        </FormField>
+          <FormField class="flex justify-end gap-4">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </FormField>
 
-      </Form>
-    </template>
-  </Card>
+        </Form>
+      </template>
+    </Card>
+  </BlockUI>
 </template>

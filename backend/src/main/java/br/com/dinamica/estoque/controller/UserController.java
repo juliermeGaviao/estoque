@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -106,6 +107,21 @@ public class UserController {
 		} catch (RuntimeException e) {
 			log.error("Erro ao trocar a senha do usuário", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao trocar a senha do usuário.");
+		}
+	}
+
+	@DeleteMapping
+	public ResponseEntity<Object> delete(@RequestParam Long id) {
+		try {
+			this.userService.delete(id);
+
+			return ResponseEntity.ok().build();
+		} catch (NoSuchElementException e) {
+			log.error(USER_NOT_FOUND + id, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(USER_NOT_FOUND + id);
+		} catch (RuntimeException e) {
+			log.error("Erro ao salvar usuário", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao remover usuário.");
 		}
 	}
 

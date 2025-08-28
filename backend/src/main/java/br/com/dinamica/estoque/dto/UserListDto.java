@@ -19,4 +19,6 @@ public class UserListDto {
 
     private Date dataAlteracao;
 
+    private String perfis;
+
 }

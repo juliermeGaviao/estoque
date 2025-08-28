@@ -1,7 +1,6 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
     }
 
 	@Override
-	public UserDto getUser(Long id) throws NoSuchElementException {
+	public UserDto getUser(Long id) {
 		Usuario usuario = this.usuarioRepository.findById(id).orElseThrow();
 
 		return this.modelMapper.map(usuario, UserDto.class);
@@ -64,7 +63,13 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
             specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
         }
 
-        return this.usuarioRepository.findAll(specification, pageable).map(usuario -> this.modelMapper.map(usuario, UserListDto.class));
+        return this.usuarioRepository.findAll(specification, pageable).map(usuario -> {
+        	UserListDto result = this.modelMapper.map(usuario, UserListDto.class);
+
+        	result.setPerfis(usuario.getPerfis().stream().map(Perfil::getNome).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
+
+        	return result;
+        });
     }
 
     @Override
@@ -104,5 +109,12 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 
         return this.modelMapper.map(usuario, UserDto.class);
     }
+
+	@Override
+	public void delete(Long id) {
+		Usuario usuario = this.usuarioRepository.findById(id).orElseThrow();
+
+		this.usuarioRepository.delete(usuario);
+	}
 
 }
