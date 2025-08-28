@@ -100,7 +100,7 @@ function editUser(user) {
 const confirmDelete = user => {
   confirm.require({
     message: 'Deseja remover o usuário?',
-    header: "Remover Usuário",
+    header: "Alerta",
     icon: 'pi pi-info-circle',
     rejectProps: {
       label: 'Cancelar',
