@@ -38,7 +38,7 @@ public class Usuario implements UserDetails {
     @Column(name = "email", unique = true, nullable = false, length = 255)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(name = "senha", nullable = false, length = 255)
     private String senha;
 
     @Column(name = "data_criacao", nullable = false)

@@ -11,5 +11,9 @@
     <include file="db/changelog/202508021328_create_user.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202508021437_create_profile.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202508021442_create_user_profile.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509091959_create_provider.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509092014_create_provider_contact.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509092017_create_client.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509092020_create_client_contact.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

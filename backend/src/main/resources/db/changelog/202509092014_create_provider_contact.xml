@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
+      http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
+
+	<changeSet id="202509092014" author="julierme">
+
+		<createTable tableName="contato_fornecedor">
+
+			<column name="id" type="bigint" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false"/>
+			</column>
+
+            <column name="id_fornecedor" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_contato_fornecedor" references="fornecedor(id)"/>
+            </column>
+
+			<column name="nome" type="varchar(255)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="cargo" type="varchar(255)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="celular" type="char(11)">
+				<constraints nullable="false"/>
+			</column>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+		</createTable>
+
+	    <rollback>
+	        <dropTable tableName="contato_fornecedor"/>
+	    </rollback>
+
+	</changeSet>
+
+</databaseChangeLog>
