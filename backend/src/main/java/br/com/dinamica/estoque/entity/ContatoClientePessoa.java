@@ -16,43 +16,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "contato_cliente_empresa")
+@Table(name = "contato_cliente_pessoa")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContatoClienteEmpresa {
+public class ContatoClientePessoa {
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cliente_empresa", nullable = false)
-    private ClienteEmpresa clienteEmpresa;
+    @JoinColumn(name = "id_cliente_pessoa", nullable = false)
+    private ClientePessoa clientePessoa;
 
-    @Column(name = "nome", nullable = false, length = 255)
-    private String nome;
+    @Column(name = "whatsapp", nullable = false, length = 11, columnDefinition = "char")
+    private String whatsapp;
 
-    @Column(name = "cargo", nullable = false, length = 255)
-    private String cargo;
-
-    @Column(name = "fone", length = 11, columnDefinition = "char")
-    private String fone;
-
-    @Column(name = "ramal", length = 20)
-    private String ramal;
-
-    @Column(name = "celular", length = 11, columnDefinition = "char")
-    private String celular;
-
-    @Column(name = "email", nullable = false, length = 100)
+    @Column(name = "email", length = 100)
     private String email;
-
-    @Column(name = "data_aniversario", columnDefinition = "date")
-    private Date dataAniversario;
-
-    @Column(name = "observacoes", length = 1024)
-    private String observacoes;
 
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;

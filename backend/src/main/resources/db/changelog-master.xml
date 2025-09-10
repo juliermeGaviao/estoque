@@ -15,5 +15,9 @@
     <include file="db/changelog/202509092014_create_provider_contact.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202509092017_create_company_client.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202509092020_create_company_client_contact.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509101859_create_person_client.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509101900_create_person_client_contact.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509101928_create_type_product.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509101932_create_product.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
