@@ -19,5 +19,7 @@
     <include file="db/changelog/202509101900_create_person_client_contact.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202509101928_create_type_product.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202509101932_create_product.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509122010_create_price_table.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202509122016_create_price_table_product.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

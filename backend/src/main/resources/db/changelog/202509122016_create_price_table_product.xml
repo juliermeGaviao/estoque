@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
+      http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
+
+	<changeSet id="202509122016" author="julierme">
+
+		<createTable tableName="tabela_preco_produto">
+
+			<column name="id" type="bigint" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false"/>
+			</column>
+
+            <column name="id_produto" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_tabela_preco_produto_produto" references="produto(id)"/>
+            </column>
+
+            <column name="id_tabela_preco" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_tabela_preco_produto_tabela" references="tabela_preco(id)"/>
+            </column>
+
+			<column name="preco" type="currency">
+				<constraints nullable="false"/>
+			</column>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+		</createTable>
+
+		<addUniqueConstraint tableName="tabela_preco_produto" columnNames="id_produto, id_tabela_preco" constraintName="uk_tabela_preco_produto_produto_tabela"/>
+
+	    <rollback>
+	        <dropTable tableName="tabela_preco_produto"/>
+	    </rollback>
+
+	</changeSet>
+
+</databaseChangeLog>
