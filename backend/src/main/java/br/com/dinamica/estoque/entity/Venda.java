@@ -37,8 +37,11 @@ public class Venda {
     @Column(name = "quantidade", nullable = false)
     private Integer quantidade;
 
-    @Column(name = "desconto", nullable = false)
+    @Column(name = "desconto")
     private Float desconto;
+
+    @Column(name = "observacoes")
+    private String observacoes;
 
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
