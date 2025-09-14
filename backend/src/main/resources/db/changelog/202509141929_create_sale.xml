@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
+      http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
+
+	<changeSet id="202509141929" author="julierme">
+
+		<createTable tableName="venda">
+
+			<column name="id" type="bigint" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false"/>
+			</column>
+
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_usuario" references="usuario(id)"/>
+            </column>
+
+            <column name="id_tabela_preco_produto" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_tabela_preco_produto" references="tabela_preco_produto(id)"/>
+            </column>
+
+            <column name="quantidade" type="int">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="desconto" type="float"/>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+		</createTable>
+
+	    <rollback>
+	        <dropTable tableName="venda"/>
+	    </rollback>
+
+	</changeSet>
+
+</databaseChangeLog>
