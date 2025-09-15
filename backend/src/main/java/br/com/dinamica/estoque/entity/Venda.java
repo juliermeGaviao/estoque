@@ -40,7 +40,7 @@ public class Venda {
     @Column(name = "desconto")
     private Float desconto;
 
-    @Column(name = "observacoes")
+    @Column(name = "observacoes", length = 1024)
     private String observacoes;
 
     @Column(name = "data_criacao", nullable = false)
