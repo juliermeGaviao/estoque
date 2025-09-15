@@ -7,6 +7,7 @@ import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.entity.Fornecedor;
@@ -14,6 +15,7 @@ import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderService;
 import br.com.dinamica.estoque.util.DateUtil;
 
+@Service
 public class ProviderServiceImpl implements ProviderService {
 
 	private FornecedorRepository repository;

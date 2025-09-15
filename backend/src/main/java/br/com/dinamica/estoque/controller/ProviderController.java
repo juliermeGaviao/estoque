@@ -2,8 +2,6 @@ package br.com.dinamica.estoque.controller;
 
 import java.util.NoSuchElementException;
 
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,43 +17,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
-import br.com.dinamica.estoque.dto.UserListDto;
-import br.com.dinamica.estoque.dto.UserRequestDTO;
-import br.com.dinamica.estoque.service.ProfileService;
-import br.com.dinamica.estoque.service.UserService;
+import br.com.dinamica.estoque.dto.ProviderDto;
+import br.com.dinamica.estoque.service.ProviderService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/provider")
 @Slf4j
-public class UserController {
+public class ProviderController {
 
-	private static final String ENTITY = "Usuário";
-	private static final String ENTITIES = "Usuários";
+	private static final String ENTITY = "Fornecedor";
+	private static final String ENTITIES = "Fornecedores";
 	private static final String NOT_FOUND = ENTITY + " não encontrado: ";
 
-	private ProfileService profileService;
+	private ProviderService service;
 
-	private UserService userService;
-
-	public UserController(ProfileService profileService, UserService userService) {
-		this.profileService = profileService;
-		this.userService = userService;
+	public ProviderController(ProviderService service) {
+		this.service = service;
 	}
 
-	@GetMapping("/profiles")
-	public ResponseEntity<Object> getProfiles() {
+	@GetMapping
+	public ResponseEntity<Object> get(@RequestParam Long id) {
 		try {
-			return ResponseEntity.ok(this.profileService.getProfiles());
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao recuperar lista de perfis.");
-		}
-	}
-
-	@GetMapping("/get")
-	public ResponseEntity<Object> getUser(@RequestParam Long id) {
-		try {
-			return ResponseEntity.ok(this.userService.getUser(id));
+			return ResponseEntity.ok(this.service.get(id));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + id;
 			log.error(mensagem, e);
@@ -65,7 +49,6 @@ public class UserController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) String email,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -75,9 +58,9 @@ public class UserController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<UserListDto> usuarios = this.userService.list(email, pageable);
+			Page<ProviderDto> result = this.service.list(pageable);
 
-			return ResponseEntity.ok(PageResponse.from(usuarios));
+			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao listar " + ENTITIES.toLowerCase() + ".";
 			log.error(mensagem, e);
@@ -86,16 +69,13 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody UserRequestDTO dto) {
+	public ResponseEntity<Object> save(@RequestBody ProviderDto dto) {
 		try {
-			return ResponseEntity.ok(this.userService.save(dto));
+			return ResponseEntity.ok(this.service.save(dto));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
-		} catch (DataIntegrityViolationException | ConstraintViolationException e) {
-			log.error("Existe outro usuário com o e-mail " + dto.getEmail(), e);
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail " + dto.getEmail());
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
 			log.error(mensagem, e);
@@ -103,23 +83,10 @@ public class UserController {
 		}
 	}
 
-	@PostMapping("/password")
-	public ResponseEntity<Object> password(@RequestBody UserRequestDTO dto) {
-		try {
-			return ResponseEntity.ok(this.userService.changePassword(dto));
-		} catch (NoSuchElementException e) {
-			log.error(NOT_FOUND + dto.getId(), e);
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NOT_FOUND + dto.getId());
-		} catch (RuntimeException e) {
-			log.error("Erro ao trocar a senha do usuário.", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao trocar a senha do usuário.");
-		}
-	}
-
 	@DeleteMapping
 	public ResponseEntity<Object> delete(@RequestParam Long id) {
 		try {
-			this.userService.delete(id);
+			this.service.delete(id);
 
 			return ResponseEntity.ok().build();
 		} catch (NoSuchElementException e) {
