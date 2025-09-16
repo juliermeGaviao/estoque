@@ -1,6 +1,6 @@
 <script setup>
 import api from '@/util/api'
-import { formatDate } from '@/util/util'
+import { formatCpfCnpj, formatDate, formatPhone } from '@/util/util'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -20,8 +20,6 @@ const size = ref(20)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
-const email = ref('')
-
 async function load() {
   loading.value = true
 
@@ -39,16 +37,12 @@ async function load() {
       }
     }
 
-    if (email.value) {
-      params.email = email.value
-    }
-
-    const response = await api.get('/user/list', { params: params })
+    const response = await api.get('/provider/list', { params: params })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuários', detail: 'Requisição de lista de usuários terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -74,7 +68,6 @@ function onFilter() {
 }
 
 function onClear() {
-  email.value = null
   load()
 }
 
@@ -120,15 +113,9 @@ const confirmDelete = user => {
   <ConfirmDialog></ConfirmDialog>
   <BlockUI :blocked="loading" fullScreen>
     <Card>
-      <template #title><h3>Lista de Usuários</h3></template>
+      <template #title><h3>Lista de Fornecedores</h3></template>
       <template #content>
         <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
-          <FloatLabel variant="on">
-            <label for="email">E-mail</label>
-            <InputText id="email" v-model="email" autocomplete="off" fluid/>
-          </FloatLabel>
-
-          <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
           <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
         </Form>
 
@@ -137,8 +124,18 @@ const confirmDelete = user => {
           :rowsPerPageOptions="[10, 20, 50, 100]">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="email" header="Email" sortable/>
-          <Column field="perfis" header="Perfis"/>
+          <Column field="razaoSocial" header="Razão Social" sortable/>
+          <Column field="fantasia" header="Nome de Fantasia" sortable/>
+          <Column field="cnpj" header="CNPJ" sortable>
+            <template #body="slotProps">
+              {{ formatCpfCnpj(slotProps.data.cnpj) }}
+            </template>
+          </Column>
+          <Column field="fone" header="Fone">
+            <template #body="slotProps">
+              {{ formatPhone(slotProps.data.fone) }}
+            </template>
+          </Column>
 
           <Column header="Data de Criação" field="dataCriacao" sortable>
             <template #body="slotProps">

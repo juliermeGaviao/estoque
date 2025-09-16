@@ -52,7 +52,7 @@ async function loadProfiles() {
   }
 }
 
-async function load(id) {
+async function loadUser(id) {
   loading.value = true
 
   try {
@@ -141,7 +141,7 @@ function cancel() {
 onMounted(() => {
   loadProfiles()
 
-  load(route.query.id)
+  loadUser(route.query.id)
 })
 </script>
 

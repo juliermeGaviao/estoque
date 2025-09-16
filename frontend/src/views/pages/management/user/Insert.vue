@@ -1,11 +1,11 @@
 <script setup>
+import api from '@/util/api'
+import { sha256Hex } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { z } from 'zod'
-import api from '../../../../util/api'
-import { sha256Hex } from '../../../../util/auth'
 
 const router = useRouter()
 const toast = useToast()

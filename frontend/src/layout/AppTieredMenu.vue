@@ -8,9 +8,15 @@ const menu = ref()
 
 const items = ref([
   {
-    label: 'Home',
-    icon: 'pi pi-home',
-    command: () => { router.push('/') }
+    label: 'Cadastro',
+    icon: 'pi pi-id-card',
+    items: [
+      {
+        label: 'Fornecedor',
+        icon: 'pi pi-building-columns',
+        command: () => { router.push('/register/provider') }
+      }
+    ]
   }
 ])
 
