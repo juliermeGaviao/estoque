@@ -38,3 +38,15 @@ export function formatPhone(value) {
 
     return value
 }
+
+export function formatarCEP(cep) {
+  if (!cep) return ''
+
+  cep = cep.replace(/\D/g, '')
+
+  if (cep.length > 5) {
+    return cep.substring(0, 5) + '-' + cep.substring(5, 8)
+  }
+
+  return cep
+}

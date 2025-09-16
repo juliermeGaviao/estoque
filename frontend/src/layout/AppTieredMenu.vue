@@ -17,6 +17,10 @@ const items = ref([
         command: () => { router.push('/register/provider') }
       }
     ]
+  },
+  {
+    label: 'Indicadores',
+    icon: 'pi pi-chart-bar'
   }
 ])
 

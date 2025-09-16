@@ -1,6 +1,5 @@
 <script setup>
 import api from '@/util/api'
-import { sha256Hex } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -14,28 +13,32 @@ const toast = useToast()
 
 const formRef = ref(null)
 const initialValues = ref({
-  email: '',
-  perfis: [2]
+  razaoSocial: '',
+  fantasia: '',
+  cnpj: '',
+  fone: '',
+  endereco: '',
+  bairro: '',
+  cep: '',
+  cidade: '',
+  uf: ''
 })
 
 const resolverUser = zodResolver(
   z.object({
-    email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
-    perfis: z.array(z.number()).optional()
+    razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
+    fantasia: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
+    cnpj: z.string().min(1, { message: 'CNPJ é obrigatório.' }),
+    fone: z.string().min(1, { message: 'Fone é obrigatório.' }),
+    endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
+    bairro: z.string().min(1, { message: 'Bairro é obrigatório.' }),
+    cep: z.string().min(1, { message: 'CEP é obrigatório.' }),
+    cidade: z.string().min(1, { message: 'Cidade é obrigatório.' }),
+    uf: z.string().min(1, { message: 'UF é obrigatório.' })
   })
 )
 
-const resolverPassword = zodResolver(
-  z.object({
-    senha: z.string().min(1, { message: 'Senha é obrigatória.' }).min(8, { message: 'Senha deve ter no mínimo 8 caracteres.' }),
-    confirmarSenha: z.string().min(1, { message: 'Confirmação de senha é obrigatória.' })
-  }).refine(data => data.senha === data.confirmarSenha, {
-    message: 'As senhas não coincidem.',
-    path: ['confirmarSenha']
-  })
-)
-
-const profiles = ref([])
+const contacts = ref([])
 const loading = ref(false)
 
 async function loadProfiles() {
@@ -44,7 +47,7 @@ async function loadProfiles() {
   try {
     const res = await api.get('/user/profiles')
 
-    profiles.value = res.data
+    contacts.value = res.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
@@ -52,22 +55,36 @@ async function loadProfiles() {
   }
 }
 
-async function loadUser(id) {
+async function load(id) {
   loading.value = true
 
   try {
-    const res = await api.get('/user/get', { params: { id } })
+    const res = await api.get('/provider', { params: { id } })
 
     if (formRef.value) {
       formRef.value.setValues({
-        email: res.data.email,
-        perfis: res.data.perfis.map(p => p.id)
+        razaoSocial: res.data.razaoSocial,
+        fantasia: res.data.fantasia,
+        cnpj: res.data.cnpj,
+        fone: res.data.fone,
+        endereco: res.data.endereco,
+        bairro: res.data.bairro,
+        cep: res.data.cep,
+        cidade: res.data.cidade,
+        uf: res.data.uf
       })
     }
 
     initialValues.value = {
-      email: res.data.email,
-      perfis: res.data.perfis.map(p => p.id)
+      razaoSocial: res.data.razaoSocial,
+      fantasia: res.data.fantasia,
+      cnpj: res.data.cnpj,
+      fone: res.data.fone,
+      endereco: res.data.endereco,
+      bairro: res.data.bairro,
+      cep: res.data.cep,
+      cidade: res.data.cidade,
+      uf: res.data.uf
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
@@ -98,40 +115,16 @@ const save = async ({ valid, values }) => {
   }
 }
 
-const changePassword = async ({ valid, values }) => {
-  if (!valid) return
-
-  loading.value = true
-
-  let params = { ... values }
-
-  params['id'] = parseInt(route.query.id)
-
-  delete params.confirmarSenha
-
-  try {
-    params.senha = await sha256Hex(params.senha)
-
-    const response = await api.post('/user/password', params)
-
-    if (response.status === 200) {
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Senha alterada com sucesso', life: 10000 })
-    }
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de troca de senha terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
-  }
-}
-
-function clearUser(values) {
-  values.email = ''
-  values.perfis = []
-}
-
-function clearPassword(values) {
-  values.senha = ''
-  values.confirmarSenha = ''
+function clear(values) {
+  values.razaoSocial = ''
+  values.fantasia = ''
+  values.cnpj = ''
+  values.fone = ''
+  values.endereco = ''
+  values.bairro = ''
+  values.cep = ''
+  values.cidade = ''
+  values.uf = ''
 }
 
 function cancel() {
@@ -141,60 +134,51 @@ function cancel() {
 onMounted(() => {
   loadProfiles()
 
-  loadUser(route.query.id)
+  load(route.query.id)
 })
 </script>
 
 <template>
   <BlockUI :blocked="loading" fullScreen>
     <Card class="mb-4">
-      <template #title><h3>Editar Usuário</h3></template>
+      <template #title><h3>Editar Fornecedor</h3></template>
 
       <template #content>
-        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" @reset="clearUser" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="email" initialValue="">
+        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" @reset="clear" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="razaoSocial" initialValue="">
             <FloatLabel variant="on" class="flex-1">
-              <InputText id="email" maxlength="255" autocomplete="off" fluid/>
-              <label for="email">E-mail</label>
+              <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
+              <label for="razaoSocial">Razão Social</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField name="perfis" class="flex items-start gap-4">
-            <div classes="label">Perfis:</div>
-            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-              <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
-              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
-            </div>
-          </FormField>
-
-          <FormField class="flex justify-end gap-4">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </FormField>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-6">
-      <template #title><h3>Senha de acesso</h3></template>
-      <template #content>
-        <Form :resolver="resolverPassword" @submit="changePassword" @reset="clearPassword" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="senha" initialValue="">
+          <FormField v-slot="$field" name="fantasia" initialValue="">
             <FloatLabel variant="on" class="flex-1">
-              <Password inputId="senha" toggleMask fluid :feedback="false"/>
-              <label for="senha">Senha</label>
+              <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
+              <label for="fantasia">Nome de Fantasia</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="confirmarSenha" initialValue="">
-            <FloatLabel variant="on" class="flex-1">
-              <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
-              <label for="confirmarSenha">Confirmação da senha</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+          <div class="grid grid-cols-2 gap-4">
+            <FormField v-slot="$field" name="cnpj" initialValue="">
+              <FloatLabel variant="on" class="flex-1">
+                <InputMask id="cnpj" mask="99.999.999/9999-99" autocomplete="off" fluid/>
+                <label for="cnpj">CNPJ</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
 
+            <FormField v-slot="$field" name="fone" initialValue="">
+              <FloatLabel variant="on" class="flex-1">
+                <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+                <label for="fone">Fone</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+
+          </div>
           <FormField class="flex justify-end gap-4">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
