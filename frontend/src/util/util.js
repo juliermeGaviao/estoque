@@ -50,3 +50,7 @@ export function formatarCEP(cep) {
 
   return cep
 }
+
+export function onlyDigits(str) {
+  return str.replace(/[^0-9]/g, '')
+}

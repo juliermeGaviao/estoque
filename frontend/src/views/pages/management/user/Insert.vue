@@ -70,13 +70,6 @@ const save = async ({ valid, values }) => {
   }
 }
 
-function clear(values) {
-  values.email = ''
-  values.senha = ''
-  values.confirmarSenha = ''
-  values.perfis = []
-}
-
 function cancel() {
   router.push('/management/user')
 }
@@ -92,7 +85,7 @@ onMounted(() => {
       <template #title><h3>Inserir Usuário</h3></template>
 
       <template #content>
-        <Form :resolver :initialValues @submit="save" @reset="clear" class="grid flex flex-column gap-4">
+        <Form :resolver :initialValues @submit="save" class="grid flex flex-column gap-4">
           <FormField v-slot="$field" name="email" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>

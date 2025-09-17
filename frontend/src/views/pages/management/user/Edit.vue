@@ -124,16 +124,6 @@ const changePassword = async ({ valid, values }) => {
   }
 }
 
-function clearUser(values) {
-  values.email = ''
-  values.perfis = []
-}
-
-function clearPassword(values) {
-  values.senha = ''
-  values.confirmarSenha = ''
-}
-
 function cancel() {
   router.back()
 }
@@ -151,7 +141,7 @@ onMounted(() => {
       <template #title><h3>Editar Usuário</h3></template>
 
       <template #content>
-        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" @reset="clearUser" class="grid flex flex-column gap-4">
+        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" class="grid flex flex-column gap-4">
           <FormField v-slot="$field" name="email" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>
@@ -178,7 +168,7 @@ onMounted(() => {
     <Card class="mb-6">
       <template #title><h3>Senha de acesso</h3></template>
       <template #content>
-        <Form :resolver="resolverPassword" @submit="changePassword" @reset="clearPassword" class="grid flex flex-column gap-4">
+        <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-4">
           <FormField v-slot="$field" name="senha" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <Password inputId="senha" toggleMask fluid :feedback="false"/>
