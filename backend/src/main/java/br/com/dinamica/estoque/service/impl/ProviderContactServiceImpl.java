@@ -50,8 +50,12 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 	}
 
 	@Override
-	public Page<ProviderContactDto> list(Pageable pageable) {
+	public Page<ProviderContactDto> list(Integer idFornecedor, Pageable pageable) {
         Specification<ContatoFornecedor> specification = (root, query, cb) -> null;
+
+        if (idFornecedor != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fornecedor").get("id"), idFornecedor));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProviderContactDto.class));
 	}

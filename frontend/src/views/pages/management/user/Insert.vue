@@ -82,7 +82,14 @@ onMounted(() => {
 <template>
   <BlockUI :blocked="loading" fullScreen>
     <Card>
-      <template #title><h3>Inserir Usuário</h3></template>
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Inserir Usuário</h3>
+          <div class="flex justify-end items-center">
+            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+          </div>
+        </div>
+      </template>
 
       <template #content>
         <Form :resolver :initialValues @submit="save" class="grid flex flex-column gap-4">
@@ -120,7 +127,6 @@ onMounted(() => {
 
           <FormField class="flex justify-end gap-4">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Cancelar" icon="pi pi-ban" @click="cancel" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </FormField>
 

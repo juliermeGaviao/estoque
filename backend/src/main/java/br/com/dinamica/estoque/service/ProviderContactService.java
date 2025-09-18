@@ -9,7 +9,7 @@ public interface ProviderContactService {
 
 	ProviderContactDto get(Long id);
 
-	Page<ProviderContactDto> list(Pageable pageable);
+	Page<ProviderContactDto> list(Integer idFornecedor, Pageable pageable);
 
 	ProviderContactDto save(ProviderContactDto dto);
 

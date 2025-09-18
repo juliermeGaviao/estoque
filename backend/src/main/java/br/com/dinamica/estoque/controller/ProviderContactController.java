@@ -49,6 +49,7 @@ public class ProviderContactController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
+			@RequestParam(required = false) Integer idFornecedor,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -58,7 +59,7 @@ public class ProviderContactController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ProviderContactDto> result = this.service.list(pageable);
+			Page<ProviderContactDto> result = this.service.list(idFornecedor, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

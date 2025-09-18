@@ -78,7 +78,7 @@ function onClear() {
   load()
 }
 
-function editUser(user) {
+function edit(user) {
   if (user?.id) {
     router.push(`/management/user/edit?id=${user.id}`)
   } else {
@@ -155,12 +155,12 @@ const confirmDelete = user => {
           <Column :bodyStyle="{ textAlign: 'center' }">
             <template #header>
               <div style="width: 100%; display: flex; justify-content: center;">
-                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="editUser(null)" title="Novo Usuário"/>
+                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" title="Novo Usuário"/>
               </div>
             </template>
 
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="editUser(slotProps.data)" title="Editar"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" title="Editar"/>
               <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" title="Remover"/>
             </template>
           </Column>

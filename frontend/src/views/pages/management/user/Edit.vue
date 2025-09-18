@@ -138,7 +138,14 @@ onMounted(() => {
 <template>
   <BlockUI :blocked="loading" fullScreen>
     <Card class="mb-4">
-      <template #title><h3>Editar Usuário</h3></template>
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Editar Usuário</h3>
+          <div class="flex justify-end items-center">
+            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+          </div>
+        </div>
+      </template>
 
       <template #content>
         <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" class="grid flex flex-column gap-4">
@@ -158,15 +165,22 @@ onMounted(() => {
             </div>
           </FormField>
 
-          <FormField class="flex justify-end gap-4">
+          <div class="flex justify-end gap-4">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </FormField>
+          </div>
         </Form>
       </template>
     </Card>
     <Card class="mb-6">
-      <template #title><h3>Senha de acesso</h3></template>
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Senha de acesso</h3>
+          <div class="flex justify-end items-center">
+            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+          </div>
+        </div>
+      </template>
       <template #content>
         <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-4">
           <FormField v-slot="$field" name="senha" initialValue="">
@@ -185,15 +199,12 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField class="flex justify-end gap-4">
+          <div class="flex justify-end gap-4">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </FormField>
+          </div>
         </Form>
       </template>
     </Card>
-    <div class="flex justify-end mt-4">
-      <Button label="Voltar" icon="pi pi-replay" @click="cancel" severity="secondary" raised/>
-    </div>
   </BlockUI>
 </template>
