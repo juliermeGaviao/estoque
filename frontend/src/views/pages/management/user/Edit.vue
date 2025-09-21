@@ -9,16 +9,14 @@ import { z } from 'zod'
 
 const router = useRouter()
 const route = useRoute()
-
 const toast = useToast()
+const profiles = ref([])
+const loading = ref(false)
 
-const formRef = ref(null)
-const initialValues = ref({
-  email: '',
-  perfis: [2]
-})
+const form = ref(null)
+const formValues = ref({ email: '', perfis: [2] })
 
-const resolverUser = zodResolver(
+const formValidator = zodResolver(
   z.object({
     email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
     perfis: z.array(z.number()).optional()
@@ -34,9 +32,6 @@ const resolverPassword = zodResolver(
     path: ['confirmarSenha']
   })
 )
-
-const profiles = ref([])
-const loading = ref(false)
 
 async function loadProfiles() {
   loading.value = true
@@ -58,16 +53,11 @@ async function load(id) {
   try {
     const res = await api.get('/user/get', { params: { id } })
 
-    if (formRef.value) {
-      formRef.value.setValues({
+    if (form.value) {
+      form.value.setValues({
         email: res.data.email,
         perfis: res.data.perfis.map(p => p.id)
       })
-    }
-
-    initialValues.value = {
-      email: res.data.email,
-      perfis: res.data.perfis.map(p => p.id)
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
@@ -82,6 +72,12 @@ const save = async ({ valid, values }) => {
   loading.value = true
 
   let params = { ... values }
+
+  for (let param in params) {
+    if (typeof params[param] === 'string') {
+      params[param] = params[param].trim()
+    }
+  }
 
   params['id'] = parseInt(route.query.id)
 
@@ -124,10 +120,6 @@ const changePassword = async ({ valid, values }) => {
   }
 }
 
-function cancel() {
-  router.back()
-}
-
 onMounted(() => {
   loadProfiles()
 
@@ -142,13 +134,13 @@ onMounted(() => {
         <div class="grid grid-cols-2">
           <h3>Editar Usuário</h3>
           <div class="flex justify-end items-center">
-            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>
 
       <template #content>
-        <Form ref="formRef" :resolver="resolverUser" :initialValues @submit="save" class="grid flex flex-column gap-4">
+        <Form ref="form" :resolver="formValidator" :formValues @submit="save" class="grid flex flex-column gap-4">
           <FormField v-slot="$field" name="email" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>
@@ -177,7 +169,7 @@ onMounted(() => {
         <div class="grid grid-cols-2">
           <h3>Senha de acesso</h3>
           <div class="flex justify-end items-center">
-            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>

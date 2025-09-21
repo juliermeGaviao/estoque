@@ -1,6 +1,5 @@
 <script setup>
 import api from '@/util/api'
-import { formatDate } from '@/util/util'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -86,7 +85,7 @@ function edit(user) {
   }
 }
 
-const confirmDelete = user => {
+const confirmDelete = entity => {
   confirm.require({
     message: 'Deseja remover o usuário?',
     header: "Alerta",
@@ -103,7 +102,7 @@ const confirmDelete = user => {
     },
     accept: async () => {
       try {
-        await api.delete(`/user?id=${user.id}`)
+        await api.delete(`/user?id=${entity.id}`)
 
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário removido com sucesso', life: 10000 })
 
@@ -117,7 +116,7 @@ const confirmDelete = user => {
 </script>
 
 <template>
-  <ConfirmDialog></ConfirmDialog>
+  <ConfirmDialog :closable="false"></ConfirmDialog>
   <BlockUI :blocked="loading" fullScreen>
     <Card>
       <template #title><h3>Lista de Usuários</h3></template>
@@ -140,28 +139,16 @@ const confirmDelete = user => {
           <Column field="email" header="Email" sortable/>
           <Column field="perfis" header="Perfis"/>
 
-          <Column header="Data de Criação" field="dataCriacao" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.dataCriacao) }}
-            </template>
-          </Column>
-
-          <Column header="Data de Alteração" field="dataAlteracao" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.dataAlteracao) }}
-            </template>
-          </Column>
-
           <Column :bodyStyle="{ textAlign: 'center' }">
             <template #header>
               <div style="width: 100%; display: flex; justify-content: center;">
-                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" title="Novo Usuário"/>
+                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Usuário'"/>
               </div>
             </template>
 
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" title="Editar"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" title="Remover"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
             </template>
           </Column>
         </DataTable>

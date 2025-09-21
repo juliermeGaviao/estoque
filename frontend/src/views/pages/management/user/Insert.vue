@@ -55,6 +55,12 @@ const save = async ({ valid, values }) => {
 
   delete params.confirmarSenha
 
+  for (let param in params) {
+    if (typeof params[param] === 'string') {
+      params[param] = params[param].trim()
+    }
+  }
+
   try {
     params.senha = await sha256Hex(params.senha)
     const response = await api.post('/user', params)
@@ -86,7 +92,7 @@ onMounted(() => {
         <div class="grid grid-cols-2">
           <h3>Inserir Usuário</h3>
           <div class="flex justify-end items-center">
-            <Button label="Voltar" icon="pi pi-arrow-left" @click="cancel" severity="secondary" raised style="height: 32px;"/>
+            <Button icon="pi pi-replay" @click="router.push('/management/user')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>

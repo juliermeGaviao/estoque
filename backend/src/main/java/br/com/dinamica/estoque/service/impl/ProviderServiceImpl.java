@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.entity.Fornecedor;
+import br.com.dinamica.estoque.repository.ContatoFornecedorRepository;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -20,10 +21,13 @@ public class ProviderServiceImpl implements ProviderService {
 
 	private FornecedorRepository repository;
 
+	private ContatoFornecedorRepository contatoFornecedorRepository;
+
 	private ModelMapper modelMapper;
 
-	public ProviderServiceImpl(FornecedorRepository repository, ModelMapper modelMapper) {
+	public ProviderServiceImpl(FornecedorRepository repository, ContatoFornecedorRepository contatoFornecedorRepository, ModelMapper modelMapper) {
 		this.repository = repository;
+		this.contatoFornecedorRepository = contatoFornecedorRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ProviderDto, Fornecedor>() {
@@ -73,6 +77,7 @@ public class ProviderServiceImpl implements ProviderService {
 
 	@Override
 	public void delete(Long id) {
+		this.contatoFornecedorRepository.deleteByFornecedor_Id(id);
 		this.repository.deleteById(id);
 	}
 
