@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import br.com.dinamica.estoque.dto.ProviderContactDto;
+import br.com.dinamica.estoque.entity.Usuario;
 
 public interface ProviderContactService {
 
@@ -11,7 +12,7 @@ public interface ProviderContactService {
 
 	Page<ProviderContactDto> list(Integer idFornecedor, Pageable pageable);
 
-	ProviderContactDto save(ProviderContactDto dto);
+	ProviderContactDto save(ProviderContactDto dto, Usuario usuario);
 
 	void delete(Long id);
 

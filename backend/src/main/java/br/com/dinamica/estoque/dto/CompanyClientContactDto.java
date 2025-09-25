@@ -31,8 +31,4 @@ public class CompanyClientContactDto {
 
     private String observacoes;
 
-    private Date dataCriacao;
-
-    private Date dataAlteracao;
-
 }

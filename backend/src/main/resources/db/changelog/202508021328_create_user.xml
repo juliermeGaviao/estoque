@@ -22,6 +22,10 @@
 				<constraints nullable="false"/>
 			</column>
 
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_usuario_usuario" references="usuario(id)"/>
+            </column>
+
             <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -35,6 +39,7 @@
 		<insert tableName="usuario">
 			<column name="email">julierme.gaviao@gmail.com</column>
 			<column name="senha">4dbd936ab6869b4496e58c8dc4ce82a8421fdf0253b25df6c49b5f0d524ca2a3</column>
+			<column name="id_usuario">1</column>
 		</insert>
 
 	    <rollback>

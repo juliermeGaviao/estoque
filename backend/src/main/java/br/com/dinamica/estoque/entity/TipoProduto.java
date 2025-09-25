@@ -33,6 +33,10 @@ public class TipoProduto {
     @Column(name = "nome", nullable = false, length = 255)
     private String nome;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 

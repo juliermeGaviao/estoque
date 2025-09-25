@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.CompanyClientDto;
 import br.com.dinamica.estoque.entity.ClienteEmpresa;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.repository.ClienteEmpresaRepository;
 import br.com.dinamica.estoque.service.CompanyClientService;
@@ -55,7 +56,7 @@ public class CompanyClientServiceImpl implements CompanyClientService {
 	}
 
 	@Override
-	public CompanyClientDto save(CompanyClientDto dto) {
+	public CompanyClientDto save(CompanyClientDto dto, Usuario usuario) {
 		ClienteEmpresa entity;
         Date agora = DateUtil.now();
 
@@ -68,6 +69,8 @@ public class CompanyClientServiceImpl implements CompanyClientService {
 		}
 
 		this.modelMapper.map(dto, entity);
+
+		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
 		entity = this.repository.save(entity);

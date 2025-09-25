@@ -27,12 +27,16 @@ public class UsuarioTabelaPreco {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario", nullable = false)
-    private Usuario usuario;
+    @JoinColumn(name = "id_vendedor", nullable = false)
+    private Usuario vendedor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tabela_preco", nullable = false)
     private TabelaPreco tabela;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;

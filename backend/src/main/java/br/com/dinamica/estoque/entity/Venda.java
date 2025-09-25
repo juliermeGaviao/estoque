@@ -27,8 +27,8 @@ public class Venda {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario", nullable = false)
-    private Usuario usuario;
+    @JoinColumn(name = "id_vendedor", nullable = false)
+    private Usuario vendedor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tabela_preco_produto", nullable = false)
@@ -42,6 +42,10 @@ public class Venda {
 
     @Column(name = "observacoes", length = 1024)
     private String observacoes;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
 
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;

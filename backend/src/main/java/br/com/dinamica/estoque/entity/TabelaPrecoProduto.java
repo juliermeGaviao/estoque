@@ -38,6 +38,10 @@ public class TabelaPrecoProduto {
     @Column(name = "preco", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
     private BigDecimal preco;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 

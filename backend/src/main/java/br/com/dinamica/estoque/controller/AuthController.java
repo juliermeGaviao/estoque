@@ -7,6 +7,7 @@ import java.util.Set;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,9 +57,10 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public void register(@RequestBody @Valid AuthRequest request) {
-        var usuario = new Usuario(null, request.email(), this.encoder.encode(request.senha()), new Date(), new Date(), Set.of());
+    public void register(@RequestBody @Valid AuthRequest request, @AuthenticationPrincipal Usuario usuarioLogado) {
+        var usuario = new Usuario(null, request.email(), this.encoder.encode(request.senha()), usuarioLogado, new Date(), new Date(), Set.of());
 
         this.usuarioRepository.save(usuario);
     }
+
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.entity.Fornecedor;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.ContatoFornecedorRepository;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderService;
@@ -55,7 +56,7 @@ public class ProviderServiceImpl implements ProviderService {
 	}
 
 	@Override
-	public ProviderDto save(ProviderDto dto) {
+	public ProviderDto save(ProviderDto dto, Usuario usuario) {
 		Fornecedor entity;
         Date agora = DateUtil.now();
 
@@ -68,6 +69,8 @@ public class ProviderServiceImpl implements ProviderService {
 		}
 
 		this.modelMapper.map(dto, entity);
+
+		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
 		entity = this.repository.save(entity);

@@ -1,7 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,9 +18,5 @@ public class PriceTableProductDto {
     private PriceTableDto tabela;
 
     private BigDecimal preco;
-
-    private Date dataCriacao;
-
-    private Date dataAlteracao;
 
 }

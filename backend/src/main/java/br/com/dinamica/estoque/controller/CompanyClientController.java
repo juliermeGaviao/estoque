@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.dto.CompanyClientDto;
 import br.com.dinamica.estoque.service.CompanyClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -70,9 +72,9 @@ public class CompanyClientController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody CompanyClientDto dto) {
+	public ResponseEntity<Object> save(@RequestBody CompanyClientDto dto, @AuthenticationPrincipal Usuario usuario) {
 		try {
-			return ResponseEntity.ok(this.service.save(dto));
+			return ResponseEntity.ok(this.service.save(dto, usuario));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
 			log.error(mensagem, e);

@@ -42,6 +42,10 @@ public class Produto {
     @Column(name = "ativo", nullable = false, columnDefinition = "tinyint")
     private Boolean ativo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 

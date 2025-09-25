@@ -73,7 +73,7 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
     }
 
     @Override
-    public UserDto save(UserRequestDTO dto) {
+    public UserDto save(UserRequestDTO dto, Usuario usuarioLogado) {
         Usuario usuario = new Usuario();
         Date agora = DateUtil.now();
 
@@ -93,6 +93,7 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 
         Set<Perfil> perfis = dto.getPerfis().stream().map(this.perfilRepository::findById).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
 
+        usuario.setCadastrante(usuarioLogado);
         usuario.setPerfis(perfis);
 
         usuario = this.usuarioRepository.saveAndFlush(usuario);

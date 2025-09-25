@@ -39,6 +39,10 @@ public class ContatoFornecedor {
     @Column(name = "celular", nullable = false, length = 11, columnDefinition = "char")
     private String celular;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 

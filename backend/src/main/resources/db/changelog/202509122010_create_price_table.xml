@@ -18,6 +18,10 @@
 				<constraints nullable="false"/>
 			</column>
 
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_tabela_preco_usuario" references="usuario(id)"/>
+            </column>
+
             <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>

@@ -1,7 +1,5 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,9 +20,5 @@ public class SaleDto {
     private Float desconto;
 
     private String observacoes;
-
-    private Date dataCriacao;
-
-    private Date dataAlteracao;
 
 }

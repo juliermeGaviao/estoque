@@ -14,12 +14,16 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-            <column name="id_usuario" type="bigint">
+            <column name="id_vendedor" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_usuario_tabela_usuario" references="usuario(id)"/>
             </column>
 
             <column name="id_tabela_preco" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_usuario_tabela_tabela" references="tabela_preco(id)"/>
+            </column>
+
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_usuario_tabela_preco_usuario" references="usuario(id)"/>
             </column>
 
             <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">

@@ -11,7 +11,7 @@
 		<createTable tableName="usuario_perfil">
 
             <column name="id_usuario" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_usuario" references="usuario(id)"/>
+                <constraints nullable="false" foreignKeyName="fk_usuario_perfil_usuario" references="usuario(id)"/>
             </column>
 
             <column name="id_perfil" type="bigint">

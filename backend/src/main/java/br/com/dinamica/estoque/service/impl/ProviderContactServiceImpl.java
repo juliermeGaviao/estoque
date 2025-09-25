@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.ProviderContactDto;
 import br.com.dinamica.estoque.entity.ContatoFornecedor;
 import br.com.dinamica.estoque.entity.Fornecedor;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.ContatoFornecedorRepository;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderContactService;
@@ -61,7 +62,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 	}
 
 	@Override
-	public ProviderContactDto save(ProviderContactDto dto) {
+	public ProviderContactDto save(ProviderContactDto dto, Usuario usuario) {
 		ContatoFornecedor entity;
         Date agora = DateUtil.now();
 
@@ -78,6 +79,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 		Fornecedor fornecedor = this.fornecedorRepository.findById(dto.getFornecedor().getId()).orElseThrow();
 		
 		entity.setFornecedor(fornecedor);
+		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
 		entity = this.repository.save(entity);
