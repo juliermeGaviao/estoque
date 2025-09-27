@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import java.util.Date;
 
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,8 +11,8 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.CompanyClientDto;
 import br.com.dinamica.estoque.entity.ClienteEmpresa;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.repository.ClienteEmpresaRepository;
+import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.service.CompanyClientService;
 import br.com.dinamica.estoque.util.DateUtil;
 
@@ -30,15 +29,6 @@ public class CompanyClientServiceImpl implements CompanyClientService {
 		this.repository = repository;
 		this.contatoClienteEmpresaRepository = contatoClienteEmpresaRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<CompanyClientDto, ClienteEmpresa>() {
-            @Override
-            protected void configure() {
-                skip(destination.getId());
-                skip(destination.getDataCriacao());
-                skip(destination.getDataAlteracao());
-            }
-        });
 	}
 
 	@Override

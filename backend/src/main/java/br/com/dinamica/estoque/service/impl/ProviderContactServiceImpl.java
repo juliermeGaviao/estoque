@@ -35,10 +35,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 		this.modelMapper.addMappings(new PropertyMap<ProviderContactDto, ContatoFornecedor>() {
             @Override
             protected void configure() {
-                skip(destination.getId());
                 skip(destination.getFornecedor());
-                skip(destination.getDataCriacao());
-                skip(destination.getDataAlteracao());
             }
         });
 	}

@@ -33,6 +33,14 @@ const router = createRouter({
                 {
                     path: '/register/provider/edit',
                     component: () => import('@/views/pages/register/provider/Edit.vue')
+                },
+                {
+                    path: '/register/company',
+                    component: () => import('@/views/pages/register/company/List.vue')
+                },
+                {
+                    path: '/register/company/edit',
+                    component: () => import('@/views/pages/register/company/Edit.vue')
                 }
             ]
         },

@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import java.util.Date;
 
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,15 +29,6 @@ public class ProviderServiceImpl implements ProviderService {
 		this.repository = repository;
 		this.contatoFornecedorRepository = contatoFornecedorRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<ProviderDto, Fornecedor>() {
-            @Override
-            protected void configure() {
-                skip(destination.getId());
-                skip(destination.getDataCriacao());
-                skip(destination.getDataAlteracao());
-            }
-        });
 	}
 
 	@Override

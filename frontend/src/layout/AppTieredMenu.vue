@@ -15,6 +15,11 @@ const items = ref([
         label: 'Fornecedor',
         icon: 'pi pi-building-columns',
         command: () => { router.push('/register/provider') }
+      },
+      {
+        label: 'Cliente Empresa',
+        icon: 'pi pi-building',
+        command: () => { router.push('/register/company') }
       }
     ]
   },
