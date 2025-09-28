@@ -47,12 +47,6 @@ public class ClientePessoa {
     @Column(name = "uf", length = 2, columnDefinition = "char")
     private String uf;
 
-    @Column(name = "data_aniversario", columnDefinition = "date")
-    private Date dataAniversario;
-
-    @Column(name = "observacoes", length = 1024)
-    private String observacoes;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;

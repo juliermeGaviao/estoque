@@ -36,6 +36,12 @@ public class ContatoClientePessoa {
     @Column(name = "email", length = 100)
     private String email;
 
+    @Column(name = "data_aniversario", columnDefinition = "date")
+    private Date dataAniversario;
+
+    @Column(name = "observacoes", length = 1024)
+    private String observacoes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;

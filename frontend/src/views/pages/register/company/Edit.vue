@@ -43,7 +43,7 @@ const sortField = ref(null)
 const sortOrder = ref(null)
 
 const contactForm = ref(null)
-const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: null, observacoes: '' })
+const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: '', observacoes: '' })
 
 const contactFormValidator = zodResolver(
   z.object({
