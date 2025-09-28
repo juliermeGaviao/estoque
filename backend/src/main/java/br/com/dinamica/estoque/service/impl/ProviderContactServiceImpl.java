@@ -32,7 +32,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 		this.fornecedorRepository = fornecedorRepository;
 		this.modelMapper = modelMapper;
 
-		this.modelMapper.addMappings(new PropertyMap<ProviderContactDto, ContatoFornecedor>() {
+		this.modelMapper.addMappings(new PropertyMap<ContatoFornecedor, ProviderContactDto>() {
             @Override
             protected void configure() {
                 skip(destination.getFornecedor());

@@ -32,7 +32,7 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 		this.clienteEmpresaRepository = clienteEmpresaRepository;
 		this.modelMapper = modelMapper;
 
-		this.modelMapper.addMappings(new PropertyMap<CompanyClientContactDto, ContatoClienteEmpresa>() {
+		this.modelMapper.addMappings(new PropertyMap<ContatoClienteEmpresa, CompanyClientContactDto>() {
             @Override
             protected void configure() {
                 skip(destination.getClienteEmpresa());
