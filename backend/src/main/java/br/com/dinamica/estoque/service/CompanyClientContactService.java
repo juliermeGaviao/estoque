@@ -10,7 +10,7 @@ public interface CompanyClientContactService {
 
 	CompanyClientContactDto get(Long id);
 
-	Page<CompanyClientContactDto> list(Pageable pageable);
+	Page<CompanyClientContactDto> list(Long idEmpresa, Pageable pageable);
 
 	CompanyClientContactDto save(CompanyClientContactDto dto, Usuario usuario);
 

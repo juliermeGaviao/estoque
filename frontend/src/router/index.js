@@ -41,6 +41,14 @@ const router = createRouter({
                 {
                     path: '/register/company/edit',
                     component: () => import('@/views/pages/register/company/Edit.vue')
+                },
+                {
+                    path: '/register/person',
+                    component: () => import('@/views/pages/register/person/List.vue')
+                },
+                {
+                    path: '/register/person/edit',
+                    component: () => import('@/views/pages/register/person/Edit.vue')
                 }
             ]
         },

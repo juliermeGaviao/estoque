@@ -16,20 +16,19 @@ const states = ref([])
 const loading = ref(false)
 const confirm = useConfirm()
 
-const companyForm = ref(null)
-const companyFormValues = ref({ razaoSocial: '', fantasia: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const personForm = ref(null)
+const personFormValues = ref({ nome: '', fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
-const companyFormValidator = zodResolver(
+const personFormValidator = zodResolver(
   z.object({
-    razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
-    fantasia: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
-    cnpj: z.string().length(18, { message: 'CNPJ é obrigatório.' }),
-    fone: z.string().length(15, { message: 'Fone é obrigatório.' }),
-    endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
-    bairro: z.string().min(1, { message: 'Bairro é obrigatório.' }),
-    cep: z.string().length(9, { message: 'CEP é obrigatório.' }),
-    cidade: z.string().min(1, { message: 'Cidade é obrigatório.' }),
-    uf: z.string().length(2, { message: 'UF é obrigatório.' })
+    nome: z.string().min(1, { message: 'Nome é obrigatório.' }),
+    fone: z.string().optional(),
+    dataAniversario: z.date().optional(),
+    endereco: z.string().optional(),
+    bairro: z.string().optional(),
+    cep: z.string().optional(),
+    cidade: z.string().optional(),
+    uf: z.string().optional()
   })
 )
 
@@ -43,17 +42,12 @@ const sortField = ref(null)
 const sortOrder = ref(null)
 
 const contactForm = ref(null)
-const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: '', observacoes: '' })
+const contactFormValues = ref({ whatsapp: '', email: '', observacoes: '' })
 
 const contactFormValidator = zodResolver(
   z.object({
-    nome: z.string().min(1, { message: 'Nome do Contato é obrigatório.' }),
-    cargo: z.string().min(1, { message: 'Cargo é obrigatório.' }),
-    fone: z.string().optional(),
-    ramal: z.string().optional(),
-    celular: z.string().optional(),
-    email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
-    dataAniversario: z.date().optional(),
+    whatsapp: z.string().min(15, { message: 'Whatsapp é obrigatório.' }),
+    email: z.string().optional().refine(val => val.trim() === '' || z.string().email().safeParse(val).success, { message: 'E-mail inválido ou vazio.' }),
     observacoes: z.string().optional()
   })
 )
@@ -65,14 +59,13 @@ async function load() {
   loading.value = true
 
   try {
-    const res = await api.get('/company-client', { params: { id: id.value } })
+    const res = await api.get('/person-client', { params: { id: id.value } })
 
-    if (companyForm.value) {
-      companyForm.value.setValues({
-        razaoSocial: res.data.razaoSocial,
-        fantasia: res.data.fantasia,
-        cnpj: res.data.cnpj,
+    if (personForm.value) {
+      personForm.value.setValues({
+        nome: res.data.nome,
         fone: res.data.fone,
+        dataAniversario: new Date(res.data.dataAniversario),
         endereco: res.data.endereco,
         bairro: res.data.bairro,
         cep: res.data.cep,
@@ -81,7 +74,7 @@ async function load() {
       })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresa Cliente', detail: 'Requisição de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pessoa Cliente', detail: 'Requisição de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -94,7 +87,7 @@ async function loadContacts() {
 
   try {
     let params = {
-      idEmpresa: id.value,
+      idPessoa: id.value,
       page: page.value,
       size: size.value
     }
@@ -107,12 +100,12 @@ async function loadContacts() {
       }
     }
 
-    const response = await api.get('/company-client-contact/list', { params: params })
+    const response = await api.get('/person-client-contact/list', { params: params })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Empresa Cliente', detail: 'Requisição de lista de contatos da empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Pessoa Cliente', detail: 'Requisição de lista de contatos da pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -125,7 +118,7 @@ const save = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  for (let field of ['cnpj', 'fone', 'cep']) {
+  for (let field of ['fone']) {
     params[field] = onlyDigits(params[field])
   }
 
@@ -138,15 +131,15 @@ const save = async ({ valid, values }) => {
   params['id'] = parseInt(id.value)
 
   try {
-    const response = await api.post('/company-client', params)
+    const response = await api.post('/person-client', params)
 
     if (response.status === 200) {
       id.value = response.data.id
 
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Empresa Cliente atualizada com sucesso', life: 10000 })
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Pessoa Cliente atualizada com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Pessoa Cliente', detail: 'Requisição de alteração de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -173,10 +166,7 @@ function edit(contact) {
 
       contactForm.value.setValues({
         nome: contact.nome,
-        cargo: contact.cargo,
-        fone: contact.fone,
-        ramal: contact.ramal,
-        celular: contact.celular,
+        whatsapp: contact.whatsapp,
         email: contact.email,
         dataAniversario: new Date(contact.dataAniversario),
         observacoes: contact.observacoes
@@ -194,13 +184,13 @@ const saveContact = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['clienteEmpresa'] = { "id": id.value }
+  params['clientePessoa'] = { "id": id.value }
 
   if (idContact) {
     params['id'] = idContact
   }
 
-  for (let field of ['fone', 'celular']) {
+  for (let field of ['whatsapp']) {
     params[field] = onlyDigits(params[field])
   }
 
@@ -211,13 +201,13 @@ const saveContact = async ({ valid, values }) => {
   }
 
   try {
-    const response = await api.post('/company-client-contact', params)
+    const response = await api.post('/person-client-contact', params)
 
     if (response.status === 200) {
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Empresa Cliente atualizado com sucesso', life: 10000 })
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Pessoa Cliente atualizado com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Pessoa Cliente', detail: 'Requisição de alteração de pessoa cliente de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     visible.value = false
     loading.value = false
@@ -244,11 +234,11 @@ const confirmDelete = entity => {
       loading.value = true
 
       try {
-        await api.delete(`/company-client-contact?id=${entity.id}`)
+        await api.delete(`/person-client-contact?id=${entity.id}`)
 
-        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Empresa Cliente removido com sucesso', life: 10000 })
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Pessoa Cliente removido com sucesso', life: 10000 })
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Empresa Cliente', detail: 'Requisição de remoção de contato de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+        toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Pessoa Cliente', detail: 'Requisição de remoção de contato de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
       } finally {
         loading.value = false
         loadContacts()
@@ -272,47 +262,45 @@ onMounted(() => {
     <Card class="mb-4">
       <template #title>
         <div class="grid grid-cols-2">
-          <h3>{{ id ? 'Editar' : 'Inserir' }} Empresa Cliente</h3>
+          <h3>{{ id ? 'Editar' : 'Inserir' }} Pessoa Cliente</h3>
           <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+            <Button icon="pi pi-replay" @click="router.push('/register/person')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>
 
       <template #content>
-        <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="razaoSocial">
-            <FloatLabel variant="on">
-              <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
-              <label for="razaoSocial">Razão Social</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+        <Form ref="personForm" :resolver="personFormValidator" :initialValues="personFormValues" @submit="save" class="grid flex flex-column gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-10">
+              <FormField v-slot="$field" name="nome">
+                <FloatLabel variant="on">
+                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                  <label for="nome">Nome</label>
+                </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
 
-          <FormField v-slot="$field" name="fantasia">
-            <FloatLabel variant="on">
-              <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
-              <label for="fantasia">Nome de Fantasia</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+            <div class="col-span-1">
+              <FormField v-slot="$field" name="fone">
+                <FloatLabel variant="on">
+                  <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+                  <label for="fone">Fone</label>
+                </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <FormField v-slot="$field" name="cnpj">
-              <FloatLabel variant="on">
-                <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
-                <label for="cnpj">CNPJ</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
-
-            <FormField v-slot="$field" name="fone">
-              <FloatLabel variant="on">
-                <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
-                <label for="fone">Fone</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
+            <div class="col-span-1">
+              <FormField v-slot="$field" name="dataAniversario" initialValue="">
+                <FloatLabel variant="on" class="flex-1">
+                  <DatePicker dateFormat="dd/mm/yy" fluid/>
+                  <label for="dataAniversario">Data de Aniversário</label>
+                </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
           </div>
 
           <FormField v-slot="$field" name="endereco">
@@ -377,9 +365,9 @@ onMounted(() => {
     <Card>
       <template #title>
         <div class="grid grid-cols-2">
-          <h3>Lista de Contatos da Empresa Cliente</h3>
+          <h3>Lista de Contatos da Pessoa Cliente</h3>
           <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+            <Button icon="pi pi-replay" @click="router.push('/register/person')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>
@@ -389,13 +377,12 @@ onMounted(() => {
           :rowsPerPageOptions="[10, 20, 50, 100]">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
-          <Column field="cargo" header="Cargo" sortable/>
-          <Column field="celular" header="Celular">
+          <Column field="whatsapp" header="Whatsapp">
             <template #body="slotProps">
-              {{ formatPhone(slotProps.data.celular) }}
+              {{ formatPhone(slotProps.data.whatsapp) }}
             </template>
           </Column>
+          <Column field="email" header="E-mail" sortable/>
 
           <Column :bodyStyle="{ textAlign: 'center' }">
             <template #header>
@@ -414,68 +401,22 @@ onMounted(() => {
     </Card>
     <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
       <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-4">
-        <FormField v-slot="$field" name="nome" class="mt-1">
-          <FloatLabel variant="on">
-            <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
-            <label for="nome">Nome</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
-
-        <FormField v-slot="$field" name="cargo">
-          <FloatLabel variant="on">
-            <InputText id="cargo" maxlength="255" autocomplete="off" fluid/>
-            <label for="cargo">Cargo</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
-
-        <div class="grid grid-cols-3 gap-4">
-          <FormField v-slot="$field" name="fone">
+        <div class="grid grid-cols-2 gap-4 mt-1">
+          <FormField v-slot="$field" name="whatsapp">
             <FloatLabel variant="on">
-              <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
-              <label for="fone">Fone</label>
+              <InputMask id="whatsapp" mask="(99) 99999-9999" autocomplete="off" fluid/>
+              <label for="whatsapp">Whatsapp</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="ramal">
-            <FloatLabel variant="on">
-              <InputText id="ramal" maxlength="20" autocomplete="off" fluid/>
-              <label for="ramal">Ramal</label>
+          <FormField v-slot="$field" name="email" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <InputText id="email" maxlength="100" autocomplete="off" fluid/>
+              <label for="email">E-mail</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
-
-          <FormField v-slot="$field" name="celular">
-            <FloatLabel variant="on">
-              <InputMask id="celular" mask="(99) 99999-9999" autocomplete="off" fluid/>
-              <label for="celular">Celular</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-        </div>
-
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-8">
-            <FormField v-slot="$field" name="email" initialValue="">
-              <FloatLabel variant="on" class="flex-1">
-                <InputText id="email" maxlength="100" autocomplete="off" fluid/>
-                <label for="email">E-mail</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
-          </div>
-
-          <div class="col-span-4">
-            <FormField v-slot="$field" name="dataAniversario" initialValue="">
-              <FloatLabel variant="on" class="flex-1">
-                <DatePicker dateFormat="dd/mm/yy" fluid/>
-                <label for="dataAniversario">Data de Aniversário</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
-          </div>
         </div>
 
         <FormField v-slot="$field" name="observacoes" initialValue="">

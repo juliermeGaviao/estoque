@@ -38,6 +38,13 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
                 skip(destination.getClientePessoa());
             }
         });
+
+		this.modelMapper.addMappings(new PropertyMap<PersonClientContactDto, ContatoClientePessoa>() {
+            @Override
+            protected void configure() {
+                skip(destination.getClientePessoa());
+            }
+        });
 	}
 
 	@Override
@@ -48,8 +55,12 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 	}
 
 	@Override
-	public Page<PersonClientContactDto> list(Pageable pageable) {
+	public Page<PersonClientContactDto> list(Long idPessoa, Pageable pageable) {
         Specification<ContatoClientePessoa> specification = (root, query, cb) -> null;
+
+        if (idPessoa != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("clientePessoa").get("id"), idPessoa));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PersonClientContactDto.class));
 	}

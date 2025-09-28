@@ -38,6 +38,13 @@ public class ProviderContactServiceImpl implements ProviderContactService {
                 skip(destination.getFornecedor());
             }
         });
+
+		this.modelMapper.addMappings(new PropertyMap<ProviderContactDto, ContatoFornecedor>() {
+            @Override
+            protected void configure() {
+                skip(destination.getFornecedor());
+            }
+        });
 	}
 
 	@Override
@@ -48,7 +55,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 	}
 
 	@Override
-	public Page<ProviderContactDto> list(Integer idFornecedor, Pageable pageable) {
+	public Page<ProviderContactDto> list(Long idFornecedor, Pageable pageable) {
         Specification<ContatoFornecedor> specification = (root, query, cb) -> null;
 
         if (idFornecedor != null) {

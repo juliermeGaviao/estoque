@@ -20,6 +20,11 @@ const items = ref([
         label: 'Cliente Empresa',
         icon: 'pi pi-building',
         command: () => { router.push('/register/company') }
+      },
+      {
+        label: 'Cliente Pessoa',
+        icon: 'pi pi-users',
+        command: () => { router.push('/register/person') }
       }
     ]
   },

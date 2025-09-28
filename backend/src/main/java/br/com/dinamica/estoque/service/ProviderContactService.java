@@ -10,7 +10,7 @@ public interface ProviderContactService {
 
 	ProviderContactDto get(Long id);
 
-	Page<ProviderContactDto> list(Integer idFornecedor, Pageable pageable);
+	Page<ProviderContactDto> list(Long idFornecedor, Pageable pageable);
 
 	ProviderContactDto save(ProviderContactDto dto, Usuario usuario);
 

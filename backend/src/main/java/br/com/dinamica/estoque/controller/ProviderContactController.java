@@ -51,7 +51,7 @@ public class ProviderContactController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) Integer idFornecedor,
+			@RequestParam(required = false) Long idFornecedor,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {

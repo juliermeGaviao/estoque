@@ -32,6 +32,9 @@ public class ClientePessoa {
     @Column(name = "fone", length = 11, columnDefinition = "char")
     private String fone;
 
+    @Column(name = "data_aniversario", columnDefinition = "date")
+    private Date dataAniversario;
+
     @Column(name = "endereco", length = 255)
     private String endereco;
 

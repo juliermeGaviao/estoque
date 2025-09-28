@@ -38,6 +38,13 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
                 skip(destination.getClienteEmpresa());
             }
         });
+
+		this.modelMapper.addMappings(new PropertyMap<CompanyClientContactDto, ContatoClienteEmpresa>() {
+            @Override
+            protected void configure() {
+                skip(destination.getClienteEmpresa());
+            }
+        });
 	}
 
 	@Override
@@ -48,8 +55,12 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 	}
 
 	@Override
-	public Page<CompanyClientContactDto> list(Pageable pageable) {
+	public Page<CompanyClientContactDto> list(Long idEmpresa, Pageable pageable) {
         Specification<ContatoClienteEmpresa> specification = (root, query, cb) -> null;
+
+        if (idEmpresa != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("clienteEmpresa").get("id"), idEmpresa));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, CompanyClientContactDto.class));
 	}

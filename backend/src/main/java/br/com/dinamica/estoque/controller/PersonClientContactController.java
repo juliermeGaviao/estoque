@@ -51,7 +51,7 @@ public class PersonClientContactController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) Integer idFornecedor,
+			@RequestParam(required = false) Long idPessoa,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -61,7 +61,7 @@ public class PersonClientContactController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<PersonClientContactDto> result = this.service.list(pageable);
+			Page<PersonClientContactDto> result = this.service.list(idPessoa, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
@@ -74,7 +74,8 @@ public class PersonClientContactController {
 	@PostMapping
 	public ResponseEntity<Object> save(@RequestBody PersonClientContactDto dto, @AuthenticationPrincipal Usuario usuario) {
 		try {
-			return ResponseEntity.ok(this.service.save(dto, usuario));
+			PersonClientContactDto result = this.service.save(dto, usuario);
+			return ResponseEntity.ok(result);
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
 			log.error(mensagem, e);

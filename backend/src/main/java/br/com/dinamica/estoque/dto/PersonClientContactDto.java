@@ -1,7 +1,5 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,8 +16,6 @@ public class PersonClientContactDto {
     private String whatsapp;
 
     private String email;
-
-    private Date dataAniversario;
 
     private String observacoes;
 
