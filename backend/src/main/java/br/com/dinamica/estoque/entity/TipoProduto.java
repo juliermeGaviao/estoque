@@ -26,10 +26,6 @@ public class TipoProduto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tipo_produto")
-    private TipoProduto pai;
-
     @Column(name = "nome", nullable = false, length = 255)
     private String nome;
 

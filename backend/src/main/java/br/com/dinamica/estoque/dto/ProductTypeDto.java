@@ -11,8 +11,6 @@ public class ProductTypeDto {
 
     private Long id;
 
-    private ProductTypeDto pai;
-
     private String nome;
 
 }

@@ -25,6 +25,11 @@ const items = ref([
         label: 'Cliente Pessoa',
         icon: 'pi pi-users',
         command: () => { router.push('/register/person') }
+      },
+      {
+        label: 'Produto',
+        icon: 'pi pi-box',
+        command: () => { router.push('/register/person') }
       }
     ]
   },

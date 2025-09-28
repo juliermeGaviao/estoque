@@ -14,10 +14,6 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-            <column name="id_tipo_produto" type="bigint">
-                <constraints foreignKeyName="fk_tipo_produto" references="tipo_produto(id)"/>
-            </column>
-
 			<column name="nome" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
