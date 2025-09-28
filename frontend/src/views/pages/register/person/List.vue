@@ -71,9 +71,9 @@ function onClear() {
   load()
 }
 
-function edit(user) {
-  if (user?.id) {
-    router.push(`/register/person/edit?id=${user.id}`)
+function edit(entity) {
+  if (entity?.id) {
+    router.push(`/register/person/edit?id=${entity.id}`)
   } else {
     router.push('/register/person/edit')
   }

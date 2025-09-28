@@ -1,6 +1,5 @@
 <script setup>
 import api from '@/util/api'
-import { formatCpfCnpj, formatPhone } from '@/util/util'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -37,12 +36,12 @@ async function load() {
       }
     }
 
-    const response = await api.get('/provider/list', { params: params })
+    const response = await api.get('/product-type/list', { params: params })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produtos', detail: 'Requisição de lista de tipos de produtos terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -73,15 +72,15 @@ function onClear() {
 
 function edit(entity) {
   if (entity?.id) {
-    router.push(`/register/provider/edit?id=${entity.id}`)
+    router.push(`/register/product-type/edit?id=${entity.id}`)
   } else {
-    router.push('/register/provider/edit')
+    router.push('/register/product-type/edit')
   }
 }
 
 const confirmDelete = entity => {
   confirm.require({
-    message: 'Deseja remover o usuário?',
+    message: 'Deseja remover o tipo de produto?',
     header: "Alerta",
     icon: 'pi pi-info-circle',
     rejectProps: {
@@ -96,13 +95,13 @@ const confirmDelete = entity => {
     },
     accept: async () => {
       try {
-        await api.delete(`/provider?id=${entity.id}`)
+        await api.delete(`/product-type?id=${entity.id}`)
 
-        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Usuário removido com sucesso', life: 10000 })
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Tipo de Produto removida com sucesso', life: 10000 })
 
         load()
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Falha de Remoção de Usuário', detail: 'Requisição de remoção de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+        toast.add({ severity: 'error', summary: 'Falha de Remoção de Tipo de Produto', detail: 'Requisição de remoção de tipo de produto terminou com o erro: ' + error.response.data, life: 10000 })
       }
     }
   })
@@ -113,7 +112,7 @@ const confirmDelete = entity => {
   <ConfirmDialog :closable="false"></ConfirmDialog>
   <BlockUI :blocked="loading" fullScreen>
     <Card>
-      <template #title><h3>Lista de Fornecedores</h3></template>
+      <template #title><h3>Lista de Tipos de Produtos</h3></template>
       <template #content>
         <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
           <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
@@ -124,23 +123,12 @@ const confirmDelete = entity => {
           :rowsPerPageOptions="[10, 20, 50, 100]">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="razaoSocial" header="Razão Social" sortable/>
-          <Column field="fantasia" header="Nome de Fantasia" sortable/>
-          <Column field="cnpj" header="CNPJ" sortable>
-            <template #body="slotProps">
-              {{ formatCpfCnpj(slotProps.data.cnpj) }}
-            </template>
-          </Column>
-          <Column field="fone" header="Fone">
-            <template #body="slotProps">
-              {{ formatPhone(slotProps.data.fone) }}
-            </template>
-          </Column>
+          <Column field="nome" header="Nome" sortable/>
 
           <Column :bodyStyle="{ textAlign: 'center' }">
             <template #header>
               <div style="width: 100%; display: flex; justify-content: center;">
-                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Fornecedor'"/>
+                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Tipo de Produto'"/>
               </div>
             </template>
 

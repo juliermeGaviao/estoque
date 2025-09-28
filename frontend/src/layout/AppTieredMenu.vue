@@ -29,7 +29,7 @@ const items = ref([
       {
         label: 'Tipo de Produto',
         icon: 'pi pi-tags',
-        command: () => { router.push('/register/person') }
+        command: () => { router.push('/register/product-type') }
       },
       {
         label: 'Produto',

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.ProductTypeDto;
 import br.com.dinamica.estoque.entity.TipoProduto;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.repository.TipoProdutoRepository;
 import br.com.dinamica.estoque.service.ProductTypeService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -20,10 +21,13 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 
 	private TipoProdutoRepository repository;
 
+	private ProdutoRepository produtoRepository;
+
 	private ModelMapper modelMapper;
 
-	public ProductTypeServiceImpl(TipoProdutoRepository repository, ModelMapper modelMapper) {
+	public ProductTypeServiceImpl(TipoProdutoRepository repository, ProdutoRepository produtoRepository, ModelMapper modelMapper) {
 		this.repository = repository;
+		this.produtoRepository = produtoRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -66,6 +70,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 
 	@Override
 	public void delete(Long id) {
+		this.produtoRepository.deleteByTipoProduto_Id(id);
 		this.repository.deleteById(id);
 	}
 
