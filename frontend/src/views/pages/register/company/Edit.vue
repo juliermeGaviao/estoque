@@ -43,7 +43,7 @@ const sortField = ref(null)
 const sortOrder = ref(null)
 
 const contactForm = ref(null)
-const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: '', observacoes: '' })
+const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: null, observacoes: '' })
 
 const contactFormValidator = zodResolver(
   z.object({
@@ -178,7 +178,7 @@ function edit(contact) {
         ramal: contact.ramal,
         celular: contact.celular,
         email: contact.email,
-        dataAniversario: contact.dataAniversario,
+        dataAniversario: new Date(contact.dataAniversario),
         observacoes: contact.observacoes
       })
     } else {
@@ -199,7 +199,7 @@ const saveContact = async ({ valid, values }) => {
   if (idContact) {
     params['id'] = idContact
   }
-console.log(params)
+
   for (let field of ['fone', 'celular']) {
     params[field] = onlyDigits(params[field])
   }
