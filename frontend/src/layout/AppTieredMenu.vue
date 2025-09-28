@@ -27,6 +27,11 @@ const items = ref([
         command: () => { router.push('/register/person') }
       },
       {
+        label: 'Tipo de Produto',
+        icon: 'pi pi-tags',
+        command: () => { router.push('/register/person') }
+      },
+      {
         label: 'Produto',
         icon: 'pi pi-box',
         command: () => { router.push('/register/person') }
