@@ -208,36 +208,36 @@ function limpar() {
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
           </FormField>
-
-          <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-            :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-            :rowsPerPageOptions="[10, 20, 50, 100]">
-
-            <Column field="id" header="Id" sortable/>
-            <Column field="nome" header="Nome" sortable/>
-            <Column field="referencia" header="Referência" sortable/>
-            <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
-            <Column field="peso" header="Peso (em gramas)" sortable/>
-            <Column field="ativo" header="Ativo" sortable>
-              <template #body="slotProps">
-                {{ slotProps.data.ativo ? 'Sim' : 'Não' }}
-              </template>
-            </Column>
-
-            <Column :bodyStyle="{ textAlign: 'center' }">
-              <template #header>
-                <div style="width: 100%; display: flex; justify-content: center;">
-                  <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Tipo de Produto'"/>
-                </div>
-              </template>
-
-              <template #body="slotProps">
-                <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-                <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
-              </template>
-            </Column>
-          </DataTable>
         </Form>
+
+        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+          :rowsPerPageOptions="[10, 20, 50, 100]">
+
+          <Column field="id" header="Id" sortable/>
+          <Column field="nome" header="Nome" sortable/>
+          <Column field="referencia" header="Referência" sortable/>
+          <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
+          <Column field="peso" header="Peso (em gramas)" sortable/>
+          <Column field="ativo" header="Ativo" sortable>
+            <template #body="slotProps">
+              {{ slotProps.data.ativo ? 'Sim' : 'Não' }}
+            </template>
+          </Column>
+
+          <Column :bodyStyle="{ textAlign: 'center' }">
+            <template #header>
+              <div style="width: 100%; display: flex; justify-content: center;">
+                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Tipo de Produto'"/>
+              </div>
+            </template>
+
+            <template #body="slotProps">
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+            </template>
+          </Column>
+        </DataTable>
       </template>
     </Card>
   </BlockUI>
