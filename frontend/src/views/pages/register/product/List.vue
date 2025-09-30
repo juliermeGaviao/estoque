@@ -121,10 +121,9 @@ async function loadProductTypes() {
   }
 }
 
-const resetValues = { nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null }
 const productForm = ref(null)
-const productFormValues = ref({ ... resetValues })
-const filterValues = ref({ ... resetValues })
+const productFormValues = ref({ nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
+const filterValues = ref({ ... productFormValues.value })
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
 const filter = async ({ valid, values }) => {
@@ -139,7 +138,7 @@ const filter = async ({ valid, values }) => {
 function limpar() {
   nextTick(() => {
     page.value = 0
-    filterValues.value = { ...resetValues }
+    filterValues.value = { ... productFormValues.value }
     sortField.value = null
     load( { ...filterValues.value } )
   })
