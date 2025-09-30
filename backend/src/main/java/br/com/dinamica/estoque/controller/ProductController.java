@@ -51,7 +51,12 @@ public class ProductController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
+			@RequestParam(required = false) String nome,
+			@RequestParam(required = false) String referencia,
 			@RequestParam(required = false) Long idTipoProduto,
+			@RequestParam(required = false) Integer minPeso,
+			@RequestParam(required = false) Integer maxPeso,
+			@RequestParam(required = false) Boolean ativo,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -61,7 +66,7 @@ public class ProductController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ProductDto> result = this.service.list(idTipoProduto, pageable);
+			Page<ProductDto> result = this.service.list(nome, referencia, idTipoProduto, minPeso, maxPeso, ativo, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

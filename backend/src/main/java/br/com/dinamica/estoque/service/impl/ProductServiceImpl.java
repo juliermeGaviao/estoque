@@ -48,11 +48,31 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public Page<ProductDto> list(Long idTipoProduto, Pageable pageable) {
+	public Page<ProductDto> list(String nome, String referencia, Long idTipoProduto, Integer minPeso, Integer maxPeso, Boolean ativo, Pageable pageable) {
         Specification<Produto> specification = (root, query, cb) -> null;
+
+        if (nome != null && !nome.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
+
+        if (referencia != null && !referencia.isBlank()) {
+            specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("referencia")), "%" + referencia.toLowerCase() + "%"));
+        }
 
         if (idTipoProduto != null) {
             specification = specification.and((root, query, cb) -> cb.equal(root.get("tipoProduto").get("id"), idTipoProduto));
+        }
+
+        if (minPeso != null && maxPeso != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get("peso"), minPeso, maxPeso));
+        } else if (minPeso != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("peso"), minPeso));
+        } else if (maxPeso != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("peso"), maxPeso));
+        }
+
+        if (ativo != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), ativo));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProductDto.class));
