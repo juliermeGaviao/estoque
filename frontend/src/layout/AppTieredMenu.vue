@@ -35,6 +35,11 @@ const items = ref([
         label: 'Produto',
         icon: 'pi pi-box',
         command: () => { router.push('/register/product') }
+      },
+      {
+        label: 'Tabela de Preços',
+        icon: 'pi pi-dollar',
+        command: () => { router.push('/register/price-table') }
       }
     ]
   },
