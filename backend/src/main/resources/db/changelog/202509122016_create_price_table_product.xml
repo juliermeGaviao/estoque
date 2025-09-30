@@ -22,7 +22,7 @@
                 <constraints nullable="false" foreignKeyName="fk_tabela_preco_produto_tabela" references="tabela_preco(id)"/>
             </column>
 
-			<column name="preco" type="currency">
+			<column name="preco" type="decimal(10, 2)">
 				<constraints nullable="false"/>
 			</column>
 
