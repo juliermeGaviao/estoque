@@ -34,7 +34,7 @@ const items = ref([
       {
         label: 'Produto',
         icon: 'pi pi-box',
-        command: () => { router.push('/register/person') }
+        command: () => { router.push('/register/product') }
       }
     ]
   },

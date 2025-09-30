@@ -38,13 +38,6 @@ public class ProductServiceImpl implements ProductService {
                 skip(destination.getTipoProduto());
             }
         });
-
-		this.modelMapper.addMappings(new PropertyMap<Produto, ProductDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getTipoProduto());
-            }
-        });
 	}
 
 	@Override

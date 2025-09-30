@@ -32,6 +32,31 @@
 
 		</createTable>
 
+		<insert tableName="tipo_produto">
+			<column name="nome">Ao Leite</column>
+			<column name="id_usuario">1</column>
+		</insert>
+
+		<insert tableName="tipo_produto">
+			<column name="nome">Branco</column>
+			<column name="id_usuario">1</column>
+		</insert>
+
+		<insert tableName="tipo_produto">
+			<column name="nome">70% Cacau</column>
+			<column name="id_usuario">1</column>
+		</insert>
+
+		<insert tableName="tipo_produto">
+			<column name="nome">Branco e Preto</column>
+			<column name="id_usuario">1</column>
+		</insert>
+
+		<insert tableName="tipo_produto">
+			<column name="nome">Crocante</column>
+			<column name="id_usuario">1</column>
+		</insert>
+
 	    <rollback>
 	        <dropTable tableName="tipo_produto"/>
 	    </rollback>
