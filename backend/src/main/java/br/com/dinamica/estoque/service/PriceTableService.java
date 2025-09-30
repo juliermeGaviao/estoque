@@ -10,7 +10,7 @@ public interface PriceTableService {
 
 	PriceTableDto get(Long id);
 
-	Page<PriceTableDto> list(Pageable pageable);
+	Page<PriceTableDto> list(String nome, Pageable pageable);
 
 	PriceTableDto save(PriceTableDto dto, Usuario usuario);
 

@@ -39,8 +39,12 @@ public class PriceTableServiceImpl implements PriceTableService {
 	}
 
 	@Override
-	public Page<PriceTableDto> list(Pageable pageable) {
+	public Page<PriceTableDto> list(String nome, Pageable pageable) {
         Specification<TabelaPreco> specification = (root, query, cb) -> null;
+
+        if (nome != null && !nome.isBlank()) {
+            specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PriceTableDto.class));
 	}

@@ -19,6 +19,8 @@ const size = ref(20)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
+const nome = ref('')
+
 async function load() {
   loading.value = true
   
@@ -33,6 +35,10 @@ async function load() {
     if (sortOrder) {
       params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
     }
+  }
+
+  if (nome.value) {
+    params.nome = nome.value
   }
 
   try {
@@ -67,6 +73,7 @@ function onFilter() {
 }
 
 function onClear() {
+  nome.value = null
   load()
 }
 
@@ -115,6 +122,12 @@ const confirmDelete = entity => {
       <template #title><h3>Lista de Tabelas de Preços</h3></template>
       <template #content>
         <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
+          <FloatLabel variant="on">
+            <label for="nome">Nome</label>
+            <InputText id="nome" v-model="nome" autocomplete="off" fluid/>
+          </FloatLabel>
+
+          <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
           <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
         </Form>
 

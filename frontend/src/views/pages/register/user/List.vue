@@ -24,24 +24,24 @@ const email = ref('')
 async function load() {
   loading.value = true
 
+  let params = {
+    page: page.value,
+    size: size.value
+  }
+
+  if (sortField.value) {
+    params.sort = sortField.value
+
+    if (sortOrder) {
+      params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
+    }
+  }
+
+  if (email.value) {
+    params.email = email.value
+  }
+
   try {
-    let params = {
-      page: page.value,
-      size: size.value
-    }
-
-    if (sortField.value) {
-      params.sort = sortField.value
-
-      if (sortOrder) {
-        params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
-      }
-    }
-
-    if (email.value) {
-      params.email = email.value
-    }
-
     const response = await api.get('/user/list', { params: params })
 
     data.value = response.data.content
