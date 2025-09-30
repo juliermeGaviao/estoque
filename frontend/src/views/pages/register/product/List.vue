@@ -154,7 +154,7 @@ function limpar() {
       <template #content>
         <Form ref="productForm" :initialValues="productFormValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-9">
+            <div class="col-span-3">
               <FormField name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -162,7 +162,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-3">
+            <div class="col-span-2">
               <FormField name="idTipoProduto">
                 <FloatLabel variant="on">
                   <Select :options="tipos" optionLabel="nome" optionValue="id" fluid/>
@@ -170,10 +170,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-          </div>
-
-          <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-3">
+            <div class="col-span-2">
               <FormField name="referencia">
                 <FloatLabel variant="on">
                   <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
@@ -181,25 +178,23 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-
-            <div class="col-span-3">
+            <div class="col-span-1">
               <FormField name="minPeso">
                 <FloatLabel variant="on">
                   <InputNumber id="minPeso" :max="10000" fluid/>
-                  <label for="minPeso">Peso Mínimo (em gramas)</label>
+                  <label for="minPeso">Peso Mínimo (g)</label>
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-3">
+            <div class="col-span-1">
               <FormField name="maxPeso">
                 <FloatLabel variant="on">
                   <InputNumber id="maxPeso" :max="10000" fluid/>
-                  <label for="maxPeso">Peso Máximo (em gramas)</label>
+                  <label for="maxPeso">Peso Máximo (g)</label>
                 </FloatLabel>
               </FormField>
             </div>
-
-            <div class="col-span-3">
+            <div class="col-span-1">
               <FormField name="ativo">
                 <FloatLabel variant="on">
                   <Select :options="validade" optionLabel="label" optionValue="value" fluid/>
@@ -207,12 +202,13 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
+            <div class="col-span-2">
+              <FormField class="flex justify-end gap-4">
+                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+              </FormField>
+            </div>
           </div>
-
-          <FormField class="flex justify-end gap-4">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-          </FormField>
         </Form>
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
