@@ -30,19 +30,19 @@ async function load(params) {
     query.sort = sortField.value
 
     if (sortOrder) {
-      query.sort += sortOrder.value === 1 ? ',asc' : ',desc'
+      query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
   }
 
   loading.value = true
 
   try {
-    const response = await api.get('/product/list', { params: query })
+    const response = await api.get("/product/list", { params: query })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de Produtos terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -121,7 +121,7 @@ async function loadProductTypes() {
   }
 }
 
-const resetValues = { nome: null, idTipoProduto: null, referencia: null, peso: null, ativo: null }
+const resetValues = { nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null }
 const productForm = ref(null)
 const productFormValues = ref({ ... resetValues })
 const filterValues = ref({ ... resetValues })
@@ -136,13 +136,11 @@ const filter = async ({ valid, values }) => {
   load( { ...filterValues.value } )
 }
 
-const formKey = ref(0)
-
 function limpar() {
   nextTick(() => {
     page.value = 0
     filterValues.value = { ...resetValues }
-    formKey.value++
+    sortField.value = null
     load( { ...filterValues.value } )
   })
 }
@@ -155,7 +153,7 @@ function limpar() {
     <Card>
       <template #title><h3>Lista de Produtos</h3></template>
       <template #content>
-        <Form ref="productForm" :key="formKey" :initialValues="productFormValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
+        <Form ref="productForm" :initialValues="productFormValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-9">
               <FormField name="nome">
@@ -176,7 +174,7 @@ function limpar() {
           </div>
 
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-4">
+            <div class="col-span-3">
               <FormField name="referencia">
                 <FloatLabel variant="on">
                   <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
@@ -185,16 +183,24 @@ function limpar() {
               </FormField>
             </div>
 
-            <div class="col-span-4">
-              <FormField name="peso">
+            <div class="col-span-3">
+              <FormField name="minPeso">
                 <FloatLabel variant="on">
-                  <InputNumber name="peso" :max="10000" fluid/>
-                  <label for="peso">Peso (em gramas)</label>
+                  <InputNumber id="minPeso" :max="10000" fluid/>
+                  <label for="minPeso">Peso Mínimo (em gramas)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="maxPeso">
+                <FloatLabel variant="on">
+                  <InputNumber id="maxPeso" :max="10000" fluid/>
+                  <label for="maxPeso">Peso Máximo (em gramas)</label>
                 </FloatLabel>
               </FormField>
             </div>
 
-            <div class="col-span-4">
+            <div class="col-span-3">
               <FormField name="ativo">
                 <FloatLabel variant="on">
                   <Select :options="validade" optionLabel="label" optionValue="value" fluid/>
