@@ -79,9 +79,9 @@ function onClear() {
 
 function edit(user) {
   if (user?.id) {
-    router.push(`/management/user/edit?id=${user.id}`)
+    router.push(`/register/user/edit?id=${user.id}`)
   } else {
-    router.push('/management/user/insert')
+    router.push('/register/user/insert')
   }
 }
 

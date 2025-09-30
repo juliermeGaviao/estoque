@@ -77,7 +77,7 @@ const save = async ({ valid, values }) => {
 }
 
 function cancel() {
-  router.push('/management/user')
+  router.push('/register/user')
 }
 
 onMounted(() => {
@@ -92,7 +92,7 @@ onMounted(() => {
         <div class="grid grid-cols-2">
           <h3>Inserir Usuário</h3>
           <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/management/user')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+            <Button icon="pi pi-replay" @click="router.push('/register/user')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>

@@ -15,16 +15,16 @@ const router = createRouter({
                     component: () => import('@/views/Home.vue')
                 },
                 {
-                    path: '/management/user',
-                    component: () => import('@/views/pages/management/user/List.vue')
+                    path: '/register/user',
+                    component: () => import('@/views/pages/register/user/List.vue')
                 },
                 {
-                    path: '/management/user/insert',
-                    component: () => import('@/views/pages/management/user/Insert.vue')
+                    path: '/register/user/insert',
+                    component: () => import('@/views/pages/register/user/Insert.vue')
                 },
                 {
-                    path: '/management/user/edit',
-                    component: () => import('@/views/pages/management/user/Edit.vue')
+                    path: '/register/user/edit',
+                    component: () => import('@/views/pages/register/user/Edit.vue')
                 },
                 {
                     path: '/register/provider',

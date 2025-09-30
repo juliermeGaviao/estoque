@@ -11,12 +11,12 @@ const items = computed(() => [
   {
     label: 'Minha Conta',
     icon: 'pi pi-cog',
-    command: () => { router.push(`/management/user/edit?id=${getUserId()}`) }
+    command: () => { router.push(`/register/user/edit?id=${getUserId()}`) }
   },
   temPerfil('admin') && {
     label: 'Gestão de Usuários',
     icon: 'pi pi-users',
-    command: () => { router.push('/management/user') }
+    command: () => { router.push('/register/user') }
   },
   {
     label: 'Sair',
