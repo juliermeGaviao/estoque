@@ -48,7 +48,6 @@ async function load(params) {
   }
 }
 
-
 onMounted(async () => {
   load({})
   loadProductTypes()
@@ -121,9 +120,9 @@ async function loadProductTypes() {
   }
 }
 
-const productForm = ref(null)
-const productFormValues = ref({ nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
-const filterValues = ref({ ... productFormValues.value })
+const form = ref(null)
+const formValues = ref({ nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
+const filterValues = ref({ ... formValues.value })
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
 const filter = async ({ valid, values }) => {
@@ -138,7 +137,7 @@ const filter = async ({ valid, values }) => {
 function limpar() {
   nextTick(() => {
     page.value = 0
-    filterValues.value = { ... productFormValues.value }
+    filterValues.value = { ... formValues.value }
     sortField.value = null
     load( { ...filterValues.value } )
   })
@@ -152,7 +151,7 @@ function limpar() {
     <Card>
       <template #title><h3>Lista de Produtos</h3></template>
       <template #content>
-        <Form ref="productForm" :initialValues="productFormValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
+        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-3">
               <FormField name="nome">

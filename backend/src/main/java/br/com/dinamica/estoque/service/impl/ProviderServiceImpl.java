@@ -39,8 +39,24 @@ public class ProviderServiceImpl implements ProviderService {
 	}
 
 	@Override
-	public Page<ProviderDto> list(Pageable pageable) {
+	public Page<ProviderDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
         Specification<Fornecedor> specification = (root, query, cb) -> null;
+
+        if (razaoSocial != null && !razaoSocial.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
+        }
+
+        if (fantasia != null && !fantasia.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("fantasia")), "%" + fantasia.toLowerCase() + "%"));
+        }
+
+        if (cnpj != null && !cnpj.isBlank()) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("cnpj"), cnpj));
+        }
+
+        if (fone != null && !fone.isBlank()) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProviderDto.class));
 	}

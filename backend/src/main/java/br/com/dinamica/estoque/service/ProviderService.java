@@ -10,7 +10,7 @@ public interface ProviderService {
 
 	ProviderDto get(Long id);
 
-	Page<ProviderDto> list(Pageable pageable);
+	Page<ProviderDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable);
 
 	ProviderDto save(ProviderDto dto, Usuario usuario);
 
