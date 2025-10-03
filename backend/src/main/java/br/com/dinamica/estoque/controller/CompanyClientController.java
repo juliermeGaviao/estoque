@@ -51,7 +51,10 @@ public class CompanyClientController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) Integer idFornecedor,
+			@RequestParam(required = false) String razaoSocial,
+			@RequestParam(required = false) String fantasia,
+			@RequestParam(required = false) String cnpj,
+			@RequestParam(required = false) String fone,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -61,7 +64,7 @@ public class CompanyClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<CompanyClientDto> result = this.service.list(pageable);
+			Page<CompanyClientDto> result = this.service.list(razaoSocial, fantasia, cnpj, fone, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

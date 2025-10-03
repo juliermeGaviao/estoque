@@ -10,7 +10,7 @@ public interface CompanyClientService {
 
 	CompanyClientDto get(Long id);
 
-	Page<CompanyClientDto> list(Pageable pageable);
+	Page<CompanyClientDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable);
 
 	CompanyClientDto save(CompanyClientDto dto, Usuario usuario);
 
