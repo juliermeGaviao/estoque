@@ -18,8 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
-import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.ProductFilterDto;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.ProductService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,6 +55,7 @@ public class ProductController {
 			@RequestParam(required = false) String nome,
 			@RequestParam(required = false) String referencia,
 			@RequestParam(required = false) Long idTipoProduto,
+			@RequestParam(required = false) Long idFornecedor,
 			@RequestParam(required = false) Integer minPeso,
 			@RequestParam(required = false) Integer maxPeso,
 			@RequestParam(required = false) Boolean ativo,
@@ -66,7 +68,7 @@ public class ProductController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ProductDto> result = this.service.list(nome, referencia, idTipoProduto, minPeso, maxPeso, ativo, pageable);
+			Page<ProductDto> result = this.service.list(new ProductFilterDto(nome, referencia, idTipoProduto, idFornecedor, minPeso, maxPeso, ativo), pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

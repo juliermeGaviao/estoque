@@ -12,14 +12,15 @@ const toast = useToast()
 const loading = ref(false)
 
 const productForm = ref(null)
-const productFormValues = ref({ nome: '', tipoProduto: -1, referencia: '', peso: '', ativo: true })
+const productFormValues = ref({ nome: '', idTipoProduto: null, idFornecedor: null, referencia: '', peso: '', ativo: true })
 
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
 const productFormValidator = zodResolver(
   z.object({
     nome: z.string().min(1, { message: 'Nome do Produto é obrigatório.' }),
-    tipoProduto: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
+    idTipoProduto: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
+    idFornecedor: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
     referencia: z.string().min(1, { message: 'Código de Referência é obrigatório.' }),
     peso: z.int().min(1, { message: 'Peso do Produto é obrigatório.' }).max(10000, 'Limite de peso é 10kg'),
     ativo: z.boolean( { required_error: 'O campo Ativo é obrigatório.' } )
@@ -37,7 +38,7 @@ async function load() {
     if (productForm.value) {
       productForm.value.setValues({
         nome: res.data.nome,
-        tipoProduto: res.data.tipoProduto.id,
+        idTipoProduto: res.data.tipoProduto.id,
         referencia: res.data.referencia,
         peso: res.data.peso,
         ativo: res.data.ativo
@@ -76,7 +77,8 @@ const save = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  delete params.tipoProduto
+  delete params.idTipoProduto
+  delete params.idFornecedor
 
   for (let param in params) {
     if (typeof params[param] === 'string') {
@@ -84,7 +86,8 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params.tipoProduto = { id: values.tipoProduto }
+  params.tipoProduto = { id: values.idTipoProduto }
+  params.fornecedor = { id: values.idFornecedor }
 
   params['id'] = parseInt(id.value)
 
@@ -119,7 +122,25 @@ onMounted(() => {
   }
 
   loadProductTypes()
+  loadProviders()
 })
+
+let fornecedores = ref([])
+
+async function loadProviders() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
+
+    fornecedores.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
 </script>
 
 <template>
@@ -138,7 +159,7 @@ onMounted(() => {
       <template #content>
         <Form ref="productForm" :key="formKey" :resolver="productFormValidator" :initialValues="productFormValues" @submit="save" class="grid flex flex-column gap-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-9">
+            <div class="col-span-8">
               <FormField v-slot="$field" name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -147,11 +168,20 @@ onMounted(() => {
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
-            <div class="col-span-3">
-              <FormField v-slot="$field" name="tipoProduto">
+            <div class="col-span-2">
+              <FormField v-slot="$field" name="idTipoProduto">
                 <FloatLabel variant="on">
                   <Select v-bind="$field" :options="tipos" optionLabel="nome" optionValue="id" fluid/>
-                  <label for="tipoProduto">Tipo do Produto</label>
+                  <label for="idTipoProduto">Tipo do Produto</label>
+                </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
+            <div class="col-span-2">
+              <FormField v-slot="$field" name="idFornecedor">
+                <FloatLabel variant="on">
+                  <Select v-bind="$field" :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+                  <label for="idFornecedor">Fornecedor</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>

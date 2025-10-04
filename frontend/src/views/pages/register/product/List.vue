@@ -51,6 +51,7 @@ async function load(params) {
 onMounted(async () => {
   load({})
   loadProductTypes()
+  loadProviders()
 })
 
 function onPage(event) {
@@ -120,8 +121,24 @@ async function loadProductTypes() {
   }
 }
 
+let fornecedores = ref([])
+
+async function loadProviders() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
+
+    fornecedores.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
 const form = ref(null)
-const formValues = ref({ nome: null, idTipoProduto: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
+const formValues = ref({ nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
 const filterValues = ref({ ... formValues.value })
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
@@ -153,7 +170,7 @@ function limpar() {
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-3">
+            <div class="col-span-2">
               <FormField name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -170,10 +187,18 @@ function limpar() {
               </FormField>
             </div>
             <div class="col-span-2">
+              <FormField name="idFornecedor">
+                <FloatLabel variant="on">
+                  <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+                  <label for="idFornecedor">Fornecedores</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-1">
               <FormField name="referencia">
                 <FloatLabel variant="on">
                   <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
-                  <label for="referencia">Código de Referência</label>
+                  <label for="referencia">Referência</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -218,6 +243,7 @@ function limpar() {
           <Column field="nome" header="Nome" sortable/>
           <Column field="referencia" header="Referência" sortable/>
           <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
+          <Column field="fornecedor.fantasia" header="Nome de Fantasia" sortable/>
           <Column field="peso" header="Peso (em gramas)" sortable/>
           <Column field="ativo" header="Ativo" sortable>
             <template #body="slotProps">

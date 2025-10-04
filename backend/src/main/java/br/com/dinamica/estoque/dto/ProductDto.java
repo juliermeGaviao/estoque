@@ -13,6 +13,8 @@ public class ProductDto {
 
     private ProductTypeDto tipoProduto;
 
+    private ProviderDto fornecedor;
+
     private String referencia;
 
     private String nome;

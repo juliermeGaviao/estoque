@@ -18,6 +18,10 @@
                 <constraints nullable="false" foreignKeyName="fk_produto_tipo_produto" references="tipo_produto(id)"/>
             </column>
 
+            <column name="id_fornecedor" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_produto_fornecedor" references="fornecedor(id)"/>
+            </column>
+
 			<column name="referencia" type="varchar(100)">
 				<constraints nullable="false" unique="true"/>
 			</column>

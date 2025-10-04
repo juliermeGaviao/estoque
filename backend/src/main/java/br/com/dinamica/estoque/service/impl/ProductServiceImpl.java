@@ -10,9 +10,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.ProductFilterDto;
+import br.com.dinamica.estoque.entity.Fornecedor;
 import br.com.dinamica.estoque.entity.Produto;
 import br.com.dinamica.estoque.entity.TipoProduto;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.repository.TipoProdutoRepository;
 import br.com.dinamica.estoque.service.ProductService;
@@ -25,17 +28,21 @@ public class ProductServiceImpl implements ProductService {
 
 	private TipoProdutoRepository tipoProdutoRepository;
 
+	private FornecedorRepository fornecedorRepository;
+
 	private ModelMapper modelMapper;
 
-	public ProductServiceImpl(ProdutoRepository repository, TipoProdutoRepository tipoProdutoRepository, ModelMapper modelMapper) {
+	public ProductServiceImpl(ProdutoRepository repository, TipoProdutoRepository tipoProdutoRepository, FornecedorRepository fornecedorRepository, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.tipoProdutoRepository = tipoProdutoRepository;
+		this.fornecedorRepository = fornecedorRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ProductDto, Produto>() {
             @Override
             protected void configure() {
                 skip(destination.getTipoProduto());
+                skip(destination.getFornecedor());
             }
         });
 	}
@@ -48,31 +55,35 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public Page<ProductDto> list(String nome, String referencia, Long idTipoProduto, Integer minPeso, Integer maxPeso, Boolean ativo, Pageable pageable) {
+	public Page<ProductDto> list(ProductFilterDto filter, Pageable pageable) {
         Specification<Produto> specification = (root, query, cb) -> null;
 
-        if (nome != null && !nome.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        if (filter.getNome() != null && !filter.getNome().isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + filter.getNome().toLowerCase() + "%"));
         }
 
-        if (referencia != null && !referencia.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("referencia")), "%" + referencia.toLowerCase() + "%"));
+        if (filter.getReferencia() != null && !filter.getReferencia().isBlank()) {
+            specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("referencia")), "%" + filter.getReferencia().toLowerCase() + "%"));
         }
 
-        if (idTipoProduto != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("tipoProduto").get("id"), idTipoProduto));
+        if (filter.getIdTipoProduto() != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("tipoProduto").get("id"), filter.getIdTipoProduto()));
         }
 
-        if (minPeso != null && maxPeso != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get("peso"), minPeso, maxPeso));
-        } else if (minPeso != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("peso"), minPeso));
-        } else if (maxPeso != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("peso"), maxPeso));
+        if (filter.getIdFornecedor() != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fornecedor").get("id"), filter.getIdFornecedor()));
         }
 
-        if (ativo != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), ativo));
+        if (filter.getMinPeso() != null && filter.getMaxPeso() != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get("peso"), filter.getMinPeso(), filter.getMaxPeso()));
+        } else if (filter.getMinPeso() != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("peso"), filter.getMinPeso()));
+        } else if (filter.getMaxPeso() != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("peso"), filter.getMaxPeso()));
+        }
+
+        if (filter.getAtivo() != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), filter.getAtivo()));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProductDto.class));
@@ -94,8 +105,10 @@ public class ProductServiceImpl implements ProductService {
 		this.modelMapper.map(dto, entity);
 
 		TipoProduto tipoProduto = this.tipoProdutoRepository.findById(dto.getTipoProduto().getId()).orElseThrow();
+		Fornecedor fornecedor = this.fornecedorRepository.findById(dto.getFornecedor().getId()).orElseThrow();
 
 		entity.setTipoProduto(tipoProduto);
+		entity.setFornecedor(fornecedor);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 

@@ -30,6 +30,10 @@ public class Produto {
     @JoinColumn(name = "id_tipo_produto", nullable = false)
     private TipoProduto tipoProduto;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_fornecedor", nullable = false)
+    private Fornecedor fornecedor;
+
     @Column(name = "referencia", nullable = false, length = 100)
     private String referencia;
 
