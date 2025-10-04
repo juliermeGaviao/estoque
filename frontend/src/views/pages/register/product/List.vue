@@ -243,7 +243,7 @@ function limpar() {
           <Column field="nome" header="Nome" sortable/>
           <Column field="referencia" header="Referência" sortable/>
           <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
-          <Column field="fornecedor.fantasia" header="Nome de Fantasia" sortable/>
+          <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
           <Column field="peso" header="Peso (em gramas)" sortable/>
           <Column field="ativo" header="Ativo" sortable>
             <template #body="slotProps">
