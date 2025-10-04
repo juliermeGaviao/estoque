@@ -19,6 +19,8 @@ import br.com.dinamica.estoque.util.DateUtil;
 @Service
 public class PersonClientServiceImpl implements PersonClientService {
 
+	private static final String DATA_ANIVERSARIO = "dataAniversario";
+
 	private ClientePessoaRepository repository;
 
 	private ContatoClientePessoaRepository contatoClientePessoaRepository;
@@ -51,11 +53,11 @@ public class PersonClientServiceImpl implements PersonClientService {
         }
 
         if (minAniversario != null && maxAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get("dataAniversario"), minAniversario, maxAniversario));
+            specification = specification.and((root, query, cb) -> cb.between(root.get(DATA_ANIVERSARIO), minAniversario, maxAniversario));
         } else if (minAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("dataAniversario"), minAniversario));
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_ANIVERSARIO), minAniversario));
         } else if (maxAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("dataAniversario"), maxAniversario));
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DATA_ANIVERSARIO), maxAniversario));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PersonClientDto.class));

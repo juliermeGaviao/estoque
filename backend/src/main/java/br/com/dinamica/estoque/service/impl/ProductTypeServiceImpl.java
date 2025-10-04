@@ -39,8 +39,12 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 	}
 
 	@Override
-	public Page<ProductTypeDto> list(Pageable pageable) {
+	public Page<ProductTypeDto> list(String nome, Pageable pageable) {
         Specification<TipoProduto> specification = (root, query, cb) -> null;
+
+        if (nome != null && !nome.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProductTypeDto.class));
 	}

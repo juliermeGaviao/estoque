@@ -10,7 +10,7 @@ public interface ProductTypeService {
 
 	ProductTypeDto get(Long id);
 
-	Page<ProductTypeDto> list(Pageable pageable);
+	Page<ProductTypeDto> list(String nome, Pageable pageable);
 
 	ProductTypeDto save(ProductTypeDto dto, Usuario usuario);
 

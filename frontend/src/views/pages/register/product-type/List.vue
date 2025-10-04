@@ -2,7 +2,7 @@
 import api from '@/util/api'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -19,24 +19,25 @@ const size = ref(20)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
-async function load() {
+async function load(params) {
+  const query = {
+    ...params,
+    page: page.value,
+    size: size.value,
+  }
+
+  if (sortField.value) {
+    query.sort = sortField.value
+
+    if (sortOrder) {
+      query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
+    }
+  }
+
   loading.value = true
 
   try {
-    let params = {
-      page: page.value,
-      size: size.value
-    }
-
-    if (sortField.value) {
-      params.sort = sortField.value
-
-      if (sortOrder) {
-        params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
-      }
-    }
-
-    const response = await api.get('/product-type/list', { params: params })
+    const response = await api.get('/product-type/list', { params: query })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
@@ -47,27 +48,22 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  load({})
+})
 
 function onPage(event) {
   page.value = event.page
   size.value = event.rows
-  load()
+
+  load( { ...filterValues.value } )
 }
 
 function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
-  load()
-}
 
-function onFilter() {
-  page.value = 0
-  load()
-}
-
-function onClear() {
-  load()
+  load( { ...filterValues.value } )
 }
 
 function edit(entity) {
@@ -106,6 +102,28 @@ const confirmDelete = entity => {
     }
   })
 }
+
+const form = ref(null)
+const formValues = ref({ nome: null })
+const filterValues = ref({ ... formValues.value })
+
+const filter = async ({ valid, values }) => {
+  if (!valid) return
+
+  filterValues.value = { ...values }
+  page.value = 0
+
+  load( { ...filterValues.value } )
+}
+
+function limpar() {
+  nextTick(() => {
+    page.value = 0
+    filterValues.value = { ... formValues.value }
+    sortField.value = null
+    load( { ...filterValues.value } )
+  })
+}
 </script>
 
 <template>
@@ -114,8 +132,23 @@ const confirmDelete = entity => {
     <Card>
       <template #title><h3>Lista de Tipos de Produtos</h3></template>
       <template #content>
-        <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
-          <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
+        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-10">
+              <FormField name="nome">
+                <FloatLabel variant="on">
+                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                  <label for="nome">Nome</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-2">
+              <FormField class="flex justify-end gap-4">
+                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+              </FormField>
+            </div>
+          </div>
         </Form>
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
