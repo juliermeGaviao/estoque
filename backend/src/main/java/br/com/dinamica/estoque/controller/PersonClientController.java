@@ -1,11 +1,13 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.Date;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,8 +20,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
-import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.dto.PersonClientDto;
+import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.PersonClientService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,7 +53,10 @@ public class PersonClientController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) Integer idFornecedor,
+			@RequestParam(required = false) String nome,
+			@RequestParam(required = false) String fone,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minAniversario,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxAniversario,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -61,7 +66,7 @@ public class PersonClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<PersonClientDto> result = this.service.list(pageable);
+			Page<PersonClientDto> result = this.service.list(nome, fone, minAniversario, maxAniversario, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

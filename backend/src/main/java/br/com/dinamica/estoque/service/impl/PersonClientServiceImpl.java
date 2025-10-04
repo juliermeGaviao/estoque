@@ -39,8 +39,24 @@ public class PersonClientServiceImpl implements PersonClientService {
 	}
 
 	@Override
-	public Page<PersonClientDto> list(Pageable pageable) {
+	public Page<PersonClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
         Specification<ClientePessoa> specification = (root, query, cb) -> null;
+
+        if (nome != null && !nome.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
+
+        if (fone != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        }
+
+        if (minAniversario != null && maxAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get("dataAniversario"), minAniversario, maxAniversario));
+        } else if (minAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("dataAniversario"), minAniversario));
+        } else if (maxAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("dataAniversario"), maxAniversario));
+        }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PersonClientDto.class));
 	}

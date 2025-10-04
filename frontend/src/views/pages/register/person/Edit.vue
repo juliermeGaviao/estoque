@@ -118,7 +118,7 @@ const save = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  for (let field of ['fone']) {
+  for (let field of ['fone', 'cep']) {
     params[field] = onlyDigits(params[field])
   }
 

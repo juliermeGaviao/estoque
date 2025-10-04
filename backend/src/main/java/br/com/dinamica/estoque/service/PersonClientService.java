@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.service;
 
+import java.util.Date;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,7 +12,7 @@ public interface PersonClientService {
 
 	PersonClientDto get(Long id);
 
-	Page<PersonClientDto> list(Pageable pageable);
+	Page<PersonClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable);
 
 	PersonClientDto save(PersonClientDto dto, Usuario usuario);
 
