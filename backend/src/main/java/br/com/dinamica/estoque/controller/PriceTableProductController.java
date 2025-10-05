@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.dto.PriceTableProductDto;
+import br.com.dinamica.estoque.dto.PriceTableProductFilterDto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.PriceTableProductService;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +109,14 @@ public class PriceTableProductController {
 	@GetMapping("/list-product")
 	public ResponseEntity<Object> listProducts(
 			@RequestParam(required = false) Long idTabelaPreco,
+			@RequestParam(required = false) String nome,
+			@RequestParam(required = false) String referencia,
+			@RequestParam(required = false) Long idTipoProduto,
+			@RequestParam(required = false) Long idFornecedor,
+			@RequestParam(required = false) Integer minPeso,
+			@RequestParam(required = false) Integer maxPeso,
+			@RequestParam(required = false) Integer minPreco,
+			@RequestParam(required = false) Integer maxPreco,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -117,7 +126,9 @@ public class PriceTableProductController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<PriceTableProductDto> result = this.service.getProductsByTable(idTabelaPreco, pageable);
+			Page<PriceTableProductDto> result = this.service.getProductsByTable(
+					new PriceTableProductFilterDto(idTabelaPreco, nome, referencia, idTipoProduto, idFornecedor, minPeso, maxPeso, minPreco, maxPreco),
+					pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

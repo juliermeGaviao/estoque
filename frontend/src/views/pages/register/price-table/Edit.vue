@@ -2,7 +2,7 @@
 import api from '@/util/api'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 
@@ -73,8 +73,11 @@ const save = async ({ valid, values }) => {
 onMounted(() => {
   if (id.value) {
     load()
-    loadProducts()
+    loadProducts( { ...productFormValues.value } )
   }
+
+  loadProductTypes()
+  loadProviders()
 })
 
 const data = ref([])
@@ -85,9 +88,10 @@ const size = ref(20)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
-async function loadProducts() {
+async function loadProducts(params) {
   const query = {
     idTabelaPreco: id.value,
+    ...params,
     page: page.value,
     size: size.value,
   }
@@ -118,14 +122,14 @@ function onPage(event) {
   page.value = event.page
   size.value = event.rows
 
-  loadProducts()
+  loadProducts( { ...filterValues.value } )
 }
 
 function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
-  loadProducts()
+  loadProducts( { ...filterValues.value } )
 }
 
 async function savePrices() {
@@ -154,12 +158,66 @@ async function savePrices() {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Preços', detail: 'Requisição de alteração de preços terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
-    loadProducts()
+    loadProducts( { ...filterValues.value } )
   }
 }
 
 function cleanPrices() {
   data.value.forEach(product => product.preco = null)
+}
+
+let tipos = ref([])
+
+async function loadProductTypes() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/product-type/list', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    tipos.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produto', detail: 'Requisição de lista de Tipos de Produto terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+let fornecedores = ref([])
+
+async function loadProviders() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
+
+    fornecedores.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+const productForm = ref(null)
+const productFormValues = ref({ nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, minPeso: null, maxPeso: null, minPreco: null, maxPreco: null })
+const filterValues = ref({ ... productFormValues.value })
+
+const filter = async ({ valid, values }) => {
+  if (!valid) return
+
+  filterValues.value = { ...values }
+  page.value = 0
+
+  loadProducts( { ...filterValues.value } )
+}
+
+function limpar() {
+  nextTick(() => {
+    page.value = 0
+    filterValues.value = { ... productFormValues.value }
+    sortField.value = null
+    loadProducts( { ...filterValues.value } )
+  })
 }
 </script>
 
@@ -204,6 +262,85 @@ function cleanPrices() {
       </template>
 
       <template #content>
+        <Form ref="productForm" :initialValues="productFormValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-3">
+              <FormField name="nome">
+                <FloatLabel variant="on">
+                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                  <label for="nome">Nome</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="referencia">
+                <FloatLabel variant="on">
+                  <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
+                  <label for="referencia">Referência</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="idTipoProduto">
+                <FloatLabel variant="on">
+                  <Select :options="tipos" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idTipoProduto">Tipo do Produto</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="idFornecedor">
+                <FloatLabel variant="on">
+                  <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+                  <label for="idFornecedor">Fornecedores</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-3">
+              <FormField name="minPeso">
+                <FloatLabel variant="on">
+                  <InputNumber id="minPeso" :max="10000" fluid/>
+                  <label for="minPeso">Peso Mínimo (g)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="maxPeso">
+                <FloatLabel variant="on">
+                  <InputNumber id="maxPeso" :max="10000" fluid/>
+                  <label for="maxPeso">Peso Máximo (g)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="minPreco">
+                <FloatLabel variant="on">
+                  <InputNumber id="minPreco" :max="10000" fluid/>
+                  <label for="minPreco">Preco Mínimo</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
+              <FormField name="maxPreco">
+                <FloatLabel variant="on">
+                  <InputNumber id="maxPreco" :max="10000" fluid/>
+                  <label for="maxPreco">Preco Máximo</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12">
+              <FormField class="flex justify-end gap-4">
+                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+              </FormField>
+            </div>
+          </div>
+        </Form>
+
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
           :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
           :rowsPerPageOptions="[10, 20, 50, 100]">

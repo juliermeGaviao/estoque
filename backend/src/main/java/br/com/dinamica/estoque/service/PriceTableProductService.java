@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import br.com.dinamica.estoque.dto.PriceTableProductDto;
+import br.com.dinamica.estoque.dto.PriceTableProductFilterDto;
 import br.com.dinamica.estoque.entity.Usuario;
 
 public interface PriceTableProductService {
@@ -18,7 +19,7 @@ public interface PriceTableProductService {
 
 	void delete(Long id);
 
-	Page<PriceTableProductDto> getProductsByTable(Long idTabelaPreco, Pageable pageable);
+	Page<PriceTableProductDto> getProductsByTable(PriceTableProductFilterDto filter, Pageable pageable);
 
 	void savePrices(List<PriceTableProductDto> prices, Usuario usuario);
 
