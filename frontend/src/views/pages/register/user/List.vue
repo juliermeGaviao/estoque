@@ -139,11 +139,9 @@ const confirmDelete = entity => {
           <Column field="email" header="Email" sortable/>
           <Column field="perfis" header="Perfis"/>
 
-          <Column :bodyStyle="{ textAlign: 'center' }">
+          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <div style="width: 100%; display: flex; justify-content: center;">
-                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Usuário'"/>
-              </div>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Usuário'"/>
             </template>
 
             <template #body="slotProps">

@@ -397,11 +397,9 @@ onMounted(() => {
             </template>
           </Column>
 
-          <Column :bodyStyle="{ textAlign: 'center' }">
+          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <div style="width: 100%; display: flex; justify-content: center;">
-                <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
-              </div>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
             </template>
 
             <template #body="slotProps">

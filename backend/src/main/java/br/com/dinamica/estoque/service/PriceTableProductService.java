@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,5 +17,9 @@ public interface PriceTableProductService {
 	PriceTableProductDto save(PriceTableProductDto dto, Usuario usuario);
 
 	void delete(Long id);
+
+	Page<PriceTableProductDto> getProductsByTable(Long idTabelaPreco, Pageable pageable);
+
+	void savePrices(List<PriceTableProductDto> prices, Usuario usuario);
 
 }

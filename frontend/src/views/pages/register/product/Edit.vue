@@ -39,6 +39,7 @@ async function load() {
       productForm.value.setValues({
         nome: res.data.nome,
         idTipoProduto: res.data.tipoProduto.id,
+        idFornecedor: res.data.fornecedor.id,
         referencia: res.data.referencia,
         peso: res.data.peso,
         ativo: res.data.ativo
