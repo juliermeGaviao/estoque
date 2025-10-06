@@ -41,6 +41,8 @@ async function load(id) {
         email: res.data.email,
         perfis: res.data.perfis.map(p => p.id)
       })
+
+      userProfiles.value = res.data.perfis.length
     })
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
@@ -155,9 +157,22 @@ const tableFormValues = ref({ tabelas: [] })
 
 const tableFormValidator = zodResolver(
   z.object({
-    tabelas: z.array(z.number()).min(1, { message: 'Ao menos uma tabela de preços é obrigatória.' })
+    tabelas: z.array(z.number()).min(1, { message: 'É necessário marcar ao menos uma tabela de preços.' })
   })
 )
+
+const userProfiles = ref(0)
+
+const savePriceTables = async ({ valid, values }) => {
+  if (!valid) return
+
+  loading.value = true
+
+  const params = { ... values }
+console.log(params)
+
+  loading.value = false
+}
 </script>
 
 <template>
@@ -185,7 +200,13 @@ const tableFormValidator = zodResolver(
           <FormField v-slot="$field" name="perfis" class="flex items-start gap-4">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-              <Checkbox v-model="$field.value" :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"/>
+              <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
+                :modelValue="$field.value"
+                @update:modelValue="val => {
+                  $field.value = val
+                  userProfiles = val.length
+                }"
+              />
               <label :for="'perfil_' + perfil.id">{{ perfil.nome }}</label>
             </div>
           </FormField>
@@ -241,12 +262,13 @@ const tableFormValidator = zodResolver(
         </div>
       </template>
       <template #content>
-        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="changePassword" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="tabelas" class="flex items-start gap-4">
-            <div classes="label">Tabelas de preços:</div>
-            <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2">
-              <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'tabela_' + tabela.id"/>
-              <label :for="'tabela_' + tabela.id">{{ tabela.nome }}</label>
+        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="tabelas" v-if="userProfiles === 2">
+            <div class="flex items-start gap-4">
+              <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
+                <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'tabela_' + tabela.id"/>
+                <label :for="'tabela_' + tabela.id">{{ tabela.nome }}</label>
+              </div>
             </div>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
