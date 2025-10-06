@@ -126,7 +126,7 @@ onMounted(() => {
   loadProviders()
 })
 
-let fornecedores = ref([])
+const providers = ref([])
 
 async function loadProviders() {
   loading.value = true
@@ -134,7 +134,7 @@ async function loadProviders() {
   try {
     const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
 
-    fornecedores.value = response.data.content
+    providers.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
@@ -181,7 +181,7 @@ async function loadProviders() {
             <div class="col-span-2">
               <FormField v-slot="$field" name="idFornecedor">
                 <FloatLabel variant="on">
-                  <Select v-bind="$field" :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+                  <Select v-bind="$field" :options="providers" optionLabel="fantasia" optionValue="id" fluid/>
                   <label for="idFornecedor">Fornecedor</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>

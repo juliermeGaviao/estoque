@@ -3,18 +3,17 @@ import api from '@/util/api'
 import { sha256Hex } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const profiles = ref([])
 const loading = ref(false)
 
 const form = ref(null)
-const formValues = ref({ email: '', perfis: [2] })
+const initialFormValues = ref({ email: '', perfis: [] })
 
 const formValidator = zodResolver(
   z.object({
@@ -33,36 +32,32 @@ const resolverPassword = zodResolver(
   })
 )
 
-async function loadProfiles() {
-  loading.value = true
+async function load(id) {
+  try {
+    const res = await api.get('/user/get', { params: { id } })
 
+    nextTick(() => {
+      form.value.setValues({
+        email: res.data.email,
+        perfis: res.data.perfis.map(p => p.id)
+      })
+    })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+
+  loadUserPriceTables(id)
+}
+
+const profiles = ref([])
+
+async function loadProfiles() {
   try {
     const res = await api.get('/user/profiles')
 
     profiles.value = res.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Perfis', detail: 'Requisição de perfis terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
-  }
-}
-
-async function load(id) {
-  loading.value = true
-
-  try {
-    const res = await api.get('/user/get', { params: { id } })
-
-    if (form.value) {
-      form.value.setValues({
-        email: res.data.email,
-        perfis: res.data.perfis.map(p => p.id)
-      })
-    }
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -121,10 +116,48 @@ const changePassword = async ({ valid, values }) => {
 }
 
 onMounted(() => {
+  loading.value = true
+
   loadProfiles()
+  loadPriceTables()
 
   load(route.query.id)
+
+  loading.value = false
 })
+
+const priceTables = ref([])
+
+async function loadPriceTables() {
+  try {
+    const response = await api.get('/price-table/list', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    priceTables.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços', detail: 'Requisição de lista de tabelas de preços terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
+const userPriceTables = ref([])
+
+async function loadUserPriceTables(id) {
+  try {
+    const response = await api.get('/user-price-table/list', { params: { idVendedor: id, page: 0, size: 10000, sort: 'tabela.nome,asc' } })
+
+    userPriceTables.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
+const tableForm = ref(null)
+const tableFormValues = ref({ tabelas: [] })
+
+const tableFormValidator = zodResolver(
+  z.object({
+    tabelas: z.array(z.number()).min(1, { message: 'Ao menos uma tabela de preços é obrigatória.' })
+  })
+)
 </script>
 
 <template>
@@ -140,8 +173,8 @@ onMounted(() => {
       </template>
 
       <template #content>
-        <Form ref="form" :resolver="formValidator" :formValues @submit="save" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="email" initialValue="">
+        <Form ref="form" :resolver="formValidator" :initialValues="initialFormValues" @submit="save" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="email">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>
               <label for="email">E-mail</label>
@@ -149,11 +182,11 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField name="perfis" class="flex items-start gap-4">
+          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-              <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
-              <label :for="'perfil' + perfil.id">{{ perfil.nome }}</label>
+              <Checkbox v-model="$field.value" :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"/>
+              <label :for="'perfil_' + perfil.id">{{ perfil.nome }}</label>
             </div>
           </FormField>
 
@@ -188,6 +221,33 @@ onMounted(() => {
               <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
               <label for="confirmarSenha">Confirmação da senha</label>
             </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+
+          <div class="flex justify-end gap-4">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </div>
+        </Form>
+      </template>
+    </Card>
+    <Card class="mb-6">
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Tabelas de Preços</h3>
+          <div class="flex justify-end items-center">
+            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          </div>
+        </div>
+      </template>
+      <template #content>
+        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="changePassword" class="grid flex flex-column gap-4">
+          <FormField v-slot="$field" name="tabelas" class="flex items-start gap-4">
+            <div classes="label">Tabelas de preços:</div>
+            <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2">
+              <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'tabela_' + tabela.id"/>
+              <label :for="'tabela_' + tabela.id">{{ tabela.nome }}</label>
+            </div>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 

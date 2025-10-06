@@ -67,6 +67,7 @@ const save = async ({ valid, values }) => {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Tabela de Preços', detail: 'Requisição de alteração de tabela de preços terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
+    loadProducts( { ...productFormValues.value } )
   }
 }
 
