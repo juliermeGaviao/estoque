@@ -16,7 +16,7 @@ const totalRecords = ref(0)
 const loading = ref(false)
 
 const page = ref(0)
-const size = ref(20)
+const size = ref(15)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
@@ -73,6 +73,7 @@ function onPage(event) {
 }
 
 function onSort(event) {
+  page.value = 0
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
@@ -190,7 +191,7 @@ function limpar() {
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
           :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[10, 20, 50, 100]">
+          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
           <Column field="nome" header="Nome" sortable/>
