@@ -11,11 +11,7 @@ public class SaleDto {
 
     private Long id;
 
-    private UserDto usuario;
-
-    private PriceTableProductDto tabelaPrecoProduto;
-
-    private Integer quantidade;
+    private UserDto vendedor;
 
     private Float desconto;
 
