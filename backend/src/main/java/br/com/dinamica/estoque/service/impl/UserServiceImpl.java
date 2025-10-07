@@ -23,23 +23,28 @@ import br.com.dinamica.estoque.entity.Perfil;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.PerfilRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
+import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
 import br.com.dinamica.estoque.service.UserService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService, UserService {
+public class UserServiceImpl implements UserDetailsService, UserService {
 
     private UsuarioRepository usuarioRepository;
 
     private PerfilRepository perfilRepository;
 
+    private UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository;
+
     private SHA256PasswordEncoder passwordEncoder;
     
 	private ModelMapper modelMapper;
 
-    public UserDetailsServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, SHA256PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+    public UserServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository,
+    		SHA256PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
         this.usuarioRepository = usuarioRepository;
         this.perfilRepository = perfilRepository;
+        this.usuarioTabelaPrecoRepository = usuarioTabelaPrecoRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
     }
@@ -71,6 +76,7 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
         	UserListDto result = this.modelMapper.map(usuario, UserListDto.class);
 
         	result.setPerfis(usuario.getPerfis().stream().map(Perfil::getNome).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
+        	result.setTabelas(this.usuarioTabelaPrecoRepository.findByVendedor(usuario.getId()).stream().map(linha -> linha.getTabela().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
 
         	return result;
         });

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.service.impl.JwtService;
-import br.com.dinamica.estoque.service.impl.UserDetailsServiceImpl;
+import br.com.dinamica.estoque.service.impl.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.GenericFilter;
 import jakarta.servlet.ServletException;
@@ -23,9 +23,9 @@ public class SecurityFilter extends GenericFilter {
     private static final long serialVersionUID = -3894446815946158380L;
 
     private final transient JwtService jwtService;
-    private final transient UserDetailsServiceImpl userDetailsService;
+    private final transient UserServiceImpl userDetailsService;
 
-    public SecurityFilter(JwtService jwtService, UserDetailsServiceImpl userDetailsService) {
+    public SecurityFilter(JwtService jwtService, UserServiceImpl userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
