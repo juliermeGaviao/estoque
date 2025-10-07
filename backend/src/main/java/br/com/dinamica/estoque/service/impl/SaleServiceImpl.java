@@ -46,20 +46,21 @@ public class SaleServiceImpl implements SaleService {
 	@Override
 	public SaleDto get(Long id) {
 		Venda entity = this.repository.findById(id).orElseThrow();
+		SaleDto result = this.modelMapper.map(entity, SaleDto.class);
 
-		entity.getVendedor().setPerfis(null);
+		result.getVendedor().setPerfis(null);
 
-		return this.modelMapper.map(entity, SaleDto.class);
+		return result;
 	}
 
 	private static final String DISCOUNT_FIELD = "desconto";
 
 	@Override
-	public Page<SaleDto> list(Long vendedorId, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable) {
+	public Page<SaleDto> list(Long idVendedor, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable) {
         Specification<Venda> specification = (root, query, cb) -> null;
 
-        if (vendedorId != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("vendedor").get("id"), vendedorId));
+        if (idVendedor != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("vendedor").get("id"), idVendedor));
         }
 
         if (minDesconto != null && maxDesconto != null) {

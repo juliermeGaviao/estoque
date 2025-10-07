@@ -11,10 +11,10 @@ public class SaleItemDto {
 
     private Long id;
 
-    private UserDto vendedor;
+    private SaleDto venda;
 
-    private Float desconto;
+    private PriceTableProductDto tabelaPrecoProduto;
 
-    private String observacoes;
+    private Integer quantidade;
 
 }

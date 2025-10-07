@@ -18,23 +18,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
-import br.com.dinamica.estoque.dto.SaleDto;
+import br.com.dinamica.estoque.dto.SaleItemDto;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.service.SaleService;
+import br.com.dinamica.estoque.service.SaleItemService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/sale")
+@RequestMapping("/sale-item")
 @Slf4j
-public class SaleController {
+public class SaleItemController {
 
-	private static final String ENTITY = "Venda";
-	private static final String ENTITIES = "Vendas";
+	private static final String ENTITY = "Item de venda";
+	private static final String ENTITIES = "Itens de venda";
 	private static final String NOT_FOUND = ENTITY + " não encontrado: ";
 
-	private SaleService service;
+	private SaleItemService service;
 
-	public SaleController(SaleService service) {
+	public SaleItemController(SaleItemService service) {
 		this.service = service;
 	}
 
@@ -51,10 +51,10 @@ public class SaleController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) Long idVendedor,
-			@RequestParam(required = false) Float minDesconto,
-			@RequestParam(required = false) Float maxDesconto,
-			@RequestParam(required = false) String observacoes,
+			@RequestParam(required = false) Long idVenda,
+			@RequestParam(required = false) Long idTabelaPrecoProduto,
+			@RequestParam(required = false) Integer minQuantidade,
+			@RequestParam(required = false) Integer maxQuantidade,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -64,7 +64,7 @@ public class SaleController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<SaleDto> result = this.service.list(idVendedor, minDesconto, maxDesconto, observacoes, pageable);
+			Page<SaleItemDto> result = this.service.list(idVenda, idTabelaPrecoProduto, minQuantidade, maxQuantidade, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
@@ -75,7 +75,7 @@ public class SaleController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody SaleDto dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody SaleItemDto dto, @AuthenticationPrincipal Usuario usuario) {
 		try {
 			return ResponseEntity.ok(this.service.save(dto, usuario));
 		} catch (NoSuchElementException e) {

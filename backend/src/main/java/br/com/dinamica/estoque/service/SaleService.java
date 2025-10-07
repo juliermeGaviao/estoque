@@ -10,7 +10,7 @@ public interface SaleService {
 
 	SaleDto get(Long id);
 
-	Page<SaleDto> list(Long vendedorId, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable);
+	Page<SaleDto> list(Long idVendedor, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable);
 
 	SaleDto save(SaleDto dto, Usuario usuario);
 
