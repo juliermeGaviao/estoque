@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -99,6 +100,22 @@ public class UserPriceTableController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao remover " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("/save-tables")
+	public ResponseEntity<Object> savePrices(@RequestBody List<UserPriceTableDto> dtos, @AuthenticationPrincipal Usuario usuario) {
+		try {
+			this.service.saveTables(dtos, usuario);
+			return ResponseEntity.ok("Preços registrados");
+		} catch (NoSuchElementException e) {
+			String mensagem = "Alguma tabela de preços ou usuário não encontrado na base";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
 		}

@@ -96,7 +96,7 @@ public class UserController {
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (DataIntegrityViolationException | ConstraintViolationException e) {
-			log.error("Existe outro usuário com o e-mail " + dto.getEmail(), e);
+			log.error("Existe outro usuário com o e-mail " + dto.getEmail());
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Existe outro usuário com o e-mail " + dto.getEmail());
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";

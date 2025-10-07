@@ -1,9 +1,9 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,14 +35,6 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 		this.tabelaPrecoRepository = tabelaPrecoRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<UserPriceTableDto, UsuarioTabelaPreco>() {
-            @Override
-            protected void configure() {
-                skip(destination.getTabela());
-                skip(destination.getUsuario());
-            }
-        });
 	}
 
 	@Override
@@ -69,6 +61,26 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 
 	@Override
 	public UserPriceTableDto save(UserPriceTableDto dto, Usuario usuario) {
+		return this.modelMapper.map(this.saveTable(dto, usuario), UserPriceTableDto.class);
+	}
+
+	@Override
+	public void delete(Long id) {
+		this.repository.deleteById(id);
+	}
+
+	@Override
+	public void saveTables(List<UserPriceTableDto> dtos, Usuario usuario) {
+		dtos.forEach(dto -> {
+			if (dto.getTabela() != null) {
+				this.saveTable(dto, usuario);
+			} else if (dto.getId() != null) {
+				this.repository.deleteById(dto.getId());
+			}
+		});
+	}
+
+	private UsuarioTabelaPreco saveTable(UserPriceTableDto dto, Usuario usuario) {
 		UsuarioTabelaPreco entity;
         Date agora = DateUtil.now();
 
@@ -80,24 +92,16 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
-
 		TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
-		Usuario vendedor = this.usuarioRepository.findById(dto.getUsuario().getId()).orElseThrow();
+		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
 
 		entity.setTabela(tabela);
 		entity.setVendedor(vendedor);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
-		entity = this.repository.save(entity);
+		return this.repository.save(entity);
 
-		return this.modelMapper.map(entity, UserPriceTableDto.class);
-	}
-
-	@Override
-	public void delete(Long id) {
-		this.repository.deleteById(id);
 	}
 
 }

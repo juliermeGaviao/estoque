@@ -11,12 +11,12 @@ const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
 
-const productForm = ref(null)
-const productFormValues = ref({ nome: '', idTipoProduto: null, idFornecedor: null, referencia: '', peso: '', ativo: true })
+const form = ref(null)
+const formValues = ref({ nome: '', idTipoProduto: null, idFornecedor: null, referencia: '', peso: '', ativo: true })
 
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
-const productFormValidator = zodResolver(
+const formValidator = zodResolver(
   z.object({
     nome: z.string().min(1, { message: 'Nome do Produto é obrigatório.' }),
     idTipoProduto: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
@@ -35,8 +35,8 @@ async function load() {
   try {
     const res = await api.get('/product', { params: { id: id.value } })
 
-    if (productForm.value) {
-      productForm.value.setValues({
+    if (form.value) {
+      form.value.setValues({
         nome: res.data.nome,
         idTipoProduto: res.data.tipoProduto.id,
         idFornecedor: res.data.fornecedor.id,
@@ -108,8 +108,8 @@ const save = async ({ valid, values }) => {
 
   if (submitAction.value === 'saveNew') {
     nextTick(() => {
-      if (productForm.value) {
-        productForm.value.setValues({ ...productFormValues.value })
+      if (form.value) {
+        form.value.setValues({ ...formValues.value })
         id.value = null
         formKey.value++
       }
@@ -158,7 +158,7 @@ async function loadProviders() {
       </template>
 
       <template #content>
-        <Form ref="productForm" :key="formKey" :resolver="productFormValidator" :initialValues="productFormValues" @submit="save" class="grid flex flex-column gap-4">
+        <Form ref="form" :key="formKey" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-8">
               <FormField v-slot="$field" name="nome">

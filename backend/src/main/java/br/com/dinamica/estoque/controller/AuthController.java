@@ -58,7 +58,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public void register(@RequestBody @Valid AuthRequest request, @AuthenticationPrincipal Usuario usuarioLogado) {
-        var usuario = new Usuario(null, request.email(), this.encoder.encode(request.senha()), usuarioLogado, new Date(), new Date(), Set.of());
+        var usuario = new Usuario(null, request.email(), this.encoder.encode(request.senha()), true, usuarioLogado, new Date(), new Date(), Set.of());
 
         this.usuarioRepository.save(usuario);
     }

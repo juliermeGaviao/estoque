@@ -1,6 +1,6 @@
 <script setup>
 import api from '@/util/api'
-import { sha256Hex } from '@/util/auth'
+import { sha256Hex, temPerfil } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
@@ -11,6 +11,7 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
+const userId = parseInt(route.query.id)
 
 const form = ref(null)
 const initialFormValues = ref({ email: '', perfis: [] })
@@ -32,9 +33,9 @@ const resolverPassword = zodResolver(
   })
 )
 
-async function load(id) {
+async function load() {
   try {
-    const res = await api.get('/user/get', { params: { id } })
+    const res = await api.get('/user/get', { params: { id: userId } })
 
     nextTick(() => {
       form.value.setValues({
@@ -47,8 +48,6 @@ async function load(id) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
   }
-
-  loadUserPriceTables(id)
 }
 
 const profiles = ref([])
@@ -76,7 +75,7 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params['id'] = parseInt(route.query.id)
+  params['id'] = userId
 
   try {
     const response = await api.post('/user', params)
@@ -98,7 +97,7 @@ const changePassword = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['id'] = parseInt(route.query.id)
+  params['id'] = userId
 
   delete params.confirmarSenha
 
@@ -120,10 +119,13 @@ const changePassword = async ({ valid, values }) => {
 onMounted(() => {
   loading.value = true
 
-  loadProfiles()
-  loadPriceTables()
+  load()
 
-  load(route.query.id)
+  if (temPerfil('admin')) {
+    loadProfiles()
+    loadPriceTables()
+    loadUserPriceTables()
+  }
 
   loading.value = false
 })
@@ -142,22 +144,27 @@ async function loadPriceTables() {
 
 const userPriceTables = ref([])
 
-async function loadUserPriceTables(id) {
+async function loadUserPriceTables() {
   try {
-    const response = await api.get('/user-price-table/list', { params: { idVendedor: id, page: 0, size: 10000, sort: 'tabela.nome,asc' } })
+    const response = await api.get('/user-price-table/list', { params: { idVendedor: userId, page: 0, size: 10000, sort: 'tabela.nome,asc' } })
 
     userPriceTables.value = response.data.content
+
+    if (userPriceTables.value.length === 1) {
+      tableForm.value.setValues({ tabelas: [], tabela: userPriceTables.value[0].tabela.id })
+    }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
 const tableForm = ref(null)
-const tableFormValues = ref({ tabelas: [] })
+const tableFormValues = ref({ tabelas: [], tabela: 0 })
 
 const tableFormValidator = zodResolver(
   z.object({
-    tabelas: z.array(z.number()).min(1, { message: 'É necessário marcar ao menos uma tabela de preços.' })
+    tabelas: z.array(z.number()).refine(data => userProfiles.value < 2 || data.length, { message: 'É necessário marcar ao menos uma tabela de preços.' }),
+    tabela: z.number().positive({ message: 'Uma Tabela de Preços deve ser escolhida.' })
   })
 )
 
@@ -166,12 +173,29 @@ const userProfiles = ref(0)
 const savePriceTables = async ({ valid, values }) => {
   if (!valid) return
 
-  loading.value = true
 
-  const params = { ... values }
-console.log(params)
+  if (userProfiles.value < 2) {
+    const userPriceTable = userPriceTables.value.length ? userPriceTables.value[0] : { tabela: { id: null }, vendedor: { id: userId } }
 
-  loading.value = false
+    userPriceTable.tabela.id = values.tabela
+    loading.value = true
+
+    try {
+      const response = await api.post('/user-price-table', userPriceTable)
+
+      if (response.status === 200) {
+        userPriceTables.value = [response.data]
+
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Tabela de Preços salva com sucesso', life: 10000 })
+      }
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
+    } finally {
+      loading.value = false
+    }
+  } else {
+    const userPriceTable = userPriceTables.value.find(record => record.tabela.id === values.tabela)
+  }
 }
 </script>
 
@@ -197,7 +221,7 @@ console.log(params)
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4">
+          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4" v-show="temPerfil('admin')">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
@@ -252,7 +276,7 @@ console.log(params)
         </Form>
       </template>
     </Card>
-    <Card class="mb-6">
+    <Card class="mb-6" v-show="temPerfil('admin')">
       <template #title>
         <div class="grid grid-cols-2">
           <h3>Tabelas de Preços</h3>
@@ -263,11 +287,21 @@ console.log(params)
       </template>
       <template #content>
         <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-4">
-          <FormField v-slot="$field" name="tabelas" v-if="userProfiles === 2">
+          <FormField v-slot="$field" name="tabelas" v-show="userProfiles === 2">
             <div class="flex items-start gap-4">
               <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
-                <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'tabela_' + tabela.id"/>
-                <label :for="'tabela_' + tabela.id">{{ tabela.nome }}</label>
+                <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'checkbox_' + tabela.id"/>
+                <label :for="'checkbox_' + tabela.id">{{ tabela.nome }}</label>
+              </div>
+            </div>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+
+          <FormField v-slot="$field" name="tabela" v-show="userProfiles < 2">
+            <div class="flex items-start gap-4">
+              <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
+                <RadioButton v-model="$field.value" :value="tabela.id" :inputId="'radiobutton_' + tabela.id"/>
+                <label :for="'radiobutton_' + tabela.id">{{ tabela.nome }}</label>
               </div>
             </div>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>

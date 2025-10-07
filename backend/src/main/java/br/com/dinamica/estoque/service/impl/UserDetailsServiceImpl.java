@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +64,8 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
             specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
         }
 
+        specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), Boolean.TRUE));
+
         return this.usuarioRepository.findAll(specification, pageable).map(usuario -> {
         	UserListDto result = this.modelMapper.map(usuario, UserListDto.class);
 
@@ -80,7 +83,14 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
         if (dto.getId() != null) {
         	usuario = this.usuarioRepository.findById(dto.getId()).orElseThrow();
         } else {
+        	Optional<Usuario> outroUsuario = this.usuarioRepository.findByEmail(dto.getEmail());
+
+        	if (outroUsuario.isPresent()) {
+        		throw new ConstraintViolationException(null, null, null);
+        	}
+
         	usuario.setDataCriacao(agora);
+        	usuario.setAtivo(true);
         }
 
         usuario.setEmail(dto.getEmail());
@@ -115,7 +125,9 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
 	public void delete(Long id) {
 		Usuario usuario = this.usuarioRepository.findById(id).orElseThrow();
 
-		this.usuarioRepository.delete(usuario);
+		usuario.setAtivo(false);
+
+		this.usuarioRepository.save(usuario);
 	}
 
 }

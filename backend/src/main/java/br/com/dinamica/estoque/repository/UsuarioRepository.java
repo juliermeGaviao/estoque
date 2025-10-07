@@ -4,11 +4,14 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import br.com.dinamica.estoque.entity.Usuario;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long>, JpaSpecificationExecutor<Usuario> {
 
-	Optional<Usuario> findByEmail(String email);
+	@Query("from Usuario where email = :email and ativo = true")
+	Optional<Usuario> findByEmail(@Param("email") String email);
 
 }

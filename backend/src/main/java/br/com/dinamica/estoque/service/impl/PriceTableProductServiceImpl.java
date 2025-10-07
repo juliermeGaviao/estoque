@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -33,15 +32,26 @@ import jakarta.persistence.Query;
 @Service
 public class PriceTableProductServiceImpl implements PriceTableProductService {
 
-	private TabelaPrecoProdutoRepository repository;
-
-	private TabelaPrecoRepository tabelaPrecoRepository;
-
-	private ProdutoRepository produtoRepository;
+	private static final Map<String, String> SORT_MAPPING = Map.of(
+	    "id", "p.id",
+	    "produto.id", "p.id",
+	    "produto.nome", "p.nome",
+	    "produto.referencia", "p.referencia",
+	    "produto.tipoProduto.nome", "tp.nome",
+	    "produto.fornecedor.fantasia", "f.fantasia",
+	    "produto.peso", "p.peso",
+	    "preco", "tpp.preco"
+	);
 
 	private EntityManager entityManager;
 
 	private ModelMapper modelMapper;
+
+	private ProdutoRepository produtoRepository;
+
+	private TabelaPrecoProdutoRepository repository;
+
+	private TabelaPrecoRepository tabelaPrecoRepository;
 
 	public PriceTableProductServiceImpl(TabelaPrecoProdutoRepository repository, TabelaPrecoRepository tabelaPrecoRepository, ProdutoRepository produtoRepository,
 			EntityManager entityManager, ModelMapper modelMapper) {
@@ -50,14 +60,6 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 		this.produtoRepository = produtoRepository;
 		this.entityManager = entityManager;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<PriceTableProductDto, TabelaPrecoProduto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getTabela());
-                skip(destination.getProduto());
-            }
-        });
 	}
 
 	@Override
@@ -84,128 +86,12 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 
 	@Override
 	public PriceTableProductDto save(PriceTableProductDto dto, Usuario usuario) {
-		TabelaPrecoProduto entity;
-        Date agora = DateUtil.now();
-
-		if (dto.getId() != null) {
-			entity = this.repository.findById(dto.getId()).orElseThrow();
-		} else {
-			entity = new TabelaPrecoProduto();
-
-			entity.setDataCriacao(agora);
-		}
-
-		this.modelMapper.map(dto, entity);
-
-		TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
-		Produto produto = this.produtoRepository.findById(dto.getProduto().getId()).orElseThrow();
-
-		entity.setTabela(tabela);
-		entity.setProduto(produto);
-		entity.setUsuario(usuario);
-		entity.setDataAlteracao(agora);
-
-		entity = this.repository.save(entity);
-
-		return this.modelMapper.map(entity, PriceTableProductDto.class);
+		return this.modelMapper.map(this.savePrice(dto, usuario), PriceTableProductDto.class);
 	}
 
 	@Override
 	public void delete(Long id) {
 		this.repository.deleteById(id);
-	}
-
-	private static final Map<String, String> SORT_MAPPING = Map.of(
-	    "id", "p.id",
-	    "produto.id", "p.id",
-	    "produto.nome", "p.nome",
-	    "produto.referencia", "p.referencia",
-	    "produto.tipoProduto.nome", "tp.nome",
-	    "produto.fornecedor.fantasia", "f.fantasia",
-	    "produto.peso", "p.peso",
-	    "preco", "tpp.preco"
-	);
-
-	private String getQuery(PriceTableProductFilterDto filter) {
-		String result = """
-				SELECT p.id, tp.nome, f.fantasia, p.referencia, p.nome, p.peso, tpp.id, tpp.preco
-				FROM produto p
-				JOIN tipo_produto tp ON tp.id = p.id_tipo_produto
-				JOIN fornecedor f ON f.id = p.id_fornecedor
-				LEFT JOIN tabela_preco_produto tpp ON p.id = tpp.id_produto AND tpp.id_tabela_preco = :idTabelaPreco
-				WHERE p.ativo = 1
-				""";
-
-		if (filter.getNome() != null) {
-			result += " AND lower(p.nome) like :nome";
-		}
-
-		if (filter.getReferencia() != null) {
-			result += " AND lower(p.referencia) like :referencia";
-		}
-
-		if (filter.getIdTipoProduto() != null) {
-			result += " AND tp.id = :idTipoProduto";
-		}
-
-		if (filter.getIdFornecedor() != null) {
-			result += " AND f.id = :idFornecedor";
-		}
-
-		if (filter.getMinPeso() != null && filter.getMaxPeso() != null) {
-			result += " AND p.peso between :minPeso and :maxPeso";
-		} else if (filter.getMinPeso() != null) {
-			result += " AND p.peso >= :minPeso";
-		} else if (filter.getMaxPeso() != null) {
-			result += " AND p.peso <= :maxPeso";
-		}
-
-		if (filter.getMinPreco() != null && filter.getMaxPreco() != null) {
-			result += " AND tpp.preco between :minPreco and :maxPreco";
-		} else if (filter.getMinPreco() != null) {
-			result += " AND tpp.preco >= :minPreco";
-		} else if (filter.getMaxPreco() != null) {
-			result += " AND tpp.preco <= :maxPreco";
-		}
-
-		return result;
-	}
-
-	private void fillParameters(PriceTableProductFilterDto filter, Query query) {
-
-	    query.setParameter("idTabelaPreco", filter.getIdTabelaPreco());
-
-		if (filter.getNome() != null) {
-		    query.setParameter("nome", "%" + filter.getNome().toLowerCase() + "%");
-		}
-		
-		if (filter.getReferencia() != null) {
-		    query.setParameter("referencia", "%" + filter.getReferencia().toLowerCase() + "%");
-		}
-
-		if (filter.getIdTipoProduto() != null) {
-		    query.setParameter("idTipoProduto", filter.getIdTipoProduto());
-		}
-
-		if (filter.getIdFornecedor() != null) {
-		    query.setParameter("idFornecedor", filter.getIdFornecedor());
-		}
-
-		if (filter.getMinPeso() != null) {
-		    query.setParameter("minPeso", filter.getMinPeso());
-		}
-
-		if (filter.getMaxPeso() != null) {
-		    query.setParameter("maxPeso", filter.getMaxPeso());
-		}
-
-		if (filter.getMinPreco() != null) {
-		    query.setParameter("minPreco", filter.getMinPreco());
-		}
-
-		if (filter.getMaxPreco() != null) {
-		    query.setParameter("maxPreco", filter.getMaxPreco());
-		}
 	}
 
 	@Override
@@ -262,32 +148,117 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 	public void savePrices(List<PriceTableProductDto> prices, Usuario usuario) {
 		prices.forEach(dto -> {
 			if (dto.getPreco() != null) {
-				TabelaPrecoProduto entity;
-				Date agora = DateUtil.now();
-
-				if (dto.getId() != null) {
-					entity = this.repository.findById(dto.getId()).orElseThrow();
-				} else {
-					entity = new TabelaPrecoProduto();
-
-					entity.setDataCriacao(agora);
-				}
-
-				TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
-				Produto produto = this.produtoRepository.findById(dto.getProduto().getId()).orElseThrow();
-
-				entity.setTabela(tabela);
-				entity.setProduto(produto);
-				entity.setUsuario(usuario);
-				entity.setDataAlteracao(agora);
-				entity.setPreco(dto.getPreco());
-
-				this.repository.save(entity);
-			} else {
-				if (dto.getId() != null) {
-					this.repository.deleteById(dto.getId());
-				}
+				this.savePrice(dto, usuario);
+			} else if (dto.getId() != null) {
+				this.repository.deleteById(dto.getId());
 			}
 		});
 	}
+
+	private void fillParameters(PriceTableProductFilterDto filter, Query query) {
+
+	    query.setParameter("idTabelaPreco", filter.getIdTabelaPreco());
+
+		if (filter.getNome() != null) {
+		    query.setParameter("nome", "%" + filter.getNome().toLowerCase() + "%");
+		}
+		
+		if (filter.getReferencia() != null) {
+		    query.setParameter("referencia", "%" + filter.getReferencia().toLowerCase() + "%");
+		}
+
+		if (filter.getIdTipoProduto() != null) {
+		    query.setParameter("idTipoProduto", filter.getIdTipoProduto());
+		}
+
+		if (filter.getIdFornecedor() != null) {
+		    query.setParameter("idFornecedor", filter.getIdFornecedor());
+		}
+
+		if (filter.getMinPeso() != null) {
+		    query.setParameter("minPeso", filter.getMinPeso());
+		}
+
+		if (filter.getMaxPeso() != null) {
+		    query.setParameter("maxPeso", filter.getMaxPeso());
+		}
+
+		if (filter.getMinPreco() != null) {
+		    query.setParameter("minPreco", filter.getMinPreco());
+		}
+
+		if (filter.getMaxPreco() != null) {
+		    query.setParameter("maxPreco", filter.getMaxPreco());
+		}
+	}
+
+	private String getQuery(PriceTableProductFilterDto filter) {
+		String result = """
+				SELECT p.id, tp.nome, f.fantasia, p.referencia, p.nome, p.peso, tpp.id, tpp.preco
+				FROM produto p
+				JOIN tipo_produto tp ON tp.id = p.id_tipo_produto
+				JOIN fornecedor f ON f.id = p.id_fornecedor
+				LEFT JOIN tabela_preco_produto tpp ON p.id = tpp.id_produto AND tpp.id_tabela_preco = :idTabelaPreco
+				WHERE p.ativo = 1
+				""";
+
+		if (filter.getNome() != null) {
+			result += " AND lower(p.nome) like :nome";
+		}
+
+		if (filter.getReferencia() != null) {
+			result += " AND lower(p.referencia) like :referencia";
+		}
+
+		if (filter.getIdTipoProduto() != null) {
+			result += " AND tp.id = :idTipoProduto";
+		}
+
+		if (filter.getIdFornecedor() != null) {
+			result += " AND f.id = :idFornecedor";
+		}
+
+		if (filter.getMinPeso() != null && filter.getMaxPeso() != null) {
+			result += " AND p.peso between :minPeso and :maxPeso";
+		} else if (filter.getMinPeso() != null) {
+			result += " AND p.peso >= :minPeso";
+		} else if (filter.getMaxPeso() != null) {
+			result += " AND p.peso <= :maxPeso";
+		}
+
+		if (filter.getMinPreco() != null && filter.getMaxPreco() != null) {
+			result += " AND tpp.preco between :minPreco and :maxPreco";
+		} else if (filter.getMinPreco() != null) {
+			result += " AND tpp.preco >= :minPreco";
+		} else if (filter.getMaxPreco() != null) {
+			result += " AND tpp.preco <= :maxPreco";
+		}
+
+		return result;
+	}
+
+	private TabelaPrecoProduto savePrice(PriceTableProductDto dto, Usuario usuario) {
+		TabelaPrecoProduto entity;
+        Date agora = DateUtil.now();
+
+		if (dto.getId() != null) {
+			entity = this.repository.findById(dto.getId()).orElseThrow();
+		} else {
+			entity = new TabelaPrecoProduto();
+
+			entity.setDataCriacao(agora);
+		}
+
+		TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
+		Produto produto = this.produtoRepository.findById(dto.getProduto().getId()).orElseThrow();
+
+		entity.setTabela(tabela);
+		entity.setProduto(produto);
+		entity.setPreco(dto.getPreco());
+		entity.setUsuario(usuario);
+		entity.setDataAlteracao(agora);
+
+		return this.repository.save(entity);
+	}
+
 }

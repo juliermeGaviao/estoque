@@ -40,6 +40,9 @@ public class Usuario implements UserDetails {
     @Column(name = "senha", nullable = false, length = 255)
     private String senha;
 
+    @Column(name = "ativo", nullable = false, columnDefinition = "tinyint")
+    private Boolean ativo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario cadastrante;
@@ -64,7 +67,7 @@ public class Usuario implements UserDetails {
     @Override public boolean isAccountNonExpired() { return true; }
     @Override public boolean isAccountNonLocked() { return true; }
     @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled() { return true; }
+    @Override public boolean isEnabled() { return this.ativo; }
 
 	public Long getId() {
 		return id;
@@ -120,6 +123,14 @@ public class Usuario implements UserDetails {
 
 	public void setPerfis(Set<Perfil> perfis) {
 		this.perfis = perfis;
+	}
+
+	public Boolean getAtivo() {
+		return ativo;
+	}
+
+	public void setAtivo(Boolean ativo) {
+		this.ativo = ativo;
 	}
 
 }

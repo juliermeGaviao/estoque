@@ -70,7 +70,7 @@ const save = async ({ valid, values }) => {
       cancel()
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de carga de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Gravação de usuário terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }

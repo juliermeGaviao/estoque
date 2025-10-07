@@ -11,7 +11,7 @@ public class UserPriceTableDto {
 
 	private Long id;
 
-    private UserDto usuario;
+    private UserDto vendedor;
 
     private PriceTableDto tabela;
 
