@@ -109,7 +109,7 @@ public class UserPriceTableController {
 	public ResponseEntity<Object> savePrices(@RequestBody List<UserPriceTableDto> dtos, @AuthenticationPrincipal Usuario usuario) {
 		try {
 			this.service.saveTables(dtos, usuario);
-			return ResponseEntity.ok("Preços registrados");
+			return ResponseEntity.ok("Tabelas registradas");
 		} catch (NoSuchElementException e) {
 			String mensagem = "Alguma tabela de preços ou usuário não encontrado na base";
 			log.error(mensagem, e);

@@ -41,7 +41,4 @@ public class UsuarioTabelaPreco {
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 
-    @Column(name = "data_alteracao", nullable = false)
-    private Date dataAlteracao;
-
 }

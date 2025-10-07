@@ -20,6 +20,8 @@
 
 		</createTable>
 
+        <addUniqueConstraint tableName="usuario_perfil" columnNames="id_usuario, id_perfil" constraintName="uk_usuario_perfil"/>
+
 		<insert tableName="usuario_perfil">
 			<column name="id_usuario">1</column>
 			<column name="id_perfil">1</column>

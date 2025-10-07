@@ -150,8 +150,10 @@ async function loadUserPriceTables() {
 
     userPriceTables.value = response.data.content
 
-    if (userPriceTables.value.length === 1) {
+    if (userProfiles.value === 1) {
       tableForm.value.setValues({ tabelas: [], tabela: userPriceTables.value[0].tabela.id })
+    } else if (userProfiles.value > 1) {
+      tableForm.value.setValues({ tabelas: userPriceTables.value.map(record => record.tabela.id), tabela: 0 })
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
@@ -163,8 +165,8 @@ const tableFormValues = ref({ tabelas: [], tabela: 0 })
 
 const tableFormValidator = zodResolver(
   z.object({
-    tabelas: z.array(z.number()).refine(data => userProfiles.value < 2 || data.length, { message: 'É necessário marcar ao menos uma tabela de preços.' }),
-    tabela: z.number().positive({ message: 'Uma Tabela de Preços deve ser escolhida.' })
+    tabelas: z.array(z.number()).refine(data => userProfiles.value === 1 || data.length, { message: 'É necessário marcar ao menos uma tabela de preços.' }),
+    tabela: z.number().refine(data => userProfiles.value === 2 || data > 0, { message: 'Uma Tabela de Preços deve ser escolhida.' })
   })
 )
 
@@ -173,11 +175,11 @@ const userProfiles = ref(0)
 const savePriceTables = async ({ valid, values }) => {
   if (!valid) return
 
-
   if (userProfiles.value < 2) {
     const userPriceTable = userPriceTables.value.length ? userPriceTables.value[0] : { tabela: { id: null }, vendedor: { id: userId } }
 
     userPriceTable.tabela.id = values.tabela
+
     loading.value = true
 
     try {
@@ -194,8 +196,30 @@ const savePriceTables = async ({ valid, values }) => {
       loading.value = false
     }
   } else {
-    const userPriceTable = userPriceTables.value.find(record => record.tabela.id === values.tabela)
+    const tables = []
+
+    values.tabelas.forEach(tabela => tables.push({ tabela: { id: tabela }, vendedor: { id: userId } }))
+
+    loading.value = true
+
+    try {
+      const response = await api.post('/user-price-table/save-tables', tables)
+
+      if (response.status === 200) {
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Tabela de Preços salva com sucesso', life: 10000 })
+        
+        loadUserPriceTables()
+      }
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
+    } finally {
+      loading.value = false
+    }
   }
+}
+
+function clearTables() {
+  tableForm.value.setValues(tableFormValues.value)
 }
 </script>
 
@@ -225,6 +249,7 @@ const savePriceTables = async ({ valid, values }) => {
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
+                @change="clearTables"
                 :modelValue="$field.value"
                 @update:modelValue="val => {
                   $field.value = val

@@ -30,13 +30,9 @@
                 <constraints nullable="false"/>
             </column>
 
-            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-
 		</createTable>
 
-		<addUniqueConstraint tableName="usuario_tabela_preco" columnNames="id_usuario, id_tabela_preco" constraintName="uk_usuario_tabela_preco"/>
+		<addUniqueConstraint tableName="usuario_tabela_preco" columnNames="id_vendedor, id_tabela_preco" constraintName="uk_vendedor_tabela_preco"/>
 
 	    <rollback>
 	        <dropTable tableName="usuario_tabela_preco"/>

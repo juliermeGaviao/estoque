@@ -64,6 +64,7 @@ public class UserDetailsServiceImpl implements UserDetailsService, UserService {
             specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
         }
 
+        specification = specification.and((root, query, cb) -> cb.notEqual(root.get("id"), 1L));
         specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), Boolean.TRUE));
 
         return this.usuarioRepository.findAll(specification, pageable).map(usuario -> {

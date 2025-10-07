@@ -13,6 +13,7 @@ import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
+import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
 import br.com.dinamica.estoque.service.PriceTableService;
 import br.com.dinamica.estoque.util.DateUtil;
 
@@ -23,11 +24,15 @@ public class PriceTableServiceImpl implements PriceTableService {
 
 	private TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository;
 
+	private UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository;
+
 	private ModelMapper modelMapper;
 
-	public PriceTableServiceImpl(TabelaPrecoRepository repository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository, ModelMapper modelMapper) {
+	public PriceTableServiceImpl(TabelaPrecoRepository repository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository,
+			UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
+		this.usuarioTabelaPrecoRepository = usuarioTabelaPrecoRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -75,6 +80,8 @@ public class PriceTableServiceImpl implements PriceTableService {
 	@Override
 	public void delete(Long id) {
 		this.tabelaPrecoProdutoRepository.deleteByTabela_Id(id);
+		this.usuarioTabelaPrecoRepository.deleteByTabela_Id(id);
+		
 		this.repository.deleteById(id);
 	}
 

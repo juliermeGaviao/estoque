@@ -61,6 +61,8 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 
 	@Override
 	public UserPriceTableDto save(UserPriceTableDto dto, Usuario usuario) {
+		this.repository.deleteByVendedor(dto.getVendedor().getId());
+
 		return this.modelMapper.map(this.saveTable(dto, usuario), UserPriceTableDto.class);
 	}
 
@@ -71,26 +73,14 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 
 	@Override
 	public void saveTables(List<UserPriceTableDto> dtos, Usuario usuario) {
-		dtos.forEach(dto -> {
-			if (dto.getTabela() != null) {
-				this.saveTable(dto, usuario);
-			} else if (dto.getId() != null) {
-				this.repository.deleteById(dto.getId());
-			}
-		});
+		this.repository.deleteByVendedor(dtos.get(0).getVendedor().getId());
+
+		dtos.forEach(dto -> this.saveTable(dto, usuario));
 	}
 
 	private UsuarioTabelaPreco saveTable(UserPriceTableDto dto, Usuario usuario) {
-		UsuarioTabelaPreco entity;
+		UsuarioTabelaPreco entity = new UsuarioTabelaPreco();
         Date agora = DateUtil.now();
-
-		if (dto.getId() != null) {
-			entity = this.repository.findById(dto.getId()).orElseThrow();
-		} else {
-			entity = new UsuarioTabelaPreco();
-
-			entity.setDataCriacao(agora);
-		}
 
 		TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
@@ -98,9 +88,9 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 		entity.setTabela(tabela);
 		entity.setVendedor(vendedor);
 		entity.setUsuario(usuario);
-		entity.setDataAlteracao(agora);
+		entity.setDataCriacao(agora);
 
-		return this.repository.save(entity);
+		return this.repository.saveAndFlush(entity);
 
 	}
 
