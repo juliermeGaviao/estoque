@@ -76,7 +76,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         	UserListDto result = this.modelMapper.map(usuario, UserListDto.class);
 
         	result.setPerfis(usuario.getPerfis().stream().map(Perfil::getNome).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
-        	result.setTabelas(this.usuarioTabelaPrecoRepository.findByVendedor(usuario.getId()).stream().map(linha -> linha.getTabela().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
+        	result.setTabelas(this.usuarioTabelaPrecoRepository.findByUsuario(usuario.getId()).stream().map(linha -> linha.getTabela().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
 
         	return result;
         });

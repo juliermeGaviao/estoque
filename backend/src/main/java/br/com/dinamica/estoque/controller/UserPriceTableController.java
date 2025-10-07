@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.dto.UserPriceTableDto;
-import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.UserPriceTableService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,9 +72,9 @@ public class UserPriceTableController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody UserPriceTableDto dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody UserPriceTableDto dto) {
 		try {
-			return ResponseEntity.ok(this.service.save(dto, usuario));
+			return ResponseEntity.ok(this.service.save(dto));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
 			log.error(mensagem, e);
@@ -106,9 +104,9 @@ public class UserPriceTableController {
 	}
 
 	@PostMapping("/save-tables")
-	public ResponseEntity<Object> savePrices(@RequestBody List<UserPriceTableDto> dtos, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> savePrices(@RequestBody List<UserPriceTableDto> dtos) {
 		try {
-			this.service.saveTables(dtos, usuario);
+			this.service.saveTables(dtos);
 			return ResponseEntity.ok("Tabelas registradas");
 		} catch (NoSuchElementException e) {
 			String mensagem = "Alguma tabela de preços ou usuário não encontrado na base";

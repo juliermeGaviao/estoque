@@ -176,7 +176,7 @@ const savePriceTables = async ({ valid, values }) => {
   if (!valid) return
 
   if (userProfiles.value < 2) {
-    const userPriceTable = userPriceTables.value.length ? userPriceTables.value[0] : { tabela: { id: null }, vendedor: { id: userId } }
+    const userPriceTable = userPriceTables.value.length ? userPriceTables.value[0] : { tabela: { id: null }, usuario: { id: userId } }
 
     userPriceTable.tabela.id = values.tabela
 
@@ -198,7 +198,7 @@ const savePriceTables = async ({ valid, values }) => {
   } else {
     const tables = []
 
-    values.tabelas.forEach(tabela => tables.push({ tabela: { id: tabela }, vendedor: { id: userId } }))
+    values.tabelas.forEach(tabela => tables.push({ tabela: { id: tabela }, usuario: { id: userId } }))
 
     loading.value = true
 

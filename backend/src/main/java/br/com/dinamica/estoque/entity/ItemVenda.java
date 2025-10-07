@@ -16,25 +16,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "venda")
+@Table(name = "item_venda")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Venda {
+public class ItemVenda {
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_vendedor", nullable = false)
-    private Usuario vendedor;
+    @JoinColumn(name = "id_venda", nullable = false)
+    private Venda venda;
 
-    @Column(name = "desconto")
-    private Float desconto;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tabela_preco_produto", nullable = false)
+    private TabelaPrecoProduto tabelaPrecoProduto;
 
-    @Column(name = "observacoes", length = 1024)
-    private String observacoes;
+    @Column(name = "quantidade", nullable = false)
+    private Integer quantidade;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)

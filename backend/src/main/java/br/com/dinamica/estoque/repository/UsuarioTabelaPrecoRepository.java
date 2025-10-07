@@ -18,10 +18,10 @@ public interface UsuarioTabelaPrecoRepository extends JpaRepository<UsuarioTabel
 
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("delete from UsuarioTabelaPreco u where u.vendedor.id = :vendedorId")
-	Integer deleteByVendedor(@Param("vendedorId") Long vendedorId);
+	@Query("delete from UsuarioTabelaPreco u where u.usuario.id = :usuarioId")
+	Integer deleteByUsuario(@Param("usuarioId") Long usuarioId);
 
-	@Query("from UsuarioTabelaPreco u where u.vendedor.id = :vendedorId")
-	List<UsuarioTabelaPreco> findByVendedor(@Param("vendedorId") Long vendedorId);
+	@Query("from UsuarioTabelaPreco u where u.usuario.id = :usuarioId")
+	List<UsuarioTabelaPreco> findByUsuario(@Param("usuarioId") Long usuarioId);
 
 }

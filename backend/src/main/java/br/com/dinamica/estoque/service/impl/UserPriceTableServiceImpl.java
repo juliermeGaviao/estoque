@@ -1,6 +1,5 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
@@ -17,7 +16,6 @@ import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
 import br.com.dinamica.estoque.service.UserPriceTableService;
-import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class UserPriceTableServiceImpl implements UserPriceTableService {
@@ -53,17 +51,17 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
         }
 
         if (idVendedor != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("vendedor").get("id"), idVendedor));
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("usuario").get("id"), idVendedor));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, UserPriceTableDto.class));
 	}
 
 	@Override
-	public UserPriceTableDto save(UserPriceTableDto dto, Usuario usuario) {
-		this.repository.deleteByVendedor(dto.getVendedor().getId());
+	public UserPriceTableDto save(UserPriceTableDto dto) {
+		this.repository.deleteByUsuario(dto.getUsuario().getId());
 
-		return this.modelMapper.map(this.saveTable(dto, usuario), UserPriceTableDto.class);
+		return this.modelMapper.map(this.saveTable(dto), UserPriceTableDto.class);
 	}
 
 	@Override
@@ -72,23 +70,20 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 	}
 
 	@Override
-	public void saveTables(List<UserPriceTableDto> dtos, Usuario usuario) {
-		this.repository.deleteByVendedor(dtos.get(0).getVendedor().getId());
+	public void saveTables(List<UserPriceTableDto> dtos) {
+		this.repository.deleteByUsuario(dtos.get(0).getUsuario().getId());
 
-		dtos.forEach(dto -> this.saveTable(dto, usuario));
+		dtos.forEach(this::saveTable);
 	}
 
-	private UsuarioTabelaPreco saveTable(UserPriceTableDto dto, Usuario usuario) {
+	private UsuarioTabelaPreco saveTable(UserPriceTableDto dto) {
 		UsuarioTabelaPreco entity = new UsuarioTabelaPreco();
-        Date agora = DateUtil.now();
 
 		TabelaPreco tabela = this.tabelaPrecoRepository.findById(dto.getTabela().getId()).orElseThrow();
-		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
+		Usuario usuario = this.usuarioRepository.findById(dto.getUsuario().getId()).orElseThrow();
 
 		entity.setTabela(tabela);
-		entity.setVendedor(vendedor);
 		entity.setUsuario(usuario);
-		entity.setDataCriacao(agora);
 
 		return this.repository.saveAndFlush(entity);
 
