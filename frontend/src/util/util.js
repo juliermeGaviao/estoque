@@ -64,3 +64,7 @@ export function formatarCEP(cep) {
 export function onlyDigits(str) {
   return str.replace(/\D/g, '')
 }
+
+export function formatNumber(value, locale = 'pt-BR', options = {}) {
+  return value ? new Intl.NumberFormat(locale, options).format(value) : null
+}

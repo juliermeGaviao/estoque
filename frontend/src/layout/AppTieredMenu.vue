@@ -8,6 +8,11 @@ const menu = ref()
 
 const items = ref([
   {
+    label: 'Vendas',
+    icon: 'pi pi-shopping-cart',
+        command: () => { router.push('/core/sale') }
+  },
+  {
     label: 'Cadastro',
     icon: 'pi pi-id-card',
     items: [

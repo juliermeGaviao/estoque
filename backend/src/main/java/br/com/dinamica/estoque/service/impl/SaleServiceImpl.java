@@ -72,7 +72,7 @@ public class SaleServiceImpl implements SaleService {
         }
 
         if (observacoes != null && !observacoes.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + observacoes.toLowerCase() + "%"));
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("observacoes")), "%" + observacoes.toLowerCase() + "%"));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> {
