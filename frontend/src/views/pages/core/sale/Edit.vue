@@ -1,5 +1,6 @@
 <script setup>
 import api from '@/util/api'
+import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -134,7 +135,9 @@ async function loadItens() {
           <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
           <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
           <Column field="quantidade" header="Quantidade"/>
-          <Column field="precoUnitario" header="Preço Unitário"/>
+          <Column field="precoUnitario" header="Preço Unitário (R$)">
+            <template #body="slotProps">{{ formatNumber(slotProps.data.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+          </Column>
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
               <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Tabela de Preços'"/>
@@ -164,7 +167,7 @@ async function loadItens() {
               <FormField name="subTotal">
                 <FloatLabel variant="on">
                   <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="subTotal">Sub-Total</label>
+                  <label for="subTotal">Sub-Total (R$)</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -180,7 +183,7 @@ async function loadItens() {
               <FormField name="total">
                 <FloatLabel variant="on">
                   <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="total">Total</label>
+                  <label for="total">Total (R$)</label>
                 </FloatLabel>
               </FormField>
             </div>
