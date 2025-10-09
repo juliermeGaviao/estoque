@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -36,6 +37,9 @@ public class ItemVenda {
 
     @Column(name = "quantidade", nullable = false)
     private Integer quantidade;
+
+    @Column(name = "preco_unitario", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
+    private BigDecimal precoUnitario;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)

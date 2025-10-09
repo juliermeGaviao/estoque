@@ -18,7 +18,15 @@
                 <constraints nullable="false" foreignKeyName="fk_venda_vendedor" references="usuario(id)"/>
             </column>
 
+            <column name="sub_total" type="decimal(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="desconto" type="float"/>
+
+            <column name="total" type="decimal(10, 2)">
+                <constraints nullable="false"/>
+            </column>
 
 			<column name="observacoes" type="varchar(1024)"/>
 

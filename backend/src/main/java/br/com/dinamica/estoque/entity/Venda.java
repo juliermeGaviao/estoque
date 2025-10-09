@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -30,8 +31,14 @@ public class Venda {
     @JoinColumn(name = "id_vendedor", nullable = false)
     private Usuario vendedor;
 
+    @Column(name = "sub_total", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
+    private BigDecimal subTotal;
+
     @Column(name = "desconto")
     private Float desconto;
+
+    @Column(name = "total", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
+    private BigDecimal total;
 
     @Column(name = "observacoes", length = 1024)
     private String observacoes;

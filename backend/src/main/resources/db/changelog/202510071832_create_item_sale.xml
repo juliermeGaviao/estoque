@@ -26,6 +26,10 @@
                 <constraints nullable="false"/>
             </column>
 
+            <column name="preco_unitario" type="decimal(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="id_usuario" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_item_venda_usuario" references="usuario(id)"/>
             </column>

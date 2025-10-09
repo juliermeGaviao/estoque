@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.dto;
 
+import java.math.BigDecimal;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +15,11 @@ public class SaleDto {
 
     private UserDto vendedor;
 
+    private BigDecimal subTotal;
+
     private Float desconto;
+
+    private BigDecimal total;
 
     private String observacoes;
 
