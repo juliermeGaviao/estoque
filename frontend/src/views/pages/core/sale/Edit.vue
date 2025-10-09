@@ -168,10 +168,10 @@ async function loadItens() {
       <template #content>
         <DataTable :value="data" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
           <Column field="id" header="Id"/>
-          <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
           <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
-          <Column field="tabelaPrecoProduto.preco" header="Preço Unitário"/>
+          <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
           <Column field="quantidade" header="Quantidade"/>
+          <Column field="tabelaPrecoProduto.preco" header="Preço Unitário"/>
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
               <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Tabela de Preços'"/>
