@@ -23,8 +23,6 @@ const formValidator = zodResolver(
 const id = ref(route.query.id)
 
 async function load() {
-  loading.value = true
-
   try {
     const res = await api.get('/price-table', { params: { id: id.value } })
 
@@ -35,8 +33,6 @@ async function load() {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tabela de Preços', detail: 'Requisição de tabela de preços terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -66,12 +62,14 @@ const save = async ({ valid, values }) => {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Tabela de Preços', detail: 'Requisição de alteração de tabela de preços terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
     loadProducts( { ...productFormValues.value } )
+    loading.value = false
   }
 }
 
 onMounted(() => {
+  loading.value = true
+
   if (id.value) {
     load()
     loadProducts( { ...productFormValues.value } )
@@ -79,6 +77,8 @@ onMounted(() => {
 
   loadProductTypes()
   loadProviders()
+
+  loading.value = false
 })
 
 const data = ref([])
@@ -105,8 +105,6 @@ async function loadProducts(params) {
     }
   }
 
-  loading.value = true
-
   try {
     const response = await api.get("/price-table-product/list-product", { params: query })
 
@@ -114,8 +112,6 @@ async function loadProducts(params) {
     data.value = response.data.content
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -123,7 +119,9 @@ function onPage(event) {
   page.value = event.page
   size.value = event.rows
 
+  loading.value = true
   loadProducts( { ...filterValues.value } )
+  loading.value = false
 }
 
 function onSort(event) {
@@ -131,7 +129,9 @@ function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
+  loading.value = true
   loadProducts( { ...filterValues.value } )
+  loading.value = false
 }
 
 async function savePrices() {
@@ -159,8 +159,8 @@ async function savePrices() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Preços', detail: 'Requisição de alteração de preços terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
     loadProducts( { ...filterValues.value } )
+    loading.value = false
   }
 }
 
@@ -171,32 +171,24 @@ function cleanPrices() {
 let tipos = ref([])
 
 async function loadProductTypes() {
-  loading.value = true
-
   try {
     const response = await api.get('/product-type/list', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
 
     tipos.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produto', detail: 'Requisição de lista de Tipos de Produto terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 let fornecedores = ref([])
 
 async function loadProviders() {
-  loading.value = true
-
   try {
     const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
 
     fornecedores.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -355,7 +347,7 @@ function limpar() {
           <Column field="produto.peso" header="Peso (em gramas)" sortable/>
           <Column field="preco" header="Preço (R$)" headerClass="flex justify-center" bodyClass="flex justify-center" sortable>
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small"/>
+              <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small" inputStyle="text-align: right"/>
             </template>
           </Column>
         </DataTable>
