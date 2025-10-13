@@ -21,4 +21,6 @@ public class SaleItemDto {
 
     private BigDecimal precoUnitario;
 
+    private BigDecimal total;
+
 }

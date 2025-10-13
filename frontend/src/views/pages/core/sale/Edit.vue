@@ -110,10 +110,28 @@ async function loadItens() {
     const response = await api.get("/sale-item/list", { params: query })
 
     data.value = response.data.content
+    data.value.forEach(item => {
+      item.editando = false
+      item.temProduto = true
+    })
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
   }
 }
+
+function addItem() {
+  data.value.push({
+    id: null,
+    venda: { id: id.value },
+    tabelaPrecoProduto: { id: null, produto: { referencia: null, nome: null } },
+    quantidade: null,
+    precoUnitario: null,
+    total: null,
+    editando: true,
+    temProduto: false
+  })
+}
+
 </script>
 
 <template>
@@ -132,18 +150,35 @@ async function loadItens() {
       <template #content>
         <DataTable :value="data" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
           <Column field="id" header="Id"/>
-          <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
+          <Column header="Referência">
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{ slotProps.data.tabelaPrecoProduto.produto.referencia }}</div>
+              <div v-show="slotProps.data.editando"><InputText v-model="slotProps.data.tabelaPrecoProduto.produto.referencia" maxlength="100" autocomplete="off"/></div>
+            </template>
+          </Column>
           <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
-          <Column field="quantidade" header="Quantidade"/>
+          <Column field="quantidade" header="Quantidade">
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.quantidade, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto"><InputNumber v-model="slotProps.data.quantidade" :maxFractionDigits="0"/></div>
+            </template>
+          </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">
-            <template #body="slotProps">{{ formatNumber(slotProps.data.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto"><InputNumber v-model="slotProps.data.precoUnitario" :minFractionDigits="2" :maxFractionDigits="2"/></div>
+            </template>
+          </Column>
+          <Column field="total" header="Total (R$)">
+            <template #body="slotProps">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
           </Column>
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Tabela de Preços'"/>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Nova Tabela de Preços'"/>
             </template>
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
+              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Verificar'" v-show="slotProps.data.editando"/>
               <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
             </template>
           </Column>
@@ -167,7 +202,7 @@ async function loadItens() {
               <FormField name="subTotal">
                 <FloatLabel variant="on">
                   <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="subTotal">Sub-Total (R$)</label>
+                  <label for="subTotal">Subtotal (R$)</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -206,8 +241,8 @@ async function loadItens() {
       </template>
     </Card>
     <div class="flex justify-end gap-4 mt-4">
-      <Button label="Limpar" icon="pi pi-times" @click="cleanPrices" severity="secondary" raised/>
-      <Button label="Salvar" icon="pi pi-save" @click="savePrices" raised/>
+      <Button label="Limpar" icon="pi pi-times" severity="secondary" raised/>
+      <Button label="Salvar" icon="pi pi-save" raised/>
     </div>
   </BlockUI>
 </template>

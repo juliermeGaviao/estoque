@@ -41,6 +41,9 @@ public class ItemVenda {
     @Column(name = "preco_unitario", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
     private BigDecimal precoUnitario;
 
+    @Column(name = "total", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
+    private BigDecimal total;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;

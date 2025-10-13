@@ -347,7 +347,7 @@ function limpar() {
           <Column field="produto.peso" header="Peso (em gramas)" sortable/>
           <Column field="preco" header="Preço (R$)" headerClass="flex justify-center" bodyClass="flex justify-center" sortable>
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small" inputStyle="text-align: right"/>
+              <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small" :inputStyle="{'text-align': 'right'}"/>
             </template>
           </Column>
         </DataTable>
