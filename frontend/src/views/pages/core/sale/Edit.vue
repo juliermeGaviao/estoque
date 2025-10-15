@@ -77,6 +77,7 @@ onMounted(() => {
   if (id.value) {
     load()
     loadItens()
+    loadTables()
   }
 
   loadUsers()
@@ -97,7 +98,7 @@ async function loadUsers() {
   }
 }
 
-const data = ref([])
+const itens = ref([])
 
 async function loadItens() {
   const query = {
@@ -109,8 +110,8 @@ async function loadItens() {
   try {
     const response = await api.get("/sale-item/list", { params: query })
 
-    data.value = response.data.content
-    data.value.forEach(item => {
+    itens.value = response.data.content
+    itens.value.forEach(item => {
       item.editando = false
       item.temProduto = true
     })
@@ -120,7 +121,7 @@ async function loadItens() {
 }
 
 function addItem() {
-  data.value.push({
+  itens.value.push({
     id: null,
     venda: { id: id.value },
     tabelaPrecoProduto: { id: null, produto: { referencia: null, nome: null } },
@@ -129,6 +130,33 @@ function addItem() {
     total: null,
     editando: true,
     temProduto: false
+  })
+}
+
+const tables = ref([])
+
+async function loadTables() {
+  try {
+    const response = await api.get("/user-price-table/list", { params: { idVendedor: id.value } })
+
+    tables.value = response.data.content
+    loadProducts()
+  } catch (error) {
+    toast.add({ severity: "error", summary: "Falha de Carga de Tabelas de Preço do Vendedor", detail: "Requisição de lista de Tabelas de Preço do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
+  }
+}
+
+const products = ref(new Map())
+
+function loadProducts() {
+  tables.value.forEach(async table => {
+    try {
+      const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: table.tabela.id } })
+  
+      products.value.set(table.tabela.id, response.data.content)
+    } catch (error) {
+      toast.add({ severity: "error", summary: "Falha de Carga de Produtos para o Vendedor", detail: "Requisição de lista de Produtos para o Vendedor terminou com o erro: " + error.response.data, life: 10000 })
+    }
   })
 }
 
@@ -148,7 +176,7 @@ function addItem() {
       </template>
 
       <template #content>
-        <DataTable :value="data" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
+        <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
           <Column field="id" header="Id"/>
           <Column header="Referência">
             <template #body="slotProps">

@@ -16,41 +16,41 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "cliente_empresa")
+@Table(name = "cliente")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClienteEmpresa {
+public class Cliente {
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "razao_social", nullable = false, length = 255)
+    @Column(name = "razao_social", length = 255)
     private String razaoSocial;
 
-    @Column(name = "fantasia", nullable = false, length = 255)
-    private String fantasia;
+    @Column(name = "nome", nullable = false, length = 255)
+    private String nome;
 
-    @Column(name = "cnpj", nullable = false, length = 14, columnDefinition = "char")
+    @Column(name = "cnpj", length = 14, columnDefinition = "char")
     private String cnpj;
 
-    @Column(name = "fone", nullable = false, length = 11, columnDefinition = "char")
+    @Column(name = "fone", length = 11, columnDefinition = "char")
     private String fone;
 
-    @Column(name = "endereco", nullable = false, length = 255)
+    @Column(name = "endereco", length = 255)
     private String endereco;
 
-    @Column(name = "bairro", nullable = false, length = 100)
+    @Column(name = "bairro", length = 100)
     private String bairro;
 
-    @Column(name = "cep", nullable = false, length = 8, columnDefinition = "char")
+    @Column(name = "cep", length = 8, columnDefinition = "char")
     private String cep;
 
-    @Column(name = "cidade", nullable = false, length = 100)
+    @Column(name = "cidade", length = 100)
     private String cidade;
 
-    @Column(name = "uf", nullable = false, length = 2, columnDefinition = "char")
+    @Column(name = "uf", length = 2, columnDefinition = "char")
     private String uf;
 
     @ManyToOne(fetch = FetchType.LAZY)

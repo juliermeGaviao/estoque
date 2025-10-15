@@ -10,10 +10,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.CompanyClientContactDto;
-import br.com.dinamica.estoque.entity.ClienteEmpresa;
+import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.ContatoClienteEmpresa;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.repository.ClienteEmpresaRepository;
+import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.service.CompanyClientContactService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -23,26 +23,26 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 
 	private ContatoClienteEmpresaRepository repository;
 
-	private ClienteEmpresaRepository clienteEmpresaRepository;
+	private ClienteRepository clienteRepository;
 
 	private ModelMapper modelMapper;
 
-	public CompanyClientContactServiceImpl(ContatoClienteEmpresaRepository repository, ClienteEmpresaRepository clienteEmpresaRepository, ModelMapper modelMapper) {
+	public CompanyClientContactServiceImpl(ContatoClienteEmpresaRepository repository, ClienteRepository clienteRepository, ModelMapper modelMapper) {
 		this.repository = repository;
-		this.clienteEmpresaRepository = clienteEmpresaRepository;
+		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ContatoClienteEmpresa, CompanyClientContactDto>() {
             @Override
             protected void configure() {
-                skip(destination.getClienteEmpresa());
+                skip(destination.getCliente());
             }
         });
 
 		this.modelMapper.addMappings(new PropertyMap<CompanyClientContactDto, ContatoClienteEmpresa>() {
             @Override
             protected void configure() {
-                skip(destination.getClienteEmpresa());
+                skip(destination.getCliente());
             }
         });
 	}
@@ -59,7 +59,7 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
         Specification<ContatoClienteEmpresa> specification = (root, query, cb) -> null;
 
         if (idEmpresa != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("clienteEmpresa").get("id"), idEmpresa));
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idEmpresa));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, CompanyClientContactDto.class));
@@ -80,9 +80,9 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 
 		this.modelMapper.map(dto, entity);
 
-		ClienteEmpresa clienteEmpresa = this.clienteEmpresaRepository.findById(dto.getClienteEmpresa().getId()).orElseThrow();
+		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 
-		entity.setClienteEmpresa(clienteEmpresa);
+		entity.setCliente(cliente);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 

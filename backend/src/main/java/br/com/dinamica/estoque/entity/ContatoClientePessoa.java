@@ -27,8 +27,8 @@ public class ContatoClientePessoa {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cliente_pessoa", nullable = false)
-    private ClientePessoa clientePessoa;
+    @JoinColumn(name = "id_cliente", nullable = false)
+    private Cliente cliente;
 
     @Column(name = "whatsapp", nullable = false, length = 11, columnDefinition = "char")
     private String whatsapp;

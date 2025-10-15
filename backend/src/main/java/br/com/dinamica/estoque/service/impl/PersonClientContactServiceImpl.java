@@ -10,10 +10,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.PersonClientContactDto;
-import br.com.dinamica.estoque.entity.ClientePessoa;
+import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.ContatoClientePessoa;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.repository.ClientePessoaRepository;
+import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClientePessoaRepository;
 import br.com.dinamica.estoque.service.PersonClientContactService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -23,26 +23,26 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 
 	private ContatoClientePessoaRepository repository;
 
-	private ClientePessoaRepository clientePessoaRepository;
+	private ClienteRepository clienteRepository;
 
 	private ModelMapper modelMapper;
 
-	public PersonClientContactServiceImpl(ContatoClientePessoaRepository repository, ClientePessoaRepository clientePessoaRepository, ModelMapper modelMapper) {
+	public PersonClientContactServiceImpl(ContatoClientePessoaRepository repository, ClienteRepository clienteRepository, ModelMapper modelMapper) {
 		this.repository = repository;
-		this.clientePessoaRepository = clientePessoaRepository;
+		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ContatoClientePessoa, PersonClientContactDto>() {
             @Override
             protected void configure() {
-                skip(destination.getClientePessoa());
+                skip(destination.getCliente());
             }
         });
 
 		this.modelMapper.addMappings(new PropertyMap<PersonClientContactDto, ContatoClientePessoa>() {
             @Override
             protected void configure() {
-                skip(destination.getClientePessoa());
+                skip(destination.getCliente());
             }
         });
 	}
@@ -59,7 +59,7 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
         Specification<ContatoClientePessoa> specification = (root, query, cb) -> null;
 
         if (idPessoa != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("clientePessoa").get("id"), idPessoa));
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idPessoa));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PersonClientContactDto.class));
@@ -80,9 +80,9 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 
 		this.modelMapper.map(dto, entity);
 
-		ClientePessoa clientePessoa = this.clientePessoaRepository.findById(dto.getClientePessoa().getId()).orElseThrow();
+		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 
-		entity.setClientePessoa(clientePessoa);
+		entity.setCliente(cliente);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 

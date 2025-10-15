@@ -13,7 +13,7 @@ public class CompanyClientContactDto {
 
     private Long id;
 
-    private CompanyClientDto clienteEmpresa;
+    private ClientDto cliente;
 
     private String nome;
 

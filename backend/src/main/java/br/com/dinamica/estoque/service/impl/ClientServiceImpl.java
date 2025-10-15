@@ -8,39 +8,39 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import br.com.dinamica.estoque.dto.CompanyClientDto;
-import br.com.dinamica.estoque.entity.ClienteEmpresa;
+import br.com.dinamica.estoque.dto.ClientDto;
+import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.repository.ClienteEmpresaRepository;
+import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
-import br.com.dinamica.estoque.service.CompanyClientService;
+import br.com.dinamica.estoque.service.ClientService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
-public class CompanyClientServiceImpl implements CompanyClientService {
+public class ClientServiceImpl implements ClientService {
 
-	private ClienteEmpresaRepository repository;
+	private ClienteRepository repository;
 
 	private ContatoClienteEmpresaRepository contatoClienteEmpresaRepository;
 
 	private ModelMapper modelMapper;
 
-	public CompanyClientServiceImpl(ClienteEmpresaRepository repository, ContatoClienteEmpresaRepository contatoClienteEmpresaRepository, ModelMapper modelMapper) {
+	public ClientServiceImpl(ClienteRepository repository, ContatoClienteEmpresaRepository contatoClienteEmpresaRepository, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.contatoClienteEmpresaRepository = contatoClienteEmpresaRepository;
 		this.modelMapper = modelMapper;
 	}
 
 	@Override
-	public CompanyClientDto get(Long id) {
-		ClienteEmpresa entity = this.repository.findById(id).orElseThrow();
+	public ClientDto get(Long id) {
+		Cliente entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, CompanyClientDto.class);
+		return this.modelMapper.map(entity, ClientDto.class);
 	}
 
 	@Override
-	public Page<CompanyClientDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
-        Specification<ClienteEmpresa> specification = (root, query, cb) -> null;
+	public Page<ClientDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
+        Specification<Cliente> specification = (root, query, cb) -> null;
 
         if (razaoSocial != null && !razaoSocial.isBlank()) {
         	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
@@ -58,18 +58,18 @@ public class CompanyClientServiceImpl implements CompanyClientService {
             specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, CompanyClientDto.class));
+		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));
 	}
 
 	@Override
-	public CompanyClientDto save(CompanyClientDto dto, Usuario usuario) {
-		ClienteEmpresa entity;
+	public ClientDto save(ClientDto dto, Usuario usuario) {
+		Cliente entity;
         Date agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
 		} else {
-			entity = new ClienteEmpresa();
+			entity = new Cliente();
 
 			entity.setDataCriacao(agora);
 		}
@@ -81,12 +81,12 @@ public class CompanyClientServiceImpl implements CompanyClientService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, CompanyClientDto.class);
+		return this.modelMapper.map(entity, ClientDto.class);
 	}
 
 	@Override
 	public void delete(Long id) {
-		this.contatoClienteEmpresaRepository.deleteByClienteEmpresa_Id(id);
+		this.contatoClienteEmpresaRepository.deleteByCliente_Id(id);
 		this.repository.deleteById(id);
 	}
 

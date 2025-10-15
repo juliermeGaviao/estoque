@@ -9,6 +9,6 @@ import br.com.dinamica.estoque.entity.ContatoClienteEmpresa;
 public interface ContatoClienteEmpresaRepository extends JpaRepository<ContatoClienteEmpresa, Long>, JpaSpecificationExecutor<ContatoClienteEmpresa> {
 
 	@Transactional
-    Long deleteByClienteEmpresa_Id(Long clienteEmpresaId);
+    Long deleteByCliente_Id(Long clienteId);
 
 }

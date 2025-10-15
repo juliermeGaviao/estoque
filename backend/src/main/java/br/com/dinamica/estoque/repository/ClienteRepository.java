@@ -3,8 +3,8 @@ package br.com.dinamica.estoque.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import br.com.dinamica.estoque.entity.ClientePessoa;
+import br.com.dinamica.estoque.entity.Cliente;
 
-public interface ClientePessoaRepository extends JpaRepository<ClientePessoa, Long>, JpaSpecificationExecutor<ClientePessoa> {
+public interface ClienteRepository extends JpaRepository<Cliente, Long>, JpaSpecificationExecutor<Cliente> {
 
 }

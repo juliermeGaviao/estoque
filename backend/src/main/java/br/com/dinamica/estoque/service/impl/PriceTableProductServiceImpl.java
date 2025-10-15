@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +61,14 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 		this.produtoRepository = produtoRepository;
 		this.entityManager = entityManager;
 		this.modelMapper = modelMapper;
+
+		this.modelMapper.addMappings(new PropertyMap<TabelaPrecoProduto, PriceTableProductDto>() {
+            @Override
+            protected void configure() {
+                skip(destination.getProduto().getTipoProduto());
+                skip(destination.getProduto().getFornecedor());
+            }
+        });
 	}
 
 	@Override

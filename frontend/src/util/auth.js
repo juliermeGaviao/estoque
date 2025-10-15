@@ -37,6 +37,10 @@ export async function sha256Hex(input) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+export function eAdmin() {
+  return temPerfil('admin')
+}
+
 export function temPerfil(perfil) {
   const perfis = getProfiles()
 

@@ -11,7 +11,7 @@ public class PersonClientContactDto {
 
     private Long id;
 
-    private PersonClientDto clientePessoa;
+    private ClientDto cliente;
 
     private String whatsapp;
 

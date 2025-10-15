@@ -3,6 +3,7 @@ package br.com.dinamica.estoque.service.impl;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,6 +34,13 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 		this.tabelaPrecoRepository = tabelaPrecoRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.modelMapper = modelMapper;
+
+		this.modelMapper.addMappings(new PropertyMap<UsuarioTabelaPreco, UserPriceTableDto>() {
+            @Override
+            protected void configure() {
+                skip(destination.getUsuario().getPerfis());
+            }
+        });
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 <script setup>
 import api from '@/util/api'
-import { sha256Hex, temPerfil } from '@/util/auth'
+import { eAdmin, sha256Hex } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
@@ -121,7 +121,7 @@ onMounted(() => {
 
   load()
 
-  if (temPerfil('admin')) {
+  if (eAdmin()) {
     loadProfiles()
     loadPriceTables()
     loadUserPriceTables()
@@ -245,7 +245,7 @@ function clearTables() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4" v-show="temPerfil('admin')">
+          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4" v-show="eAdmin()">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
@@ -301,7 +301,7 @@ function clearTables() {
         </Form>
       </template>
     </Card>
-    <Card class="mb-6" v-show="temPerfil('admin')">
+    <Card class="mb-6" v-show="eAdmin()">
       <template #title>
         <div class="grid grid-cols-2">
           <h3>Tabelas de Preços</h3>

@@ -19,22 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.dto.CompanyClientDto;
-import br.com.dinamica.estoque.service.CompanyClientService;
+import br.com.dinamica.estoque.dto.ClientDto;
+import br.com.dinamica.estoque.service.ClientService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/company-client")
 @Slf4j
-public class CompanyClientController {
+public class ClientController {
 
 	private static final String ENTITY = "Empresa Cliente";
 	private static final String ENTITIES = "Empresas Clientes";
 	private static final String NOT_FOUND = ENTITY + " não encontrado: ";
 
-	private CompanyClientService service;
+	private ClientService service;
 
-	public CompanyClientController(CompanyClientService service) {
+	public ClientController(ClientService service) {
 		this.service = service;
 	}
 
@@ -64,7 +64,7 @@ public class CompanyClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<CompanyClientDto> result = this.service.list(razaoSocial, fantasia, cnpj, fone, pageable);
+			Page<ClientDto> result = this.service.list(razaoSocial, fantasia, cnpj, fone, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
@@ -75,7 +75,7 @@ public class CompanyClientController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody CompanyClientDto dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody ClientDto dto, @AuthenticationPrincipal Usuario usuario) {
 		try {
 			return ResponseEntity.ok(this.service.save(dto, usuario));
 		} catch (NoSuchElementException e) {

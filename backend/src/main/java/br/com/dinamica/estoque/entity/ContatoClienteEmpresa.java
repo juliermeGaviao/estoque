@@ -27,8 +27,8 @@ public class ContatoClienteEmpresa {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cliente_empresa", nullable = false)
-    private ClienteEmpresa clienteEmpresa;
+    @JoinColumn(name = "id_cliente", nullable = false)
+    private Cliente cliente;
 
     @Column(name = "nome", nullable = false, length = 255)
     private String nome;

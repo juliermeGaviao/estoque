@@ -1,5 +1,6 @@
 <script setup>
 import api from '@/util/api'
+import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
@@ -27,12 +28,18 @@ async function load(params) {
     size: size.value,
   }
 
+  if (!eAdmin()) {
+    query.idVendedor = getUserId()
+  }
+
   if (sortField.value) {
     query.sort = sortField.value
 
     if (sortOrder) {
       query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
+  } else {
+    query.sort = "id,desc"
   }
 
   loading.value = true
@@ -154,7 +161,7 @@ function limpar() {
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-3">
+            <div :class="'col-span-' + (eAdmin() ? 3 : 4)" v-show="eAdmin()">
               <FormField name="idVendedor">
                 <FloatLabel variant="on">
                   <Select :options="users" optionLabel="email" optionValue="id" fluid/>
@@ -162,7 +169,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-2">
+            <div :class="'col-span-' + (eAdmin() ? 2 : 3)">
               <FormField name="minDesconto">
                 <FloatLabel variant="on">
                   <InputNumber id="minDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -170,7 +177,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-2">
+            <div :class="'col-span-' + (eAdmin() ? 2 : 3)">
               <FormField name="maxDesconto">
                 <FloatLabel variant="on">
                   <InputNumber id="maxDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -178,7 +185,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-3">
+            <div :class="'col-span-' + (eAdmin() ? 3 : 4)">
               <FormField name="observacoes">
                 <FloatLabel variant="on">
                   <InputText id="observacoes" maxlength="255" autocomplete="off" fluid/>
@@ -200,9 +207,15 @@ function limpar() {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="vendedor.email" header="Vendedor" sortable/>
+          <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
+          <Column field="subTotal" header="Subtotal (R$)" sortable>
+            <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+          </Column>
           <Column field="desconto" header="Desconto (%)" sortable>
             <template #body="slotProps">{{ formatNumber(slotProps.data.desconto, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+          </Column>
+          <Column field="total" header="Total (R$)" sortable>
+            <template #body="slotProps">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
           </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">

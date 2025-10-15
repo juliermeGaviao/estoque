@@ -14,8 +14,8 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-            <column name="id_cliente_pessoa" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_contato_cliente_pessoa" references="cliente_pessoa(id)"/>
+            <column name="id_cliente" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_contato_cliente_pessoa" references="cliente(id)"/>
             </column>
 
 			<column name="whatsapp" type="char(11)">

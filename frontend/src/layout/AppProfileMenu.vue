@@ -2,7 +2,7 @@
 import TieredMenu from 'primevue/tieredmenu'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserId, logout, temPerfil } from '../util/auth'
+import { eAdmin, getUserId, logout } from '../util/auth'
 
 const router = useRouter()
 const menu = ref()
@@ -13,7 +13,7 @@ const items = computed(() => [
     icon: 'pi pi-cog',
     command: () => { router.push(`/register/user/edit?id=${getUserId()}`) }
   },
-  temPerfil('admin') && {
+  eAdmin() && {
     label: 'Gestão de Usuários',
     icon: 'pi pi-users',
     command: () => { router.push('/register/user') }

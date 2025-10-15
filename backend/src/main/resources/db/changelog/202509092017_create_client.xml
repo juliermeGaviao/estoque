@@ -8,47 +8,33 @@
 
 	<changeSet id="202509091959" author="julierme">
 
-		<createTable tableName="cliente_empresa">
+		<createTable tableName="cliente">
 
 			<column name="id" type="bigint" autoIncrement="true">
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="razao_social" type="varchar(255)">
+			<column name="razao_social" type="varchar(255)"/>
+
+			<column name="nome" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
 
-			<column name="fantasia" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
+			<column name="cnpj" type="char(14)"/>
 
-			<column name="cnpj" type="char(14)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="fone" type="char(11)"/>
 
-			<column name="fone" type="char(11)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="data_aniversario" type="date"/>
 
-			<column name="endereco" type="varchar(255)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="endereco" type="varchar(255)"/>
 
-			<column name="bairro" type="varchar(100)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="bairro" type="varchar(100)"/>
 
-			<column name="cep" type="char(8)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="cep" type="char(8)"/>
 
-			<column name="cidade" type="varchar(100)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="cidade" type="varchar(100)"/>
 
-			<column name="uf" type="char(2)">
-				<constraints nullable="false"/>
-			</column>
+            <column name="uf" type="char(2)"/>
 
             <column name="id_usuario" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_cliente_empresa_usuario" references="usuario(id)"/>
@@ -65,7 +51,7 @@
 		</createTable>
 
 	    <rollback>
-	        <dropTable tableName="cliente_empresa"/>
+	        <dropTable tableName="cliente"/>
 	    </rollback>
 
 	</changeSet>
