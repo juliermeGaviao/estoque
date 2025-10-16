@@ -50,7 +50,7 @@ async function load(params) {
   loading.value = true
 
   try {
-    const response = await api.get('/person-client/list', { params: query })
+    const response = await api.get('/client/list-people', { params: query })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
@@ -105,7 +105,7 @@ const confirmDelete = entity => {
     },
     accept: async () => {
       try {
-        await api.delete(`/person-client?id=${entity.id}`)
+        await api.delete(`/client?id=${entity.id}`)
 
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Pessoa cliente removida com sucesso', life: 10000 })
 

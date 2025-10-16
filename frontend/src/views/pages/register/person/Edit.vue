@@ -59,7 +59,7 @@ async function load() {
   loading.value = true
 
   try {
-    const res = await api.get('/person-client', { params: { id: id.value } })
+    const res = await api.get('/client', { params: { id: id.value } })
 
     if (personForm.value) {
       personForm.value.setValues({
@@ -128,10 +128,10 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   try {
-    const response = await api.post('/person-client', params)
+    const response = await api.post('/client', params)
 
     if (response.status === 200) {
       id.value = response.data.id
@@ -186,7 +186,7 @@ const saveContact = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['clientePessoa'] = { "id": id.value }
+  params['cliente'] = { "id": id.value }
 
   if (idContact) {
     params['id'] = idContact

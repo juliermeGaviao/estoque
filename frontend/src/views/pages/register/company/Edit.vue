@@ -17,12 +17,12 @@ const loading = ref(false)
 const confirm = useConfirm()
 
 const companyForm = ref(null)
-const companyFormValues = ref({ razaoSocial: '', fantasia: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const companyFormValues = ref({ razaoSocial: '', nome: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
 const companyFormValidator = zodResolver(
   z.object({
     razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
-    fantasia: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
+    nome: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
     cnpj: z.string().length(18, { message: 'CNPJ é obrigatório.' }),
     fone: z.string().length(15, { message: 'Fone é obrigatório.' }),
     endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
@@ -65,12 +65,12 @@ async function load() {
   loading.value = true
 
   try {
-    const res = await api.get('/company-client', { params: { id: id.value } })
+    const res = await api.get('/client', { params: { id: id.value } })
 
     if (companyForm.value) {
       companyForm.value.setValues({
         razaoSocial: res.data.razaoSocial,
-        fantasia: res.data.fantasia,
+        nome: res.data.nome,
         cnpj: res.data.cnpj,
         fone: res.data.fone,
         endereco: res.data.endereco,
@@ -135,10 +135,10 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   try {
-    const response = await api.post('/company-client', params)
+    const response = await api.post('/client', params)
 
     if (response.status === 200) {
       id.value = response.data.id
@@ -196,7 +196,7 @@ const saveContact = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['clienteEmpresa'] = { "id": id.value }
+  params['cliente'] = { "id": id.value }
 
   if (idContact) {
     params['id'] = idContact
@@ -291,10 +291,10 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="fantasia">
+          <FormField v-slot="$field" name="nome">
             <FloatLabel variant="on">
-              <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
-              <label for="fantasia">Nome de Fantasia</label>
+              <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+              <label for="nome">Nome de Fantasia</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>

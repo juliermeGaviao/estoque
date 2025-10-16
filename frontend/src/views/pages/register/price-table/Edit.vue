@@ -47,7 +47,7 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   loading.value = true
 
@@ -143,7 +143,7 @@ async function savePrices() {
     payload.push({
       id: line.id,
       produto: { id: line.produto.id },
-      tabela: { id: parseInt(id.value) },
+      tabela: { id: Number.parseInt(id.value) },
       preco: line.preco
     })
   })

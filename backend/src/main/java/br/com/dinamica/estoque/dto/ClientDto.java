@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.dto;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,11 +15,13 @@ public class ClientDto {
 
     private String razaoSocial;
 
-    private String fantasia;
+    private String nome;
 
     private String cnpj;
 
     private String fone;
+
+    private Date dataAniversario;
 
     private String endereco;
 

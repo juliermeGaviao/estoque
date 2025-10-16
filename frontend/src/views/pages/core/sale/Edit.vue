@@ -52,7 +52,7 @@ const save = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   loading.value = true
 

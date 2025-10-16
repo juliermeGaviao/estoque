@@ -42,7 +42,7 @@ async function load(params) {
   loading.value = true
 
   try {
-    const response = await api.get('/company-client/list', { params: query })
+    const response = await api.get('/client/list-companies', { params: query })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
@@ -97,7 +97,7 @@ const confirmDelete = entity => {
     },
     accept: async () => {
       try {
-        await api.delete(`/company-client?id=${entity.id}`)
+        await api.delete(`/client?id=${entity.id}`)
 
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Empresa cliente removida com sucesso', life: 10000 })
 
@@ -110,7 +110,7 @@ const confirmDelete = entity => {
 }
 
 const form = ref(null)
-const formValues = ref({ razaoSocial: null, fantasia: null, cnpj: null, fone: null })
+const formValues = ref({ razaoSocial: null, nome: null, cnpj: null, fone: null })
 const filterValues = ref({ ... formValues.value })
 
 const filter = async ({ valid, values }) => {
@@ -149,10 +149,10 @@ function limpar() {
               </FormField>
             </div>
             <div class="col-span-3">
-              <FormField name="fantasia">
+              <FormField name="nome">
                 <FloatLabel variant="on">
-                  <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
-                  <label for="fantasia">Nome de Fantasia</label>
+                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                  <label for="nome">Nome de Fantasia</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -187,7 +187,7 @@ function limpar() {
 
           <Column field="id" header="Id" sortable/>
           <Column field="razaoSocial" header="Razão Social" sortable/>
-          <Column field="fantasia" header="Nome de Fantasia" sortable/>
+          <Column field="nome" header="Nome de Fantasia" sortable/>
           <Column field="cnpj" header="CNPJ" sortable>
             <template #body="slotProps">
               {{ formatCpfCnpj(slotProps.data.cnpj) }}

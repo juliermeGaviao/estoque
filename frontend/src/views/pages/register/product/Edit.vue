@@ -90,7 +90,7 @@ const save = async ({ valid, values }) => {
   params.tipoProduto = { id: values.idTipoProduto }
   params.fornecedor = { id: values.idFornecedor }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   try {
     const response = await api.post('/product', params)

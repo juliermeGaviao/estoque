@@ -11,7 +11,7 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
-const userId = parseInt(route.query.id)
+const userId = Number.parseInt(route.query.id)
 
 const form = ref(null)
 const initialFormValues = ref({ email: '', perfis: [] })

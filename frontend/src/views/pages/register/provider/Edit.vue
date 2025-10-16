@@ -130,7 +130,7 @@ const save = async ({ valid, values }) => {
     }
   }
 
-  params['id'] = parseInt(id.value)
+  params['id'] = Number.parseInt(id.value)
 
   try {
     const response = await api.post('/provider', params)

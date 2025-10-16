@@ -13,21 +13,27 @@ import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
+import br.com.dinamica.estoque.repository.ContatoClientePessoaRepository;
 import br.com.dinamica.estoque.service.ClientService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class ClientServiceImpl implements ClientService {
 
+	private static final String DATA_ANIVERSARIO = "dataAniversario";
+
 	private ClienteRepository repository;
 
 	private ContatoClienteEmpresaRepository contatoClienteEmpresaRepository;
 
+	private ContatoClientePessoaRepository contatoClientePessoaRepository;
+
 	private ModelMapper modelMapper;
 
-	public ClientServiceImpl(ClienteRepository repository, ContatoClienteEmpresaRepository contatoClienteEmpresaRepository, ModelMapper modelMapper) {
+	public ClientServiceImpl(ClienteRepository repository, ContatoClienteEmpresaRepository contatoClienteEmpresaRepository, ContatoClientePessoaRepository contatoClientePessoaRepository, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.contatoClienteEmpresaRepository = contatoClienteEmpresaRepository;
+		this.contatoClientePessoaRepository = contatoClientePessoaRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -42,12 +48,14 @@ public class ClientServiceImpl implements ClientService {
 	public Page<ClientDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
         Specification<Cliente> specification = (root, query, cb) -> null;
 
+        specification = specification.and((root, query, cb) -> cb.isNull(root.get(DATA_ANIVERSARIO)));
+
         if (razaoSocial != null && !razaoSocial.isBlank()) {
         	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
         }
 
         if (fantasia != null && !fantasia.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("fantasia")), "%" + fantasia.toLowerCase() + "%"));
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + fantasia.toLowerCase() + "%"));
         }
 
         if (cnpj != null && !cnpj.isBlank()) {
@@ -56,6 +64,31 @@ public class ClientServiceImpl implements ClientService {
 
         if (fone != null && !fone.isBlank()) {
             specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        }
+
+		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));
+	}
+
+	@Override
+	public Page<ClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
+        Specification<Cliente> specification = (root, query, cb) -> null;
+
+        specification = specification.and((root, query, cb) -> cb.isNull(root.get("cnpj")));
+
+        if (nome != null && !nome.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
+
+        if (fone != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        }
+
+        if (minAniversario != null && maxAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get(DATA_ANIVERSARIO), minAniversario, maxAniversario));
+        } else if (minAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_ANIVERSARIO), minAniversario));
+        } else if (maxAniversario != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DATA_ANIVERSARIO), maxAniversario));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));
@@ -87,6 +120,7 @@ public class ClientServiceImpl implements ClientService {
 	@Override
 	public void delete(Long id) {
 		this.contatoClienteEmpresaRepository.deleteByCliente_Id(id);
+		this.contatoClientePessoaRepository.deleteByCliente_Id(id);
 		this.repository.deleteById(id);
 	}
 

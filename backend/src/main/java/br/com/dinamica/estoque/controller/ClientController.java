@@ -1,11 +1,13 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.Date;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,14 +19,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.service.ClientService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/company-client")
+@RequestMapping("/client")
 @Slf4j
 public class ClientController {
 
@@ -49,10 +51,10 @@ public class ClientController {
 		}
 	}
 
-	@GetMapping("/list")
+	@GetMapping("/list-companies")
 	public ResponseEntity<Object> list(
 			@RequestParam(required = false) String razaoSocial,
-			@RequestParam(required = false) String fantasia,
+			@RequestParam(required = false) String nome,
 			@RequestParam(required = false) String cnpj,
 			@RequestParam(required = false) String fone,
 			@RequestParam(defaultValue = "0") int page,
@@ -64,7 +66,32 @@ public class ClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ClientDto> result = this.service.list(razaoSocial, fantasia, cnpj, fone, pageable);
+			Page<ClientDto> result = this.service.list(razaoSocial, nome, cnpj, fone, pageable);
+
+			return ResponseEntity.ok(PageResponse.from(result));
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao listar " + ENTITIES.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@GetMapping("/list-people")
+	public ResponseEntity<Object> list(
+			@RequestParam(required = false) String nome,
+			@RequestParam(required = false) String fone,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minAniversario,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxAniversario,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id,asc") String[] sort) {
+		try {
+			String sortField = sort[0];
+			String sortDirection = sort.length > 1 ? sort[1] : "asc";
+
+			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
+
+			Page<ClientDto> result = this.service.list(nome, fone, minAniversario, maxAniversario, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
