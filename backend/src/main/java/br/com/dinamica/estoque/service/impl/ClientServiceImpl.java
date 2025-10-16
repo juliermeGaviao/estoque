@@ -6,6 +6,7 @@ import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +51,7 @@ public class ClientServiceImpl implements ClientService {
 
 	@Override
 	public List<CommonClientDto> findAll() {
-		List<Cliente> clientes = this.repository.findAll();
+		List<Cliente> clientes = this.repository.findAll(Sort.by(Sort.Direction.ASC, "nome"));
 
 		return clientes.stream().map(cliente -> new CommonClientDto(cliente.getId(), cliente.getNome())).toList();
 	}

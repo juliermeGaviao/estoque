@@ -13,12 +13,16 @@ const toast = useToast()
 const loading = ref(false)
 
 const form = ref(null)
-const formValues = ref({ idVendedor: null, subTotal: null, desconto: null, total: null, observacoes: null })
+const formValues = ref({ idCliente: null, idVendedor: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
 
 const formValidator = zodResolver(
   z.object({
+    idCliente: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Cliente é obrigatório." }),
     idVendedor: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Vendedor é obrigatório." }),
+    razaoSocial: z.string().optional(),
+    subTotal: z.number().optional(),
     desconto: z.number().optional(),
+    total: z.number().optional(),
     observacoes: z.string().optional()
   })
 )
@@ -33,12 +37,15 @@ async function load() {
 
     if (form.value) {
       form.value.setValues({
+        idCliente: res.data.cliente.id,
         idVendedor: res.data.vendedor.id,
         subTotal: res.data.subTotal,
         desconto: res.data.desconto,
         total: res.data.total,
         observacoes: res.data.observacoes
       })
+
+      loadClient(res.data.cliente.id)
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga da Venda', detail: 'Requisição de venda terminou com o erro: ' + error.response.data, life: 10000 })
@@ -81,6 +88,7 @@ onMounted(() => {
   }
 
   loadUsers()
+  loadClients()
 
   loading.value = false
 })
@@ -160,6 +168,41 @@ function loadProducts() {
   })
 }
 
+const clients = ref([])
+
+async function loadClients() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/client/find-all')
+
+    clients.value = response.data
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de Clientes terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+const pj = ref(false)
+
+const loadClient = async (value) => {
+  loading.value = true
+
+  try {
+    const res = await api.get('/client', { params: { id: value } })
+
+    pj.value = res.data.cnpj?.length > 0
+    form.value.setValues({
+      razaoSocial: res.data.razaoSocial
+    })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Cliente', detail: 'Requisição de cliente terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
 </script>
 
 <template>
@@ -226,7 +269,25 @@ function loadProducts() {
       <template #content>
         <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
           <div class="grid grid-cols-12 gap-4">
-            <div :class="'col-span-' + (id ? '3': '4')">
+            <div :class="'col-span-' + (pj ? 5 : 12)">
+              <FormField name="idCliente">
+                <FloatLabel variant="on">
+                  <Select :options="clients" optionLabel="nome" optionValue="id" fluid @update:modelValue="loadClient($event)"/>
+                  <label for="idCliente">Cliente</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-7" v-show="pj">
+              <FormField name="razaoSocial">
+                <FloatLabel variant="on">
+                  <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid readonly/>
+                  <label for="razaoSocial">Razão Social</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div :class="'col-span-' + (id ? 3: 4)">
               <FormField name="subTotal">
                 <FloatLabel variant="on">
                   <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -234,7 +295,7 @@ function loadProducts() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-' + (id ? '3': '4')">
+            <div :class="'col-span-' + (id ? 3: 4)">
               <FormField name="desconto">
                 <FloatLabel variant="on">
                   <InputNumber id="desconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -242,7 +303,7 @@ function loadProducts() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-' + (id ? '3': '4')">
+            <div :class="'col-span-' + (id ? 3: 4)">
               <FormField name="total">
                 <FloatLabel variant="on">
                   <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -250,7 +311,7 @@ function loadProducts() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-3'" v-show="id">
+            <div class="col-span-3" v-show="id">
               <FormField name="idVendedor">
                 <FloatLabel variant="on">
                   <Select :options="users" optionLabel="email" optionValue="id" fluid/>
@@ -262,7 +323,7 @@ function loadProducts() {
           <FormField name="observacoes">
             <FloatLabel variant="on" class="flex-1">
               <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
-              <label for="email">Observações</label>
+              <label for="observacoes">Observações</label>
             </FloatLabel>
           </FormField>
         </Form>

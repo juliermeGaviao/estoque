@@ -56,7 +56,7 @@ async function load(params) {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   load({})
   loadUsers()
   loadClients()
@@ -130,8 +130,7 @@ async function loadUsers() {
   }
 }
 
-
-let clients = ref([])
+const clients = ref([])
 
 async function loadClients() {
   loading.value = true
