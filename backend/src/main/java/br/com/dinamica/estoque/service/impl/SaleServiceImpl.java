@@ -56,8 +56,12 @@ public class SaleServiceImpl implements SaleService {
 	private static final String DISCOUNT_FIELD = "desconto";
 
 	@Override
-	public Page<SaleDto> list(Long idVendedor, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable) {
+	public Page<SaleDto> list(Long idCliente, Long idVendedor, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable) {
         Specification<Venda> specification = (root, query, cb) -> null;
+
+        if (idCliente != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idCliente));
+        }
 
         if (idVendedor != null) {
             specification = specification.and((root, query, cb) -> cb.equal(root.get("vendedor").get("id"), idVendedor));

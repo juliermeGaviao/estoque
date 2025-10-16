@@ -3,11 +3,15 @@ package br.com.dinamica.estoque.entity;
 import java.util.Date;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,30 +21,23 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "cliente")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "tipo", discriminatorType = DiscriminatorType.STRING, length = 1, columnDefinition = "char")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cliente {
+public abstract class Cliente {
 
-	@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "razao_social", length = 255)
-    private String razaoSocial;
 
     @Column(name = "nome", nullable = false, length = 255)
     private String nome;
 
-    @Column(name = "cnpj", length = 14, columnDefinition = "char")
-    private String cnpj;
-
     @Column(name = "fone", length = 11, columnDefinition = "char")
     private String fone;
 
-    @Column(name = "data_aniversario", columnDefinition = "date")
-    private Date dataAniversario;
-    
     @Column(name = "endereco", length = 255)
     private String endereco;
 

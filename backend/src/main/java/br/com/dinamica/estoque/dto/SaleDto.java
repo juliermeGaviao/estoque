@@ -13,6 +13,8 @@ public class SaleDto {
 
     private Long id;
 
+    private ClientDto cliente;
+
     private UserDto vendedor;
 
     private BigDecimal subTotal;

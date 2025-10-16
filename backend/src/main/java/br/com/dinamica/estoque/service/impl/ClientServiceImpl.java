@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -9,7 +10,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ClientDto;
+import br.com.dinamica.estoque.dto.CommonClientDto;
 import br.com.dinamica.estoque.entity.Cliente;
+import br.com.dinamica.estoque.entity.ClienteEmpresa;
+import br.com.dinamica.estoque.entity.ClientePessoa;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
@@ -45,17 +49,22 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
-	public Page<ClientDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
-        Specification<Cliente> specification = (root, query, cb) -> null;
+	public List<CommonClientDto> findAll() {
+		List<Cliente> clientes = this.repository.findAll();
 
-        specification = specification.and((root, query, cb) -> cb.isNull(root.get(DATA_ANIVERSARIO)));
+		return clientes.stream().map(cliente -> new CommonClientDto(cliente.getId(), cliente.getNome())).toList();
+	}
+
+	@Override
+	public Page<ClientDto> list(String razaoSocial, String nome, String cnpj, String fone, Pageable pageable) {
+        Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClienteEmpresa.class);
 
         if (razaoSocial != null && !razaoSocial.isBlank()) {
         	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
         }
 
-        if (fantasia != null && !fantasia.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + fantasia.toLowerCase() + "%"));
+        if (nome != null && !nome.isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
         }
 
         if (cnpj != null && !cnpj.isBlank()) {
@@ -71,9 +80,7 @@ public class ClientServiceImpl implements ClientService {
 
 	@Override
 	public Page<ClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
-        Specification<Cliente> specification = (root, query, cb) -> null;
-
-        specification = specification.and((root, query, cb) -> cb.isNull(root.get("cnpj")));
+        Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClientePessoa.class);
 
         if (nome != null && !nome.isBlank()) {
         	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
@@ -102,7 +109,7 @@ public class ClientServiceImpl implements ClientService {
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
 		} else {
-			entity = new Cliente();
+			entity = dto.getDataAniversario() != null ? new ClientePessoa() : new ClienteEmpresa();
 
 			entity.setDataCriacao(agora);
 		}

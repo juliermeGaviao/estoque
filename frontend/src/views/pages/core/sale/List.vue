@@ -59,6 +59,7 @@ async function load(params) {
 onMounted(async () => {
   load({})
   loadUsers()
+  loadClients()
 })
 
 function onPage(event) {
@@ -129,8 +130,25 @@ async function loadUsers() {
   }
 }
 
+
+let clients = ref([])
+
+async function loadClients() {
+  loading.value = true
+
+  try {
+    const response = await api.get('/client/find-all')
+
+    clients.value = response.data
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de Clientes terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
 const form = ref(null)
-const formValues = ref({ idVendedor: null, minDesconto: null, maxDesconto: null, observacoes: null })
+const formValues = ref({ idCliente: null, idVendedor: null, minDesconto: null, maxDesconto: null, observacoes: null })
 const filterValues = ref({ ... formValues.value })
 
 const filter = async ({ valid, values }) => {
@@ -161,7 +179,15 @@ function limpar() {
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div :class="'col-span-' + (eAdmin() ? 3 : 4)" v-show="eAdmin()">
+            <div :class="'col-span-' + (eAdmin() ? 2 : 4)">
+              <FormField name="idCliente">
+                <FloatLabel variant="on">
+                  <Select :options="clients" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idCliente">Clientes</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div :class="'col-span-' + (eAdmin() ? 2 : 3)" v-show="eAdmin()">
               <FormField name="idVendedor">
                 <FloatLabel variant="on">
                   <Select :options="users" optionLabel="email" optionValue="id" fluid/>
@@ -169,7 +195,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-' + (eAdmin() ? 2 : 3)">
+            <div class="col-span-2">
               <FormField name="minDesconto">
                 <FloatLabel variant="on">
                   <InputNumber id="minDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -177,7 +203,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-' + (eAdmin() ? 2 : 3)">
+            <div class="col-span-2">
               <FormField name="maxDesconto">
                 <FloatLabel variant="on">
                   <InputNumber id="maxDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -185,7 +211,7 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div :class="'col-span-' + (eAdmin() ? 3 : 4)">
+            <div class="col-span-2">
               <FormField name="observacoes">
                 <FloatLabel variant="on">
                   <InputText id="observacoes" maxlength="255" autocomplete="off" fluid/>
@@ -207,6 +233,7 @@ function limpar() {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
+          <Column field="cliente.nome" header="Cliente" sortable/>
           <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
           <Column field="subTotal" header="Subtotal (R$)" sortable>
             <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>

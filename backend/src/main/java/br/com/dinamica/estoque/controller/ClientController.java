@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.controller;
 
 import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.ClientDto;
+import br.com.dinamica.estoque.dto.CommonClientDto;
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.ClientService;
@@ -48,6 +50,19 @@ public class ClientController {
 			String mensagem = NOT_FOUND + id;
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		}
+	}
+
+	@GetMapping("/find-all")
+	public ResponseEntity<Object> list() {
+		try {
+			List<CommonClientDto> result = this.service.findAll();
+
+			return ResponseEntity.ok(result);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao buscar lista completa de " + ENTITIES.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
 		}
 	}
 

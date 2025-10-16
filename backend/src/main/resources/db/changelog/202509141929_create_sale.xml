@@ -14,6 +14,10 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
+            <column name="id_cliente" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_cliente" references="cliente(id)"/>
+            </column>
+
             <column name="id_vendedor" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_venda_vendedor" references="usuario(id)"/>
             </column>

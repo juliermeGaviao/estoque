@@ -4,18 +4,16 @@ import java.util.Date;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClientDto {
-
-    private Long id;
+@EqualsAndHashCode(callSuper = true)
+public class ClientDto extends CommonClientDto {
 
     private String razaoSocial;
-
-    private String nome;
 
     private String cnpj;
 

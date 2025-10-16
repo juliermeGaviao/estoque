@@ -6,7 +6,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
       http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
 
-	<changeSet id="202509091959" author="julierme">
+	<changeSet id="202509092017" author="julierme">
 
 		<createTable tableName="cliente">
 
@@ -14,17 +14,15 @@
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
-			<column name="razao_social" type="varchar(255)"/>
+            <column name="tipo" type="char(1)">
+                <constraints nullable="false"/>
+            </column>
 
 			<column name="nome" type="varchar(255)">
 				<constraints nullable="false"/>
 			</column>
 
-			<column name="cnpj" type="char(14)"/>
-
             <column name="fone" type="char(11)"/>
-
-            <column name="data_aniversario" type="date"/>
 
             <column name="endereco" type="varchar(255)"/>
 

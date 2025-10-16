@@ -51,6 +51,7 @@ public class SaleController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
+			@RequestParam(required = false) Long idCliente,
 			@RequestParam(required = false) Long idVendedor,
 			@RequestParam(required = false) Float minDesconto,
 			@RequestParam(required = false) Float maxDesconto,
@@ -64,7 +65,7 @@ public class SaleController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<SaleDto> result = this.service.list(idVendedor, minDesconto, maxDesconto, observacoes, pageable);
+			Page<SaleDto> result = this.service.list(idCliente, idVendedor, minDesconto, maxDesconto, observacoes, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
