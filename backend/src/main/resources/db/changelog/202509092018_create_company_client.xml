@@ -8,20 +8,24 @@
 
 	<changeSet id="202509092018" author="julierme">
 
-		<createTable tableName="cliente_pessoa">
+		<createTable tableName="cliente_empresa">
 
 			<column name="id" type="bigint">
-				<constraints primaryKey="true" nullable="false" foreignKeyName="fk_cliente_pessoa_cliente" references="cliente(id)"/>
+				<constraints primaryKey="true" nullable="false" foreignKeyName="fk_cliente_empresa_cliente" references="cliente(id)"/>
 			</column>
 
-            <column name="data_aniversario" type="date">
+			<column name="razao_social" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+
+			<column name="cnpj" type="char(14)">
                 <constraints nullable="false"/>
             </column>
 
 		</createTable>
 
 	    <rollback>
-	        <dropTable tableName="cliente_pessoa"/>
+	        <dropTable tableName="cliente_empresa"/>
 	    </rollback>
 
 	</changeSet>

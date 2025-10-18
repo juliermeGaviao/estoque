@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class ClientDto extends CommonClientDto {
 
+	private ClientDto empresa;
+
     private String razaoSocial;
 
     private String cnpj;

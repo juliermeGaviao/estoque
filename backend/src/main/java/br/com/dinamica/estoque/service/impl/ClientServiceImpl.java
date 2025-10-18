@@ -80,11 +80,15 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
-	public Page<ClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
+	public Page<ClientDto> list(String nome, Long idEmpresa, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
         Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClientePessoa.class);
 
         if (nome != null && !nome.isBlank()) {
         	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        }
+
+        if (idEmpresa != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("empresa").get("id"), idEmpresa));
         }
 
         if (fone != null) {
@@ -116,6 +120,12 @@ public class ClientServiceImpl implements ClientService {
 		}
 
 		this.modelMapper.map(dto, entity);
+
+		if (dto.getEmpresa() != null) {
+			Cliente empresa = this.repository.findById(dto.getEmpresa().getId()).orElseThrow();
+
+			((ClientePessoa) entity).setEmpresa(empresa);
+		}
 
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);

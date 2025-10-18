@@ -47,8 +47,6 @@ async function load(params) {
     query.maxAniversario = formatDate(query.maxAniversario)
   }
 
-  loading.value = true
-
   try {
     const response = await api.get('/client/list-people', { params: query })
 
@@ -56,20 +54,25 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Pessoas Cliente', detail: 'Requisição de lista de pessoas cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 onMounted(async () => {
+  loading.value = true
+
   load({})
+  loadCompanies()
+
+  loading.value = false
 })
 
 function onPage(event) {
   page.value = event.page
   size.value = event.rows
 
+  loading.value = true
   load( { ...filterValues.value } )
+  loading.value = false
 }
 
 function onSort(event) {
@@ -77,7 +80,9 @@ function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
+  loading.value = true
   load( { ...filterValues.value } )
+  loading.value = false
 }
 
 function edit(entity) {
@@ -104,6 +109,8 @@ const confirmDelete = entity => {
       raised: true
     },
     accept: async () => {
+      loading.value = true
+
       try {
         await api.delete(`/client?id=${entity.id}`)
 
@@ -112,13 +119,15 @@ const confirmDelete = entity => {
         load()
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Falha de Remoção de Pessoa Cliente', detail: 'Requisição de remoção de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+      } finally {
+        loading.value = false
       }
     }
   })
 }
 
 const form = ref(null)
-const formValues = ref({ nome: null, fone: null, minAniversario: null, maxAniversario: null })
+const formValues = ref({ nome: null, idEmpresa: null, fone: null, minAniversario: null, maxAniversario: null })
 const filterValues = ref({ ... formValues.value })
 
 const filter = async ({ valid, values }) => {
@@ -138,6 +147,21 @@ function limpar() {
     load( { ...filterValues.value } )
   })
 }
+
+const companies = ref([])
+
+async function loadCompanies() {
+  try {
+    const response = await api.get('/client/list-companies', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    companies.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresas', detail: 'Requisição de lista de Empresas terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+
+}
 </script>
 
 <template>
@@ -148,7 +172,7 @@ function limpar() {
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-3">
+            <div class="col-span-2">
               <FormField name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -156,7 +180,15 @@ function limpar() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-3">
+            <div class="col-span-2">
+              <FormField name="idEmpresa">
+                <FloatLabel variant="on">
+                  <Select id="idEmpresa" :options="companies" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idEmpresa">Empresa</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-2">
               <FormField name="fone">
                 <FloatLabel variant="on">
                   <InputText id="fone" maxlength="255" autocomplete="off" fluid/>
@@ -195,6 +227,7 @@ function limpar() {
 
           <Column field="id" header="Id" sortable/>
           <Column field="nome" header="Nome" sortable/>
+          <Column field="empresa.nome" header="Empresa"/>
           <Column field="fone" header="Fone">
             <template #body="slotProps">
               {{ formatPhone(slotProps.data.fone) }}

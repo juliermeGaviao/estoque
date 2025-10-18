@@ -94,6 +94,7 @@ public class ClientController {
 	@GetMapping("/list-people")
 	public ResponseEntity<Object> list(
 			@RequestParam(required = false) String nome,
+			@RequestParam(required = false) Long idEmpresa,
 			@RequestParam(required = false) String fone,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minAniversario,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxAniversario,
@@ -106,7 +107,7 @@ public class ClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ClientDto> result = this.service.list(nome, fone, minAniversario, maxAniversario, pageable);
+			Page<ClientDto> result = this.service.list(nome, idEmpresa, fone, minAniversario, maxAniversario, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

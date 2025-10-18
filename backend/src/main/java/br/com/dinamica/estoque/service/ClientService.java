@@ -18,7 +18,7 @@ public interface ClientService {
 
 	Page<ClientDto> list(String razaoSocial, String nome, String cnpj, String fone, Pageable pageable);
 
-	Page<ClientDto> list(String nome, String fone, Date minAniversario, Date maxAniversario, Pageable pageable);
+	Page<ClientDto> list(String nome, Long idEmpresa, String fone, Date minAniversario, Date maxAniversario, Pageable pageable);
 
 	ClientDto save(ClientDto dto, Usuario usuario);
 
