@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -40,6 +41,13 @@ public class ClientServiceImpl implements ClientService {
 		this.contatoClienteEmpresaRepository = contatoClienteEmpresaRepository;
 		this.contatoClientePessoaRepository = contatoClientePessoaRepository;
 		this.modelMapper = modelMapper;
+
+		this.modelMapper.addMappings(new PropertyMap<ClientDto, ClientePessoa>() {
+            @Override
+            protected void configure() {
+                skip(destination.getEmpresa());
+            }
+        });
 	}
 
 	@Override

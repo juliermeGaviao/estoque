@@ -17,11 +17,12 @@ const loading = ref(false)
 const confirm = useConfirm()
 
 const personForm = ref(null)
-const personFormValues = ref({ nome: '', fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const personFormValues = ref({ nome: '', idEmpresa: null, fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
 const personFormValidator = zodResolver(
   z.object({
     nome: z.string().min(1, { message: 'Nome é obrigatório.' }),
+    idEmpresa: z.number().optional(),
     fone: z.string().optional(),
     dataAniversario: z.date().optional(),
     endereco: z.string().optional(),
@@ -56,14 +57,13 @@ let idContact
 const visible = ref(false)
 
 async function load() {
-  loading.value = true
-
   try {
     const res = await api.get('/client', { params: { id: id.value } })
 
     if (personForm.value) {
       personForm.value.setValues({
         nome: res.data.nome,
+        idEmpresa: res.data.empresa?.id,
         fone: res.data.fone,
         dataAniversario: new Date(res.data.dataAniversario),
         endereco: res.data.endereco,
@@ -75,16 +75,10 @@ async function load() {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Pessoa Cliente', detail: 'Requisição de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
-
-  loadContacts()
 }
 
 async function loadContacts() {
-  loading.value = true
-
   try {
     let params = {
       idPessoa: id.value,
@@ -106,8 +100,6 @@ async function loadContacts() {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Pessoa Cliente', detail: 'Requisição de lista de contatos da pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -126,6 +118,10 @@ const save = async ({ valid, values }) => {
     if (typeof params[param] === 'string') {
       params[param] = params[param].trim()
     }
+  }
+
+  if (params.idEmpresa) {
+    params.empresa = { id: params.idEmpresa }
   }
 
   params['id'] = Number.parseInt(id.value)
@@ -148,7 +144,10 @@ const save = async ({ valid, values }) => {
 function onPage(event) {
   page.value = event.page
   size.value = event.rows
+
+  loading.value = true
   loadContacts()
+  loading.value = false
 }
 
 function onSort(event) {
@@ -156,7 +155,9 @@ function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
+  loading.value = true
   loadContacts()
+  loading.value = false
 }
 
 function edit(contact) {
@@ -182,8 +183,6 @@ function edit(contact) {
 const saveContact = async ({ valid, values }) => {
   if (!valid) return
 
-  loading.value = true
-
   let params = { ... values }
 
   params['cliente'] = { "id": id.value }
@@ -202,6 +201,8 @@ const saveContact = async ({ valid, values }) => {
     }
   }
 
+  loading.value = true
+
   try {
     const response = await api.post('/person-client-contact', params)
 
@@ -212,8 +213,8 @@ const saveContact = async ({ valid, values }) => {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Pessoa Cliente', detail: 'Requisição de alteração de pessoa cliente de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     visible.value = false
-    loading.value = false
     loadContacts()
+    loading.value = false
   }
 }
 
@@ -242,8 +243,8 @@ const confirmDelete = entity => {
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Pessoa Cliente', detail: 'Requisição de remoção de contato de pessoa cliente terminou com o erro: ' + error.response.data, life: 10000 })
       } finally {
-        loading.value = false
         loadContacts()
+        loading.value = false
       }
     }
   })
@@ -252,10 +253,31 @@ const confirmDelete = entity => {
 onMounted(() => {
   StateService.getStates().then(data => states.value = data)
 
+  loading.value = true
+
   if (id.value) {
     load()
   }
+
+  loadCompanies()
+
+  loading.value = false
 })
+
+const companies = ref([])
+
+async function loadCompanies() {
+  try {
+    const response = await api.get('/client/list-companies', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    companies.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresas', detail: 'Requisição de lista de Empresas terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+
+}
 </script>
 
 <template>
@@ -274,13 +296,22 @@ onMounted(() => {
       <template #content>
         <Form ref="personForm" :resolver="personFormValidator" :initialValues="personFormValues" @submit="save" class="grid flex flex-column gap-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-10">
+            <div class="col-span-8">
               <FormField v-slot="$field" name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
                   <label for="nome">Nome</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
+
+            <div class="col-span-2">
+              <FormField name="idEmpresa">
+                <FloatLabel variant="on">
+                  <Select id="idEmpresa" :options="companies" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idEmpresa">Empresa</label>
+                </FloatLabel>
               </FormField>
             </div>
 
