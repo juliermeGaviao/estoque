@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -29,5 +30,8 @@ public class ClientePessoa extends Cliente {
 
     @Column(name = "data_aniversario", nullable = false, columnDefinition = "date")
     private Date dataAniversario;
+
+    @Column(name = "limite", precision = 19, scale = 2, columnDefinition = "decimal")
+    private BigDecimal limite;
 
 }

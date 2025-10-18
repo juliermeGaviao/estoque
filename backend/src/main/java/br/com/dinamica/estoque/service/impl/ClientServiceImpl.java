@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.service.impl;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -25,6 +26,8 @@ import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class ClientServiceImpl implements ClientService {
+
+	private static final String LIMITE = "limite";
 
 	private static final String DATA_ANIVERSARIO = "dataAniversario";
 
@@ -88,7 +91,7 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
-	public Page<ClientDto> list(String nome, Long idEmpresa, String fone, Date minAniversario, Date maxAniversario, Pageable pageable) {
+	public Page<ClientDto> list(String nome, Long idEmpresa, String fone, BigDecimal minLimite, BigDecimal maxLimite, Date minAniversario, Date maxAniversario, Pageable pageable) {
         Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClientePessoa.class);
 
         if (nome != null && !nome.isBlank()) {
@@ -101,6 +104,14 @@ public class ClientServiceImpl implements ClientService {
 
         if (fone != null) {
             specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        }
+
+        if (minLimite != null && maxLimite != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get(LIMITE), minLimite, maxLimite));
+        } else if (minLimite != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(LIMITE), minLimite));
+        } else if (maxLimite != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(LIMITE), maxLimite));
         }
 
         if (minAniversario != null && maxAniversario != null) {

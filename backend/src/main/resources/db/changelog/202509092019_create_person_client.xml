@@ -22,6 +22,8 @@
                 <constraints nullable="false"/>
             </column>
 
+            <column name="limite" type="decimal(10, 2)"/>
+
 		</createTable>
 
 	    <rollback>

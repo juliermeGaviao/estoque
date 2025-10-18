@@ -17,12 +17,13 @@ const loading = ref(false)
 const confirm = useConfirm()
 
 const personForm = ref(null)
-const personFormValues = ref({ nome: '', idEmpresa: null, fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const personFormValues = ref({ nome: '', idEmpresa: null, limite: null, fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
 const personFormValidator = zodResolver(
   z.object({
     nome: z.string().min(1, { message: 'Nome é obrigatório.' }),
     idEmpresa: z.number().optional(),
+    limite: z.number().optional(),
     fone: z.string().optional(),
     dataAniversario: z.date().optional(),
     endereco: z.string().optional(),
@@ -64,6 +65,7 @@ async function load() {
       personForm.value.setValues({
         nome: res.data.nome,
         idEmpresa: res.data.empresa?.id,
+        limite: res.data.limite,
         fone: res.data.fone,
         dataAniversario: new Date(res.data.dataAniversario),
         endereco: res.data.endereco,
@@ -306,7 +308,7 @@ async function loadCompanies() {
               </FormField>
             </div>
 
-            <div class="col-span-2">
+            <div class="col-span-4">
               <FormField name="idEmpresa">
                 <FloatLabel variant="on">
                   <Select id="idEmpresa" :options="companies" optionLabel="nome" optionValue="id" fluid/>
@@ -314,8 +316,17 @@ async function loadCompanies() {
                 </FloatLabel>
               </FormField>
             </div>
-
-            <div class="col-span-1">
+          </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-4">
+              <FormField name="limite">
+                <FloatLabel variant="on">
+                  <InputNumber id="limite" :max="10000" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="limite">Limite (R$)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-4">
               <FormField v-slot="$field" name="fone">
                 <FloatLabel variant="on">
                   <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
@@ -325,7 +336,7 @@ async function loadCompanies() {
               </FormField>
             </div>
 
-            <div class="col-span-1">
+            <div class="col-span-4">
               <FormField v-slot="$field" name="dataAniversario" initialValue="">
                 <FloatLabel variant="on" class="flex-1">
                   <DatePicker dateFormat="dd/mm/yy" fluid/>

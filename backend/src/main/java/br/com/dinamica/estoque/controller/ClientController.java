@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -96,6 +97,8 @@ public class ClientController {
 			@RequestParam(required = false) String nome,
 			@RequestParam(required = false) Long idEmpresa,
 			@RequestParam(required = false) String fone,
+			@RequestParam(required = false) BigDecimal minLimite,
+			@RequestParam(required = false) BigDecimal maxLimite,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minAniversario,
 			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxAniversario,
 			@RequestParam(defaultValue = "0") int page,
@@ -107,7 +110,7 @@ public class ClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ClientDto> result = this.service.list(nome, idEmpresa, fone, minAniversario, maxAniversario, pageable);
+			Page<ClientDto> result = this.service.list(nome, idEmpresa, fone, minLimite, maxLimite, minAniversario, maxAniversario, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

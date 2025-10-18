@@ -1,6 +1,6 @@
 <script setup>
 import api from '@/util/api'
-import { formatDate, formatPhone, onlyDigits } from '@/util/util'
+import { formatDate, formatNumber, formatPhone, onlyDigits } from '@/util/util'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
@@ -127,7 +127,7 @@ const confirmDelete = entity => {
 }
 
 const form = ref(null)
-const formValues = ref({ nome: null, idEmpresa: null, fone: null, minAniversario: null, maxAniversario: null })
+const formValues = ref({ nome: null, idEmpresa: null, fone: null, minAniversario: null, maxAniversario: null, minLimite: null, maxLimite: null })
 const filterValues = ref({ ... formValues.value })
 
 const filter = async ({ valid, values }) => {
@@ -172,7 +172,7 @@ async function loadCompanies() {
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
           <div class="grid grid-cols-12 gap-4">
-            <div class="col-span-2">
+            <div class="col-span-8">
               <FormField name="nome">
                 <FloatLabel variant="on">
                   <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -180,7 +180,7 @@ async function loadCompanies() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-2">
+            <div class="col-span-4">
               <FormField name="idEmpresa">
                 <FloatLabel variant="on">
                   <Select id="idEmpresa" :options="companies" optionLabel="nome" optionValue="id" fluid/>
@@ -188,11 +188,29 @@ async function loadCompanies() {
                 </FloatLabel>
               </FormField>
             </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4">
             <div class="col-span-2">
               <FormField name="fone">
                 <FloatLabel variant="on">
                   <InputText id="fone" maxlength="255" autocomplete="off" fluid/>
                   <label for="fone">Fone</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-2">
+              <FormField name="minLimite">
+                <FloatLabel variant="on" class="flex-1">
+                  <InputNumber id="minLimite" :max="10000" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="minLimite">Limite Mínimo (R$)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-2">
+              <FormField name="maxLimite">
+                <FloatLabel variant="on" class="flex-1">
+                  <InputNumber id="maxLimite" :max="10000" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="maxLimite">Limite Máximo (R$)</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -228,6 +246,11 @@ async function loadCompanies() {
           <Column field="id" header="Id" sortable/>
           <Column field="nome" header="Nome" sortable/>
           <Column field="empresa.nome" header="Empresa"/>
+          <Column field="limite" header="Limite (R$)">
+            <template #body="slotProps">
+              {{ formatNumber(slotProps.data.limite, 'pt-BR', { minimumFractionDigits: 2 } ) }}
+            </template>
+          </Column>
           <Column field="fone" header="Fone">
             <template #body="slotProps">
               {{ formatPhone(slotProps.data.fone) }}

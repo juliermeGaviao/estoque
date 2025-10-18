@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;
@@ -32,5 +33,7 @@ public class ClientDto extends CommonClientDto {
     private String cidade;
 
     private String uf;
+
+    private BigDecimal limite;
 
 }
