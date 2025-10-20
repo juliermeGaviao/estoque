@@ -181,7 +181,7 @@ function limpar() {
             <div :class="'col-span-' + (eAdmin() ? 2 : 4)">
               <FormField name="idCliente">
                 <FloatLabel variant="on">
-                  <Select :options="clients" optionLabel="nome" optionValue="id" fluid/>
+                  <Select :options="clients" optionLabel="nome" optionValue="id" filter fluid/>
                   <label for="idCliente">Clientes</label>
                 </FloatLabel>
               </FormField>

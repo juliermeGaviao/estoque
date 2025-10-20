@@ -35,6 +35,10 @@ public class Venda {
     @JoinColumn(name = "id_vendedor", nullable = false)
     private Usuario vendedor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tabela", nullable = false)
+    private TabelaPreco tabela;
+
     @Column(name = "sub_total", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")
     private BigDecimal subTotal;
 

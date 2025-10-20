@@ -10,9 +10,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.SaleDto;
+import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
+import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
 import br.com.dinamica.estoque.service.SaleService;
@@ -27,18 +29,22 @@ public class SaleServiceImpl implements SaleService {
 
 	private UsuarioRepository usuarioRepository;
 
+	private TabelaPrecoRepository precoTabelaRepository;
+
 	private ModelMapper modelMapper;
 
-	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, ModelMapper modelMapper) {
+	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.itemVendaRepository = itemVendaRepository;
 		this.usuarioRepository = usuarioRepository;
+		this.precoTabelaRepository = precoTabelaRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<SaleDto, Venda>() {
             @Override
             protected void configure() {
                 skip(destination.getVendedor());
+                skip(destination.getTabela());
             }
         });
 	}
@@ -104,8 +110,10 @@ public class SaleServiceImpl implements SaleService {
 		this.modelMapper.map(dto, entity);
 
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
+		TabelaPreco tabela = this.precoTabelaRepository.findById(dto.getTabela().getId()).orElseThrow();
 
 		entity.setVendedor(vendedor);
+		entity.setTabela(tabela);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 

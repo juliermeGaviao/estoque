@@ -22,6 +22,10 @@
                 <constraints nullable="false" foreignKeyName="fk_venda_vendedor" references="usuario(id)"/>
             </column>
 
+            <column name="id_tabela" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_tabela_preco" references="tabela_preco(id)"/>
+            </column>
+
             <column name="sub_total" type="decimal(10, 2)">
                 <constraints nullable="false"/>
             </column>

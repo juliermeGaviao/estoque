@@ -198,7 +198,9 @@ const savePriceTables = async ({ valid, values }) => {
   } else {
     const tables = []
 
-    values.tabelas.forEach(tabela => tables.push({ tabela: { id: tabela }, usuario: { id: userId } }))
+    for (let tabela of values.tabelas) {
+      tables.push({ tabela: { id: tabela }, usuario: { id: userId } })
+    }
 
     loading.value = true
 

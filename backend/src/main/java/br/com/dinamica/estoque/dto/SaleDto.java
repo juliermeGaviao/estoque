@@ -17,6 +17,8 @@ public class SaleDto {
 
     private UserDto vendedor;
 
+    private PriceTableDto tabela;
+
     private BigDecimal subTotal;
 
     private Float desconto;

@@ -1,5 +1,6 @@
 <script setup>
 import api from '@/util/api'
+import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
@@ -13,12 +14,13 @@ const toast = useToast()
 const loading = ref(false)
 
 const form = ref(null)
-const formValues = ref({ idCliente: null, idVendedor: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
+const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
 
 const formValidator = zodResolver(
   z.object({
     idCliente: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Cliente é obrigatório." }),
     idVendedor: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Vendedor é obrigatório." }),
+    idTabela: z.int().min(1, "Tabela de preços é de preenchimento obrigatório."),
     razaoSocial: z.string().optional(),
     subTotal: z.number().optional(),
     desconto: z.number().optional(),
@@ -39,6 +41,7 @@ async function load() {
       form.value.setValues({
         idCliente: res.data.cliente.id,
         idVendedor: res.data.vendedor.id,
+        idTabela: res.data.tabela.id,
         subTotal: res.data.subTotal,
         desconto: res.data.desconto,
         total: res.data.total,
@@ -85,6 +88,7 @@ onMounted(() => {
     load()
     loadItens()
     loadTables()
+    loadProducts()
   }
 
   loadUsers()
@@ -119,10 +123,10 @@ async function loadItens() {
     const response = await api.get("/sale-item/list", { params: query })
 
     itens.value = response.data.content
-    itens.value.forEach(item => {
+    for (let item of itens.value) {
       item.editando = false
       item.temProduto = true
-    })
+    }
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
   }
@@ -145,27 +149,26 @@ const tables = ref([])
 
 async function loadTables() {
   try {
-    const response = await api.get("/user-price-table/list", { params: { idVendedor: id.value } })
+    const response = await api.get("/user-price-table/list", { params: { idVendedor: getUserId() } })
 
     tables.value = response.data.content
-    loadProducts()
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Tabelas de Preço do Vendedor", detail: "Requisição de lista de Tabelas de Preço do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
   }
 }
 
-const products = ref(new Map())
+const products = ref([])
 
-function loadProducts() {
-  tables.value.forEach(async table => {
-    try {
-      const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: table.tabela.id } })
-  
-      products.value.set(table.tabela.id, response.data.content)
-    } catch (error) {
-      toast.add({ severity: "error", summary: "Falha de Carga de Produtos para o Vendedor", detail: "Requisição de lista de Produtos para o Vendedor terminou com o erro: " + error.response.data, life: 10000 })
+async function loadProducts() {
+  try {
+    const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: form.value.idTabela } })
+
+    for (let product of response.data.content) {
+      products.value.push({ id: product.id, nome: product.produto.nome, referencia: product.produto.referencia })
     }
-  })
+  } catch (error) {
+    toast.add({ severity: "error", summary: "Falha de Carga de Produtos para o Vendedor", detail: "Requisição de lista de Produtos para o Vendedor terminou com o erro: " + error.response.data, life: 10000 })
+  }
 }
 
 const clients = ref([])
@@ -193,6 +196,7 @@ const loadClient = async (value) => {
     const res = await api.get('/client', { params: { id: value } })
 
     pj.value = res.data.cnpj?.length > 0
+
     form.value.setValues({
       razaoSocial: res.data.razaoSocial
     })
@@ -208,6 +212,89 @@ const loadClient = async (value) => {
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
   <BlockUI :blocked="loading" fullScreen>
+    <Card class="mb-4">
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Sumário da Venda</h3>
+          <div class="flex justify-end items-center" v-show="id">
+            <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          </div>
+        </div>
+      </template>
+
+      <template #content>
+        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div :class="'col-span-' + (pj ? 5 : 12)">
+              <FormField name="idCliente">
+                <FloatLabel variant="on">
+                  <Select :options="clients" optionLabel="nome" optionValue="id" filter fluid @update:modelValue="loadClient($event)"/>
+                  <label for="idCliente">Cliente</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-7" v-show="pj">
+              <FormField name="razaoSocial">
+                <FloatLabel variant="on">
+                  <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid readonly/>
+                  <label for="razaoSocial">Razão Social</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4" v-show="eAdmin()">
+            <div class="col-span-6">
+              <FormField name="idTabela">
+                <FloatLabel variant="on">
+                  <Select :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid/>
+                  <label for="idTabela">Tabela de Preços</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-6">
+              <FormField name="idVendedor">
+                <FloatLabel variant="on">
+                  <Select :options="users" optionLabel="email" optionValue="id" fluid/>
+                  <label for="idVendedor">Vendedor</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-4">
+              <FormField name="subTotal">
+                <FloatLabel variant="on">
+                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="subTotal">Subtotal (R$)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-4">
+              <FormField name="desconto">
+                <FloatLabel variant="on">
+                  <InputNumber id="desconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="desconto">Desconto (%)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-4">
+              <FormField name="total">
+                <FloatLabel variant="on">
+                  <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <label for="total">Total (R$)</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+          </div>
+          <FormField name="observacoes">
+            <FloatLabel variant="on" class="flex-1">
+              <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
+              <label for="observacoes">Observações</label>
+            </FloatLabel>
+          </FormField>
+        </Form>
+      </template>
+    </Card>
     <Card class="mb-4">
       <template #title>
         <div class="grid grid-cols-2">
@@ -254,79 +341,6 @@ const loadClient = async (value) => {
             </template>
           </Column>
         </DataTable>
-      </template>
-    </Card>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Sumário da Venda</h3>
-          <div class="flex justify-end items-center" v-show="id">
-            <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
-        </div>
-      </template>
-
-      <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
-          <div class="grid grid-cols-12 gap-4">
-            <div :class="'col-span-' + (pj ? 5 : 12)">
-              <FormField name="idCliente">
-                <FloatLabel variant="on">
-                  <Select :options="clients" optionLabel="nome" optionValue="id" fluid @update:modelValue="loadClient($event)"/>
-                  <label for="idCliente">Cliente</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-7" v-show="pj">
-              <FormField name="razaoSocial">
-                <FloatLabel variant="on">
-                  <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid readonly/>
-                  <label for="razaoSocial">Razão Social</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-          </div>
-          <div class="grid grid-cols-12 gap-4">
-            <div :class="'col-span-' + (id ? 3: 4)">
-              <FormField name="subTotal">
-                <FloatLabel variant="on">
-                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="subTotal">Subtotal (R$)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div :class="'col-span-' + (id ? 3: 4)">
-              <FormField name="desconto">
-                <FloatLabel variant="on">
-                  <InputNumber id="desconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="desconto">Desconto (%)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div :class="'col-span-' + (id ? 3: 4)">
-              <FormField name="total">
-                <FloatLabel variant="on">
-                  <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="total">Total (R$)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3" v-show="id">
-              <FormField name="idVendedor">
-                <FloatLabel variant="on">
-                  <Select :options="users" optionLabel="email" optionValue="id" fluid/>
-                  <label for="idVendedor">Vendedor</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-          </div>
-          <FormField name="observacoes">
-            <FloatLabel variant="on" class="flex-1">
-              <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
-              <label for="observacoes">Observações</label>
-            </FloatLabel>
-          </FormField>
-        </Form>
       </template>
     </Card>
     <div class="flex justify-end gap-4 mt-4">

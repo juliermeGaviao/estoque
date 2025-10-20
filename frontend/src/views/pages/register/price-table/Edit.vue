@@ -139,14 +139,14 @@ async function savePrices() {
 
   const payload = []
 
-  data.value.forEach(line => {
+  for (let line of data.value) {
     payload.push({
       id: line.id,
       produto: { id: line.produto.id },
       tabela: { id: Number.parseInt(id.value) },
       preco: line.preco
     })
-  })
+  }
 
   loading.value = true
 
@@ -165,7 +165,9 @@ async function savePrices() {
 }
 
 function cleanPrices() {
-  data.value.forEach(product => product.preco = null)
+  for (let product of data.value) {
+    product.preco = null
+  }
 }
 
 let tipos = ref([])
