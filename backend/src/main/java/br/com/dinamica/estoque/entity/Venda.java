@@ -36,7 +36,7 @@ public class Venda {
     private Usuario vendedor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tabela", nullable = false)
+    @JoinColumn(name = "id_tabela_preco", nullable = false)
     private TabelaPreco tabela;
 
     @Column(name = "sub_total", nullable = false, precision = 19, scale = 2, columnDefinition = "decimal")

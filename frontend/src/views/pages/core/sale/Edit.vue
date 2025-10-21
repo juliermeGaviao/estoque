@@ -4,7 +4,7 @@ import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 
@@ -49,6 +49,7 @@ async function load() {
       })
 
       loadClient(res.data.cliente.id)
+      loadProducts(res.data.tabela.id)
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga da Venda', detail: 'Requisição de venda terminou com o erro: ' + error.response.data, life: 10000 })
@@ -88,7 +89,6 @@ onMounted(() => {
     load()
     loadItens()
     loadTables()
-    loadProducts()
   }
 
   loadUsers()
@@ -124,9 +124,12 @@ async function loadItens() {
 
     itens.value = response.data.content
     for (let item of itens.value) {
+      item.edicao = { ...item.tabelaPrecoProduto }
       item.editando = false
       item.temProduto = true
     }
+
+    nextTick(() => evaluateTotal())
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
   }
@@ -136,10 +139,11 @@ function addItem() {
   itens.value.push({
     id: null,
     venda: { id: id.value },
-    tabelaPrecoProduto: { id: null, produto: { referencia: null, nome: null } },
+    tabelaPrecoProduto: { id: null, produto: { nome: null }, quantidade: null, precoUnitario: null, total: null },
     quantidade: null,
     precoUnitario: null,
     total: null,
+    edicao: { id: null, produto: { nome: null }, quantidade: null, precoUnitario: null, total: null },
     editando: true,
     temProduto: false
   })
@@ -149,7 +153,7 @@ const tables = ref([])
 
 async function loadTables() {
   try {
-    const response = await api.get("/user-price-table/list", { params: { idVendedor: getUserId() } })
+    const response = await api.get("/user-price-table/list", { params: { idVendedor: getUserId(), page: 0, size: 10000, sort: 'tabela.nome,asc' } })
 
     tables.value = response.data.content
   } catch (error) {
@@ -159,13 +163,11 @@ async function loadTables() {
 
 const products = ref([])
 
-async function loadProducts() {
+async function loadProducts(idTabela) {
   try {
-    const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: form.value.idTabela } })
+    const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: idTabela, page: 0, size: 10000, sort: 'produto.nome,asc' } })
 
-    for (let product of response.data.content) {
-      products.value.push({ id: product.id, nome: product.produto.nome, referencia: product.produto.referencia })
-    }
+    products.value = response.data.content
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos para o Vendedor", detail: "Requisição de lista de Produtos para o Vendedor terminou com o erro: " + error.response.data, life: 10000 })
   }
@@ -207,6 +209,55 @@ const loadClient = async (value) => {
   }
 }
 
+function edit(item) {
+  item.edicao = { ...item.tabelaPrecoProduto }
+  item.edicao.nome = item.tabelaPrecoProduto.produto.nome
+  item.edicao.quantidade = item.quantidade
+  item.edicao.precoUnitario = item.precoUnitario
+  item.edicao.total = item.total
+  item.editando = true
+  item.temProduto = true
+}
+
+function cancel(item) {
+  item.editando = false
+}
+
+function setProduct(idTabelaPrecoProduto, item) {
+  let product = null
+
+  for (let i = 0; i < products.value.length && product === null; i++) {
+    product = idTabelaPrecoProduto === products.value[i].id ? products.value[i] : null
+  }
+
+  item.edicao.produto.nome = product.produto.nome
+  item.edicao.precoUnitario = product.preco
+  item.edicao.total = item.quantidade ? item.quantidade * product.preco : null
+
+  nextTick(() => evaluateTotal())
+}
+
+
+function setAmount(evento, item) {
+  item.edicao.total = Number.parseInt(evento.value) * item.edicao.precoUnitario
+  nextTick(() => evaluateTotal())
+}
+
+function evaluateTotal() {
+  let subTotal = 0
+
+  for (const item of itens.value) {
+    if (item.editando) {
+      subTotal += item.edicao.total ? item.edicao.total : 0
+    } else {
+      subTotal += item.total ? item.total : 0
+    }
+  }
+
+  const total = form.value?.states?.desconto?.value ? (subTotal - (subTotal * form.value.states.desconto.value / 100)) : subTotal
+
+  form.value.setValues({ subTotal: subTotal, total: total })
+}
 </script>
 
 <template>
@@ -264,7 +315,7 @@ const loadClient = async (value) => {
             <div class="col-span-4">
               <FormField name="subTotal">
                 <FloatLabel variant="on">
-                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="evaluateTotal"/>
                   <label for="subTotal">Subtotal (R$)</label>
                 </FloatLabel>
               </FormField>
@@ -311,24 +362,36 @@ const loadClient = async (value) => {
           <Column header="Referência">
             <template #body="slotProps">
               <div v-show="!slotProps.data.editando">{{ slotProps.data.tabelaPrecoProduto.produto.referencia }}</div>
-              <div v-show="slotProps.data.editando"><InputText v-model="slotProps.data.tabelaPrecoProduto.produto.referencia" maxlength="100" autocomplete="off"/></div>
+              <div v-show="slotProps.data.editando">
+                <Select v-model="slotProps.data.edicao.id" :options="products" optionLabel="produto.referencia" optionValue="id" filter fluid @update:modelValue="setProduct($event, slotProps.data)"/>
+              </div>
             </template>
           </Column>
-          <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
+          <Column field="tabelaPrecoProduto.produto.nome" header="Nome">
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{slotProps.data.tabelaPrecoProduto.produto.nome}}</div>
+              <div v-show="slotProps.data.editando">{{slotProps.data.edicao.produto.nome}}</div>
+            </template>
+          </Column>
           <Column field="quantidade" header="Quantidade">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.quantidade, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto"><InputNumber v-model="slotProps.data.quantidade" :maxFractionDigits="0"/></div>
+              <div v-show="!slotProps.data.editando">{{slotProps.data.quantidade}}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto">
+                <InputNumber v-model="slotProps.data.edicao.quantidade" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)"/>
+              </div>
             </template>
           </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">
             <template #body="slotProps">
               <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto"><InputNumber v-model="slotProps.data.precoUnitario" :minFractionDigits="2" :maxFractionDigits="2"/></div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
             </template>
           </Column>
           <Column field="total" header="Total (R$)">
-            <template #body="slotProps">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+            </template>
           </Column>
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
@@ -336,8 +399,9 @@ const loadClient = async (value) => {
             </template>
             <template #body="slotProps">
               <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
               <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Verificar'" v-show="slotProps.data.editando"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
             </template>
           </Column>
         </DataTable>
