@@ -4,7 +4,7 @@ import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
-import { nextTick, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { z } from 'zod'
 
@@ -129,7 +129,7 @@ async function loadItens() {
       item.temProduto = true
     }
 
-    nextTick(() => evaluateTotal())
+    evaluateTotal()
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
   }
@@ -221,6 +221,16 @@ function edit(item) {
 
 function cancel(item) {
   item.editando = false
+
+  if (!item.id) {
+    const index = itens.value.indexOf(item)
+
+    if (index !== -1) {
+      itens.value.splice(index, 1)
+    }
+  }
+
+  evaluateTotal()
 }
 
 function setProduct(idTabelaPrecoProduto, item) {
@@ -232,15 +242,20 @@ function setProduct(idTabelaPrecoProduto, item) {
 
   item.edicao.produto.nome = product.produto.nome
   item.edicao.precoUnitario = product.preco
-  item.edicao.total = item.quantidade ? item.quantidade * product.preco : null
+  item.temProduto = true
 
-  nextTick(() => evaluateTotal())
+  evaluateItem(item)
 }
 
+function evaluateItem(item) {
+  item.edicao.total = item.edicao.quantidade ? item.edicao.quantidade * item.edicao.precoUnitario : null
+
+  evaluateTotal()
+}
 
 function setAmount(evento, item) {
   item.edicao.total = Number.parseInt(evento.value) * item.edicao.precoUnitario
-  nextTick(() => evaluateTotal())
+  evaluateTotal()
 }
 
 function evaluateTotal() {
@@ -377,7 +392,7 @@ function evaluateTotal() {
             <template #body="slotProps">
               <div v-show="!slotProps.data.editando">{{slotProps.data.quantidade}}</div>
               <div v-show="slotProps.data.editando && slotProps.data.temProduto">
-                <InputNumber v-model="slotProps.data.edicao.quantidade" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)"/>
+                <InputNumber v-model="slotProps.data.edicao.quantidade" :max="10000" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="evaluateItem(slotProps.data)"/>
               </div>
             </template>
           </Column>
