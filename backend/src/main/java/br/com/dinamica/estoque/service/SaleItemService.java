@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,6 +15,8 @@ public interface SaleItemService {
 	Page<SaleItemDto> list(Long idVenda, Long idTabelaPrecoProduto, Integer minQuantidade, Integer maxQuantidade, Pageable pageable);
 
 	SaleItemDto save(SaleItemDto dto, Usuario usuario);
+
+	List<SaleItemDto> save(List<SaleItemDto> list, Usuario usuario);
 
 	void delete(Long id);
 

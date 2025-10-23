@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
@@ -117,6 +118,11 @@ public class SaleItemServiceImpl implements SaleItemService {
 		entity = this.repository.save(entity);
 
 		return this.modelMapper.map(entity, SaleItemDto.class);
+	}
+
+	@Override
+	public List<SaleItemDto> save(List<SaleItemDto> list, Usuario usuario) {
+		return list.stream().map(dto -> this.save(dto, usuario)).toList();
 	}
 
 	@Override

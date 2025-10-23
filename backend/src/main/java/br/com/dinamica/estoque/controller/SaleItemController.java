@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -80,6 +81,21 @@ public class SaleItemController {
 			return ResponseEntity.ok(this.service.save(dto, usuario));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("save-items")
+	public ResponseEntity<Object> save(@RequestParam(required = false) Long idVenda, @RequestBody List<SaleItemDto> items, @AuthenticationPrincipal Usuario usuario) {
+		try {
+			return ResponseEntity.ok(this.service.save(items, usuario));
+		} catch (NoSuchElementException e) {
+			String mensagem = NOT_FOUND + e.getMessage();
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (RuntimeException e) {

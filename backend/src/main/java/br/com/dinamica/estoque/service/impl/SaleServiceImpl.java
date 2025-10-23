@@ -10,9 +10,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.SaleDto;
+import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
+import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
@@ -31,18 +33,28 @@ public class SaleServiceImpl implements SaleService {
 
 	private TabelaPrecoRepository precoTabelaRepository;
 
+	private ClienteRepository clienteRepository;
+
 	private ModelMapper modelMapper;
 
-	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ModelMapper modelMapper) {
+	public SaleServiceImpl(
+			VendaRepository repository,
+			ItemVendaRepository itemVendaRepository,
+			UsuarioRepository usuarioRepository,
+			TabelaPrecoRepository precoTabelaRepository,
+			ClienteRepository clienteRepository,
+			ModelMapper modelMapper) {
 		this.repository = repository;
 		this.itemVendaRepository = itemVendaRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.precoTabelaRepository = precoTabelaRepository;
+		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<SaleDto, Venda>() {
             @Override
             protected void configure() {
+                skip(destination.getCliente());
                 skip(destination.getVendedor());
                 skip(destination.getTabela());
             }
@@ -109,9 +121,11 @@ public class SaleServiceImpl implements SaleService {
 
 		this.modelMapper.map(dto, entity);
 
+		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
 		TabelaPreco tabela = this.precoTabelaRepository.findById(dto.getTabela().getId()).orElseThrow();
 
+		entity.setCliente(cliente);
 		entity.setVendedor(vendedor);
 		entity.setTabela(tabela);
 		entity.setUsuario(usuario);

@@ -3,6 +3,7 @@ import api from '@/util/api'
 import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
+import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,20 +13,21 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
+const confirm = useConfirm()
 
 const form = ref(null)
 const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
 
 const formValidator = zodResolver(
   z.object({
-    idCliente: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Cliente é obrigatório." }),
+    idCliente: z.number().min(1, { message: "Preenchimento do Cliente é obrigatório." }),
     idVendedor: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Vendedor é obrigatório." }),
     idTabela: z.int().min(1, "Tabela de preços é de preenchimento obrigatório."),
-    razaoSocial: z.string().optional(),
+    razaoSocial: z.string().nullable().optional(),
     subTotal: z.number().optional(),
-    desconto: z.number().optional(),
+    desconto: z.number().nullable().optional(),
     total: z.number().optional(),
-    observacoes: z.string().optional()
+    observacoes: z.string().nullable().optional()
   })
 )
 
@@ -48,6 +50,7 @@ async function load() {
         observacoes: res.data.observacoes
       })
 
+      loadItens()
       loadClient(res.data.cliente.id)
       loadProducts(res.data.tabela.id)
     }
@@ -61,9 +64,16 @@ async function load() {
 const save = async ({ valid, values }) => {
   if (!valid) return
 
-  let params = { ... values }
-
-  params['id'] = Number.parseInt(id.value)
+  const params = {
+    id: Number.parseInt(id.value),
+    cliente: { id: values.idCliente },
+    vendedor: { id: values.idVendedor },
+    tabela: { id: values.idTabela },
+    subTotal: values.subTotal,
+    desconto: values.desconto,
+    total: values.total,
+    observacoes: values.observacoes
+  }
 
   loading.value = true
 
@@ -73,7 +83,10 @@ const save = async ({ valid, values }) => {
     if (response.status === 200) {
       id.value = response.data.id
 
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda efetuada com sucesso', life: 10000 })
+      await saveItens()
+      load()
+
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda salva com sucesso', life: 10000 })
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação da Venda', detail: 'Requisição de alteração da venda terminou com o erro: ' + error.response.data, life: 10000 })
@@ -82,15 +95,22 @@ const save = async ({ valid, values }) => {
   }
 }
 
+async function saveItens() {
+  try {
+    await api.post('/sale-item/save-items', itens.value.filter(item => item.editando === false))
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação dos Itens de Venda', detail: 'Requisição de alteração dos itens de venda terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
 onMounted(() => {
   loading.value = true
 
   if (id.value) {
     load()
-    loadItens()
-    loadTables()
   }
-
+  
+  loadTables()
   loadUsers()
   loadClients()
 
@@ -139,11 +159,11 @@ function addItem() {
   itens.value.push({
     id: null,
     venda: { id: id.value },
-    tabelaPrecoProduto: { id: null, produto: { nome: null }, quantidade: null, precoUnitario: null, total: null },
+    tabelaPrecoProduto: { id: null, produto: { nome: null, referencia: null }, quantidade: null, precoUnitario: null, total: null },
     quantidade: null,
     precoUnitario: null,
     total: null,
-    edicao: { id: null, produto: { nome: null }, quantidade: null, precoUnitario: null, total: null },
+    edicao: { id: null, referencia: null, nome: null, quantidade: null, precoUnitario: null, total: null },
     editando: true,
     temProduto: false
   })
@@ -210,24 +230,30 @@ const loadClient = async (value) => {
 }
 
 function edit(item) {
-  item.edicao = { ...item.tabelaPrecoProduto }
-  item.edicao.nome = item.tabelaPrecoProduto.produto.nome
-  item.edicao.quantidade = item.quantidade
-  item.edicao.precoUnitario = item.precoUnitario
-  item.edicao.total = item.total
+  if (item.id) {
+    item.edicao = {
+      id: item.tabelaPrecoProduto.id,
+      referencia: item.tabelaPrecoProduto.produto.nome,
+      nome: item.tabelaPrecoProduto.produto.nome,
+      quantidade: item.quantidade,
+      precoUnitario: item.precoUnitario,
+      total: item.total
+    }
+
+    item.temProduto = true
+  } else if (!item.edicao) {
+    item.edicao = { id: null, nome: null, referencia: null, quantidade: null, precoUnitario: null, total: null }
+  }
+
   item.editando = true
-  item.temProduto = true
+  evaluateItem(item)
 }
 
 function cancel(item) {
   item.editando = false
 
-  if (!item.id) {
-    const index = itens.value.indexOf(item)
-
-    if (index !== -1) {
-      itens.value.splice(index, 1)
-    }
+  if (!item.id && (!item.edicao.quantidade || Number.parseInt(item.edicao.quantidade) <= 0)) {
+    itens.value.splice(itens.value.indexOf(item), 1)
   }
 
   evaluateTotal()
@@ -240,7 +266,9 @@ function setProduct(idTabelaPrecoProduto, item) {
     product = idTabelaPrecoProduto === products.value[i].id ? products.value[i] : null
   }
 
-  item.edicao.produto.nome = product.produto.nome
+  item.edicao.id = product.id
+  item.edicao.referencia = product.produto.referencia
+  item.edicao.nome = product.produto.nome
   item.edicao.precoUnitario = product.preco
   item.temProduto = true
 
@@ -248,13 +276,14 @@ function setProduct(idTabelaPrecoProduto, item) {
 }
 
 function evaluateItem(item) {
-  item.edicao.total = item.edicao.quantidade ? item.edicao.quantidade * item.edicao.precoUnitario : null
+  item.edicao.total = item.edicao?.quantidade * item.edicao.precoUnitario
 
   evaluateTotal()
 }
 
 function setAmount(evento, item) {
   item.edicao.total = Number.parseInt(evento.value) * item.edicao.precoUnitario
+
   evaluateTotal()
 }
 
@@ -272,6 +301,71 @@ function evaluateTotal() {
   const total = form.value?.states?.desconto?.value ? (subTotal - (subTotal * form.value.states.desconto.value / 100)) : subTotal
 
   form.value.setValues({ subTotal: subTotal, total: total })
+}
+
+function commit(item) {
+  if (!item.temProduto) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Item de venda está sem produto associado.', life: 10000 })
+    return
+  }
+
+  if (!item.edicao.quantidade || Number.parseInt(item.edicao.quantidade) <= 0) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Quantidade de itens deve ter valor maior que zero.', life: 10000 })
+    return
+  }
+
+  item.tabelaPrecoProduto.id = item.edicao.id
+  item.tabelaPrecoProduto.produto.referencia = item.edicao.referencia
+  item.tabelaPrecoProduto.produto.nome = item.edicao.nome
+  item.precoUnitario = item.edicao.precoUnitario
+  item.quantidade = item.edicao.quantidade
+  item.total = item.edicao.quantidade * item.edicao.precoUnitario
+
+  item.editando = false
+
+  evaluateTotal()
+}
+
+const confirmDelete = entity => {
+  confirm.require({
+    message: 'Deseja remover o item venda?',
+    header: "Alerta",
+    icon: 'pi pi-info-circle',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      raised: true
+    },
+    acceptProps: {
+      label: 'Remover',
+      severity: 'danger',
+      raised: true
+    },
+    accept: async () => {
+      if (entity.id) {
+        try {
+          await api.delete(`/sale-item?id=${entity.id}`)
+          
+          toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Item de Venda removido com sucesso', life: 10000 })
+          
+          load()
+        } catch (error) {
+          toast.add({ severity: 'error', summary: 'Falha de Remoção do Item de Venda', detail: 'Requisição de remoção de item de venda terminou com o erro: ' + error.response.data, life: 10000 })
+        }
+      }
+
+      itens.value.splice(itens.value.indexOf(entity), 1)
+    }
+  })
+}
+
+function changeDiscount(event) {
+  const subTotal = form.value?.states?.subTotal?.value
+  const value = typeof event.value === 'string' ? event.value.replace(',', '.') : event.value
+  const desconto = event.value ? Number.parseFloat(value) : 0
+  const total = value ? subTotal - (subTotal * Math.min(desconto, 99.99) / 100) : subTotal
+
+  form.value.setValues({ total: Number.parseFloat(total.toFixed(2)) })
 }
 </script>
 
@@ -292,11 +386,12 @@ function evaluateTotal() {
         <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
           <div class="grid grid-cols-12 gap-4">
             <div :class="'col-span-' + (pj ? 5 : 12)">
-              <FormField name="idCliente">
+              <FormField v-slot="$field" name="idCliente">
                 <FloatLabel variant="on">
-                  <Select :options="clients" optionLabel="nome" optionValue="id" filter fluid @update:modelValue="loadClient($event)"/>
+                  <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @update:modelValue="loadClient($event)"/>
                   <label for="idCliente">Cliente</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
             <div class="col-span-7" v-show="pj">
@@ -310,54 +405,64 @@ function evaluateTotal() {
           </div>
           <div class="grid grid-cols-12 gap-4" v-show="eAdmin()">
             <div class="col-span-6">
-              <FormField name="idTabela">
+              <FormField v-slot="$field" name="idTabela">
                 <FloatLabel variant="on">
-                  <Select :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid/>
+                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid/>
                   <label for="idTabela">Tabela de Preços</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
             <div class="col-span-6">
-              <FormField name="idVendedor">
+              <FormField v-slot="$field" name="idVendedor">
                 <FloatLabel variant="on">
-                  <Select :options="users" optionLabel="email" optionValue="id" fluid/>
+                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid/>
                   <label for="idVendedor">Vendedor</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
           </div>
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-4">
-              <FormField name="subTotal">
+              <FormField v-slot="$field" name="subTotal">
                 <FloatLabel variant="on">
-                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="evaluateTotal"/>
+                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="evaluateTotal" readonly/>
                   <label for="subTotal">Subtotal (R$)</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
             <div class="col-span-4">
-              <FormField name="desconto">
+              <FormField v-slot="$field" name="desconto">
                 <FloatLabel variant="on">
-                  <InputNumber id="desconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <InputNumber id="desconto" :max="99.99" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="changeDiscount" @blur="changeDiscount"/>
                   <label for="desconto">Desconto (%)</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
             <div class="col-span-4">
-              <FormField name="total">
+              <FormField v-slot="$field" name="total">
                 <FloatLabel variant="on">
-                  <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                  <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
                   <label for="total">Total (R$)</label>
                 </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
           </div>
-          <FormField name="observacoes">
+          <FormField v-slot="$field" name="observacoes">
             <FloatLabel variant="on" class="flex-1">
               <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
               <label for="observacoes">Observações</label>
             </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
+          <div class="flex justify-end gap-4 mt-2">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </div>
         </Form>
       </template>
     </Card>
@@ -385,7 +490,7 @@ function evaluateTotal() {
           <Column field="tabelaPrecoProduto.produto.nome" header="Nome">
             <template #body="slotProps">
               <div v-show="!slotProps.data.editando">{{slotProps.data.tabelaPrecoProduto.produto.nome}}</div>
-              <div v-show="slotProps.data.editando">{{slotProps.data.edicao.produto.nome}}</div>
+              <div v-show="slotProps.data.editando">{{slotProps.data.edicao.nome}}</div>
             </template>
           </Column>
           <Column field="quantidade" header="Quantidade">
@@ -415,16 +520,12 @@ function evaluateTotal() {
             <template #body="slotProps">
               <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
               <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
-              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Verificar'" v-show="slotProps.data.editando"/>
+              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-show="slotProps.data.editando"/>
               <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
             </template>
           </Column>
         </DataTable>
       </template>
     </Card>
-    <div class="flex justify-end gap-4 mt-4">
-      <Button label="Limpar" icon="pi pi-times" severity="secondary" raised/>
-      <Button label="Salvar" icon="pi pi-save" raised/>
-    </div>
   </BlockUI>
 </template>
