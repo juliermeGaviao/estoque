@@ -305,7 +305,7 @@ function evaluateTotal() {
 
   const total = form.value?.states?.desconto?.value ? (subTotal - (subTotal * form.value.states.desconto.value / 100)) : subTotal
 
-  form.value.setValues({ subTotal: subTotal, total: total })
+  form.value.setValues({ subTotal: Number.parseFloat(subTotal.toFixed(2)), total: Number.parseFloat(total.toFixed(2)) })
 }
 
 function commit(item) {
