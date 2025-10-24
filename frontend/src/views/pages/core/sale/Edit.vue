@@ -87,7 +87,8 @@ const save = async ({ valid, values }) => {
       id.value = response.data.id
 
       await saveItens()
-      load(id.value)
+      await load(id.value)
+      loadItens(id.value)
 
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda salva com sucesso', life: 10000 })
     }
