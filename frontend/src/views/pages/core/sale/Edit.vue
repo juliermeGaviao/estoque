@@ -20,24 +20,24 @@ const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, raza
 
 const formValidator = zodResolver(
   z.object({
-    idCliente: z.number().min(1, { message: "Preenchimento do Cliente é obrigatório." }),
-    idVendedor: z.number().refine(val => !id || (val && val > 0), { message: "Preenchimento do Vendedor é obrigatório." }),
-    idTabela: z.int().min(1, "Tabela de preços é de preenchimento obrigatório."),
+    idCliente: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Preenchimento do Cliente é obrigatório." }),
+    idVendedor: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Preenchimento do Vendedor é obrigatório." }),
+    idTabela: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Tabela de preços é de preenchimento obrigatório." }),
     razaoSocial: z.string().nullable().optional(),
-    subTotal: z.number().optional(),
+    subTotal: z.number().nullable().optional(),
     desconto: z.number().nullable().optional(),
-    total: z.number().optional(),
+    total: z.number().nullable().optional(),
     observacoes: z.string().nullable().optional()
   })
 )
 
 const id = ref(route.query.id)
 
-async function load() {
+async function load(idVenda) {
   loading.value = true
 
   try {
-    const res = await api.get('/sale', { params: { id: id.value } })
+    const res = await api.get('/sale', { params: { id: idVenda } })
 
     if (form.value) {
       form.value.setValues({
@@ -49,10 +49,6 @@ async function load() {
         total: res.data.total,
         observacoes: res.data.observacoes
       })
-
-      loadItens()
-      loadClient(res.data.cliente.id)
-      loadProducts(res.data.tabela.id)
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga da Venda', detail: 'Requisição de venda terminou com o erro: ' + error.response.data, life: 10000 })
@@ -63,6 +59,13 @@ async function load() {
 
 const save = async ({ valid, values }) => {
   if (!valid) return
+
+  const filter = itens.value.filter(item => item.editando === false)
+
+  if (filter.length === 0) {
+    toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Ao menos um item de venda deve ser informado.', life: 10000 })
+    return
+  }
 
   const params = {
     id: Number.parseInt(id.value),
@@ -84,7 +87,7 @@ const save = async ({ valid, values }) => {
       id.value = response.data.id
 
       await saveItens()
-      load()
+      load(id.value)
 
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda salva com sucesso', life: 10000 })
     }
@@ -103,14 +106,21 @@ async function saveItens() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loading.value = true
 
   if (id.value) {
-    load()
+    await load(id.value)
+    loadItens(id.value)
+
+    const fields = form.value.states
+    loadTables(fields.idVendedor.value)
+    loadClient(fields.idCliente.value)
+    loadProducts(fields.idTabela.value)
+  } else {
+    loadTables(getUserId())
   }
-  
-  loadTables()
+
   loadUsers()
   loadClients()
 
@@ -132,9 +142,9 @@ async function loadUsers() {
 
 const itens = ref([])
 
-async function loadItens() {
+async function loadItens(idVenda) {
   const query = {
-    idVenda: id.value,
+    idVenda: idVenda,
     page: 0,
     size: 10000,
   }
@@ -171,9 +181,9 @@ function addItem() {
 
 const tables = ref([])
 
-async function loadTables() {
+async function loadTables(idVendedor) {
   try {
-    const response = await api.get("/user-price-table/list", { params: { idVendedor: getUserId(), page: 0, size: 10000, sort: 'tabela.nome,asc' } })
+    const response = await api.get("/user-price-table/list", { params: { idVendedor: idVendedor, page: 0, size: 10000, sort: 'tabela.nome,asc' } })
 
     tables.value = response.data.content
   } catch (error) {
@@ -219,9 +229,7 @@ const loadClient = async (value) => {
 
     pj.value = res.data.cnpj?.length > 0
 
-    form.value.setValues({
-      razaoSocial: res.data.razaoSocial
-    })
+    form.value.setFieldValue('razaoSocial', res.data.razaoSocial)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Cliente', detail: 'Requisição de cliente terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
@@ -260,11 +268,7 @@ function cancel(item) {
 }
 
 function setProduct(idTabelaPrecoProduto, item) {
-  let product = null
-
-  for (let i = 0; i < products.value.length && product === null; i++) {
-    product = idTabelaPrecoProduto === products.value[i].id ? products.value[i] : null
-  }
+  const product = products.value.find(product => idTabelaPrecoProduto === product.id)
 
   item.edicao.id = product.id
   item.edicao.referencia = product.produto.referencia
@@ -314,9 +318,9 @@ function commit(item) {
     return
   }
 
-  item.tabelaPrecoProduto.id = item.edicao.id
-  item.tabelaPrecoProduto.produto.referencia = item.edicao.referencia
-  item.tabelaPrecoProduto.produto.nome = item.edicao.nome
+  const product = products.value.find(product => item.edicao.id === product.id)
+
+  item.tabelaPrecoProduto = product
   item.precoUnitario = item.edicao.precoUnitario
   item.quantidade = item.edicao.quantidade
   item.total = item.edicao.quantidade * item.edicao.precoUnitario
@@ -326,7 +330,7 @@ function commit(item) {
   evaluateTotal()
 }
 
-const confirmDelete = entity => {
+const confirmDelete = item => {
   confirm.require({
     message: 'Deseja remover o item venda?',
     header: "Alerta",
@@ -342,30 +346,87 @@ const confirmDelete = entity => {
       raised: true
     },
     accept: async () => {
-      if (entity.id) {
-        try {
-          await api.delete(`/sale-item?id=${entity.id}`)
-          
-          toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Item de Venda removido com sucesso', life: 10000 })
-          
-          load()
-        } catch (error) {
-          toast.add({ severity: 'error', summary: 'Falha de Remoção do Item de Venda', detail: 'Requisição de remoção de item de venda terminou com o erro: ' + error.response.data, life: 10000 })
-        }
-      }
-
-      itens.value.splice(itens.value.indexOf(entity), 1)
+      deleteItemSale(item)
     }
   })
 }
 
+async function deleteItemSale(item) {
+  if (item.id) {
+    try {
+      await api.delete(`/sale-item?id=${item.id}`)
+      
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Item de Venda removido com sucesso', life: 10000 })
+      
+      load(item.venda.id)
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Remoção do Item de Venda', detail: 'Requisição de remoção de item de venda terminou com o erro: ' + error.response.data, life: 10000 })
+    }
+  }
+
+  itens.value.splice(itens.value.indexOf(item), 1)
+}
 function changeDiscount(event) {
   const subTotal = form.value?.states?.subTotal?.value
   const value = typeof event.value === 'string' ? event.value.replace(',', '.') : event.value
   const desconto = event.value ? Number.parseFloat(value) : 0
   const total = value ? subTotal - (subTotal * Math.min(desconto, 99.99) / 100) : subTotal
 
-  form.value.setValues({ total: Number.parseFloat(total.toFixed(2)) })
+  form.value.setFieldValue('total', Number.parseFloat(total.toFixed(2)))
+}
+
+async function changeSalesman(idVendedor) {
+  await loadTables(idVendedor)
+
+  if (tables.value.length === 1) {
+    form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
+    loadProducts(tables.value[0].tabela.id)
+  } else {
+    form.value.setFieldValue('idTabela', null)
+    products.value = []
+  }
+}
+
+async function changePriceTable(idTabela) {
+  const oldValue = form.value.states.idTabela.value
+
+  confirm.require({
+    message: 'Alterar a tabela de preços pode remover itens da venda cujos produtos não existam ou não tenham preço definido para a nova tabela escolhida. Deseja continuar?',
+    header: "Alerta",
+    icon: 'pi pi-info-circle',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      raised: true
+    },
+    acceptProps: {
+      label: 'Prosseguir',
+      severity: 'danger',
+      raised: true
+    },
+    accept: async () => {
+      await loadProducts(idTabela)
+
+      for (let item of itens.value) {
+        if (item.tabelaPrecoProduto?.produto?.id) {
+          const tabelaPrecoProduto = products.value.find(product => product.produto.id === item.tabelaPrecoProduto?.produto?.id)
+
+          if (tabelaPrecoProduto) {
+            item.tabelaPrecoProduto = tabelaPrecoProduto
+            item.precoUnitario = tabelaPrecoProduto.preco
+            item.total = item.quantidade * tabelaPrecoProduto.preco
+          } else {
+            deleteItemSale(item)
+          }
+        } else {
+          deleteItemSale(item)
+        }
+      }
+
+      evaluateTotal()
+    },
+    reject: () => form.value.setFieldValue('idTabela', oldValue)
+  })
 }
 </script>
 
@@ -375,8 +436,8 @@ function changeDiscount(event) {
     <Card class="mb-4">
       <template #title>
         <div class="grid grid-cols-2">
-          <h3>Sumário da Venda</h3>
-          <div class="flex justify-end items-center" v-show="id">
+          <h3>Venda</h3>
+          <div class="flex justify-end items-center">
             <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
@@ -405,19 +466,19 @@ function changeDiscount(event) {
           </div>
           <div class="grid grid-cols-12 gap-4" v-show="eAdmin()">
             <div class="col-span-6">
-              <FormField v-slot="$field" name="idTabela">
+              <FormField v-slot="$field" name="idVendedor">
                 <FloatLabel variant="on">
-                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid/>
-                  <label for="idTabela">Tabela de Preços</label>
+                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @update:modelValue="changeSalesman($event)"/>
+                  <label for="idVendedor">Vendedor</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
             <div class="col-span-6">
-              <FormField v-slot="$field" name="idVendedor">
+              <FormField v-slot="$field" name="idTabela">
                 <FloatLabel variant="on">
-                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid/>
-                  <label for="idVendedor">Vendedor</label>
+                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @value-change="changePriceTable($event)"/>
+                  <label for="idTabela">Tabela de Preços</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
