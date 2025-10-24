@@ -427,7 +427,7 @@ function changeDiscount(event) {
             <div class="col-span-4">
               <FormField v-slot="$field" name="subTotal">
                 <FloatLabel variant="on">
-                  <InputNumber id="subTotal" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="evaluateTotal" readonly/>
+                  <InputNumber id="subTotal" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
                   <label for="subTotal">Subtotal (R$)</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -436,7 +436,7 @@ function changeDiscount(event) {
             <div class="col-span-4">
               <FormField v-slot="$field" name="desconto">
                 <FloatLabel variant="on">
-                  <InputNumber id="desconto" :max="99.99" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="changeDiscount" @blur="changeDiscount"/>
+                  <InputNumber id="desconto" :max="99.99" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="changeDiscount"/>
                   <label for="desconto">Desconto (%)</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -445,7 +445,7 @@ function changeDiscount(event) {
             <div class="col-span-4">
               <FormField v-slot="$field" name="total">
                 <FloatLabel variant="on">
-                  <InputNumber id="total" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
+                  <InputNumber id="total" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
                   <label for="total">Total (R$)</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
