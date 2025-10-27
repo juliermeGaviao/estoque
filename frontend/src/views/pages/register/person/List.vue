@@ -170,8 +170,8 @@ async function loadCompanies() {
     <Card>
       <template #title><h3>Lista de Pessoas Cliente</h3></template>
       <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-4 mb-4">
-          <div class="grid grid-cols-12 gap-4">
+        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-8">
               <FormField name="nome">
                 <FloatLabel variant="on">
@@ -189,7 +189,7 @@ async function loadCompanies() {
               </FormField>
             </div>
           </div>
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-2">
               <FormField name="fone">
                 <FloatLabel variant="on">
@@ -231,7 +231,7 @@ async function loadCompanies() {
               </FormField>
             </div>
             <div class="col-span-2">
-              <FormField class="flex justify-end gap-4">
+              <FormField class="flex justify-end gap-2">
                 <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
                 <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
               </FormField>

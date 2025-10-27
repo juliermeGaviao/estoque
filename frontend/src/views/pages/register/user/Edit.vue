@@ -238,7 +238,7 @@ function clearTables() {
       </template>
 
       <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="initialFormValues" @submit="save" class="grid flex flex-column gap-4">
+        <Form ref="form" :resolver="formValidator" :initialValues="initialFormValues" @submit="save" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="email">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>
@@ -247,7 +247,7 @@ function clearTables() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="perfis" class="flex items-start gap-4" v-show="eAdmin()">
+          <FormField v-slot="$field" name="perfis" class="flex items-start gap-2" v-show="eAdmin()">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
@@ -262,7 +262,7 @@ function clearTables() {
             </div>
           </FormField>
 
-          <div class="flex justify-end gap-4">
+          <div class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </div>
@@ -279,7 +279,7 @@ function clearTables() {
         </div>
       </template>
       <template #content>
-        <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-4">
+        <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="senha" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <Password inputId="senha" toggleMask fluid :feedback="false"/>
@@ -296,7 +296,7 @@ function clearTables() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <div class="flex justify-end gap-4">
+          <div class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </div>
@@ -313,9 +313,9 @@ function clearTables() {
         </div>
       </template>
       <template #content>
-        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-4">
+        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="tabelas" v-show="userProfiles === 2">
-            <div class="flex items-start gap-4">
+            <div class="flex items-start gap-2">
               <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
                 <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'checkbox_' + tabela.id"/>
                 <label :for="'checkbox_' + tabela.id">{{ tabela.nome }}</label>
@@ -325,7 +325,7 @@ function clearTables() {
           </FormField>
 
           <FormField v-slot="$field" name="tabela" v-show="userProfiles < 2">
-            <div class="flex items-start gap-4">
+            <div class="flex items-start gap-2">
               <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
                 <RadioButton v-model="$field.value" :value="tabela.id" :inputId="'radiobutton_' + tabela.id"/>
                 <label :for="'radiobutton_' + tabela.id">{{ tabela.nome }}</label>
@@ -334,7 +334,7 @@ function clearTables() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <div class="flex justify-end gap-4">
+          <div class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </div>

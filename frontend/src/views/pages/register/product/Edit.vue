@@ -158,8 +158,8 @@ async function loadProviders() {
       </template>
 
       <template #content>
-        <Form ref="form" :key="formKey" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
-          <div class="grid grid-cols-12 gap-4">
+        <Form ref="form" :key="formKey" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-8">
               <FormField v-slot="$field" name="nome">
                 <FloatLabel variant="on">
@@ -189,7 +189,7 @@ async function loadProviders() {
             </div>
           </div>
 
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <FormField v-slot="$field" name="referencia">
                 <FloatLabel variant="on">
@@ -221,7 +221,7 @@ async function loadProviders() {
             </div>
           </div>
 
-          <FormField class="flex justify-end gap-4">
+          <FormField class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar & Novo" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'"/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised @click="submitAction = 'save'"/>

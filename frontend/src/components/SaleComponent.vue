@@ -10,7 +10,8 @@ import { useRouter } from 'vue-router'
 import { z } from 'zod'
 
 const props = defineProps({
-  id: { type: [Number, String], default: null }
+  id: { type: [Number, String], default: null },
+  backEndpoint: { type: [String], default: null }
 })
 
 const router = useRouter()
@@ -135,10 +136,10 @@ onMounted(async () => {
     loadClient(fields.idCliente.value)
     loadProducts(fields.idTabela.value)
   } else {
-    form.value.setFieldValue('idVendedor', getUserId())
     await loadTables(getUserId())
-
+    
     if (tables.value?.length === 1) {
+      form.value.setFieldValue('idVendedor', getUserId())
       form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
       loadProducts(tables.value[0].tabela.id)
     }
@@ -451,6 +452,11 @@ async function changePriceTable(idTabela) {
     reject: () => form.value.setFieldValue('idTabela', oldValue)
   })
 }
+
+function clear() {
+  form.value.reset()
+  itens.value = []
+}
 </script>
 
 <template>
@@ -460,15 +466,15 @@ async function changePriceTable(idTabela) {
       <template #title>
         <div class="grid grid-cols-2">
           <h3>Venda</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          <div class="flex justify-end items-center" v-show="props.backEndpoint">
+            <Button icon="pi pi-replay" @click="router.push(props.backEndpoint)" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>
       </template>
 
       <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-4">
-          <div class="grid grid-cols-12 gap-4">
+        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" @reset="clear" class="grid flex flex-column gap-2">
+          <div class="grid grid-cols-12 gap-2">
             <div :class="'col-span-' + (pj ? 5 : 12)">
               <FormField v-slot="$field" name="idCliente">
                 <FloatLabel variant="on">
@@ -487,7 +493,7 @@ async function changePriceTable(idTabela) {
               </FormField>
             </div>
           </div>
-          <div class="grid grid-cols-12 gap-4" v-show="eAdmin()">
+          <div class="grid grid-cols-12 gap-2" v-show="eAdmin()">
             <div class="col-span-6">
               <FormField v-slot="$field" name="idVendedor">
                 <FloatLabel variant="on">
@@ -507,7 +513,7 @@ async function changePriceTable(idTabela) {
               </FormField>
             </div>
           </div>
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <FormField v-slot="$field" name="subTotal">
                 <FloatLabel variant="on">
@@ -543,7 +549,7 @@ async function changePriceTable(idTabela) {
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
-          <div class="flex justify-end gap-4 mt-2">
+          <div class="flex justify-end gap-2 mt-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'"/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
@@ -555,7 +561,7 @@ async function changePriceTable(idTabela) {
       <template #title>
         <div class="grid grid-cols-2">
           <h3>Itens da Venda</h3>
-          <div class="flex justify-end items-center">
+          <div class="flex justify-end items-center" v-show="props.backEndpoint">
             <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
           </div>
         </div>

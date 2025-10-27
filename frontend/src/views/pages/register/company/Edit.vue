@@ -282,7 +282,7 @@ onMounted(() => {
       </template>
 
       <template #content>
-        <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-4">
+        <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="razaoSocial">
             <FloatLabel variant="on">
               <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
@@ -299,7 +299,7 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-2">
             <FormField v-slot="$field" name="cnpj">
               <FloatLabel variant="on">
                 <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
@@ -325,7 +325,7 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-10">
               <FormField v-slot="$field" name="bairro">
                 <FloatLabel variant="on">
@@ -347,7 +347,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-10">
               <FormField v-slot="$field" name="cidade">
                 <FloatLabel variant="on">
@@ -369,7 +369,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <FormField class="flex justify-end gap-4">
+          <FormField class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </FormField>
@@ -413,7 +413,7 @@ onMounted(() => {
       </template>
     </Card>
     <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
-      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-4">
+      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
         <FormField v-slot="$field" name="nome" class="mt-1">
           <FloatLabel variant="on">
             <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -430,7 +430,7 @@ onMounted(() => {
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-3 gap-2">
           <FormField v-slot="$field" name="fone">
             <FloatLabel variant="on">
               <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
@@ -456,7 +456,7 @@ onMounted(() => {
           </FormField>
         </div>
 
-        <div class="grid grid-cols-12 gap-4">
+        <div class="grid grid-cols-12 gap-2">
           <div class="col-span-8">
             <FormField v-slot="$field" name="email" initialValue="">
               <FloatLabel variant="on" class="flex-1">
@@ -486,7 +486,7 @@ onMounted(() => {
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <FormField class="flex justify-end gap-4">
+        <FormField class="flex justify-end gap-2">
           <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
           <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
           <Button label="Salvar" icon="pi pi-save" type="submit" raised/>

@@ -123,7 +123,7 @@ const confirmDelete = entity => {
     <Card>
       <template #title><h3>Lista de Usuários</h3></template>
       <template #content>
-        <Form class="flex gap-4 mb-4" @submit="onFilter" @reset="onClear">
+        <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
           <FloatLabel variant="on">
             <label for="email">E-mail</label>
             <InputText id="email" v-model="email" autocomplete="off" fluid/>

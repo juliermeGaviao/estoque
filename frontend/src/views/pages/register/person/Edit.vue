@@ -296,8 +296,8 @@ async function loadCompanies() {
       </template>
 
       <template #content>
-        <Form ref="personForm" :resolver="personFormValidator" :initialValues="personFormValues" @submit="save" class="grid flex flex-column gap-4">
-          <div class="grid grid-cols-12 gap-4">
+        <Form ref="personForm" :resolver="personFormValidator" :initialValues="personFormValues" @submit="save" class="grid flex flex-column gap-2">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-8">
               <FormField v-slot="$field" name="nome">
                 <FloatLabel variant="on">
@@ -317,7 +317,7 @@ async function loadCompanies() {
               </FormField>
             </div>
           </div>
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-4">
               <FormField name="limite">
                 <FloatLabel variant="on">
@@ -355,7 +355,7 @@ async function loadCompanies() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-10">
               <FormField v-slot="$field" name="bairro">
                 <FloatLabel variant="on">
@@ -377,7 +377,7 @@ async function loadCompanies() {
             </div>
           </div>
 
-          <div class="grid grid-cols-12 gap-4">
+          <div class="grid grid-cols-12 gap-2">
             <div class="col-span-10">
               <FormField v-slot="$field" name="cidade">
                 <FloatLabel variant="on">
@@ -399,7 +399,7 @@ async function loadCompanies() {
             </div>
           </div>
 
-          <FormField class="flex justify-end gap-4">
+          <FormField class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </FormField>
@@ -442,8 +442,8 @@ async function loadCompanies() {
       </template>
     </Card>
     <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
-      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-4">
-        <div class="grid grid-cols-2 gap-4 mt-1">
+      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
+        <div class="grid grid-cols-2 gap-2 mt-1">
           <FormField v-slot="$field" name="whatsapp">
             <FloatLabel variant="on">
               <InputMask id="whatsapp" mask="(99) 99999-9999" autocomplete="off" fluid/>
@@ -469,7 +469,7 @@ async function loadCompanies() {
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <FormField class="flex justify-end gap-4">
+        <FormField class="flex justify-end gap-2">
           <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
           <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
           <Button label="Salvar" icon="pi pi-save" type="submit" raised/>

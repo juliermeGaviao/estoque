@@ -6,5 +6,5 @@ const route = useRoute()
 </script>
 
 <template>
-  <SaleComponent :id="route.query.id"/>
+  <SaleComponent :id="route.query.id" back-endpoint="/core/sale"/>
 </template>

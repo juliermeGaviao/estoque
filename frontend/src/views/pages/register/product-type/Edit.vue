@@ -91,7 +91,7 @@ onMounted(() => {
       </template>
 
       <template #content>
-        <Form ref="productTypeForm" :resolver="productTypeFormValidator" :initialValues="productTypeFormValues" @submit="save" class="grid flex flex-column gap-4">
+        <Form ref="productTypeForm" :resolver="productTypeFormValidator" :initialValues="productTypeFormValues" @submit="save" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="nome">
             <FloatLabel variant="on">
               <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
@@ -100,7 +100,7 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField class="flex justify-end gap-4">
+          <FormField class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </FormField>

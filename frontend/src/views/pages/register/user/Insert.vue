@@ -98,7 +98,7 @@ onMounted(() => {
       </template>
 
       <template #content>
-        <Form :resolver :initialValues @submit="save" class="grid flex flex-column gap-4">
+        <Form :resolver :initialValues @submit="save" class="grid flex flex-column gap-2">
           <FormField v-slot="$field" name="email" initialValue="">
             <FloatLabel variant="on" class="flex-1">
               <InputText id="email" maxlength="255" autocomplete="off" fluid/>
@@ -123,7 +123,7 @@ onMounted(() => {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField name="perfis" class="flex items-start gap-4">
+          <FormField name="perfis" class="flex items-start gap-2">
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil' + perfil.id" :disabled="perfil.id === 2"/>
@@ -131,7 +131,7 @@ onMounted(() => {
             </div>
           </FormField>
 
-          <FormField class="flex justify-end gap-4">
+          <FormField class="flex justify-end gap-2">
             <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </FormField>
