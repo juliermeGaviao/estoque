@@ -24,7 +24,7 @@ const companyFormValidator = zodResolver(
     razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
     nome: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
     cnpj: z.string().length(18, { message: 'CNPJ é obrigatório.' }),
-    fone: z.string().length(15, { message: 'Fone é obrigatório.' }),
+    fone: z.string().min(1, { message: 'Fone é obrigatório.' }).transform((val) => val.replaceAll(/\D/g, '')).refine((val) => val.length === 10 || val.length === 11, { message: 'O telefone deve conter DDD + (8 ou 9) dígitos).' }),
     endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
     bairro: z.string().min(1, { message: 'Bairro é obrigatório.' }),
     cep: z.string().length(9, { message: 'CEP é obrigatório.' }),
@@ -310,7 +310,7 @@ onMounted(() => {
 
             <FormField v-slot="$field" name="fone">
               <FloatLabel variant="on">
-                <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+                <InputMask id="fone" mask="(99) 9999-9999?9" autocomplete="off" fluid/>
                 <label for="fone">Fone</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -433,7 +433,7 @@ onMounted(() => {
         <div class="grid grid-cols-3 gap-2">
           <FormField v-slot="$field" name="fone">
             <FloatLabel variant="on">
-              <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+              <InputMask id="fone" mask="(99) 9999-99999" autocomplete="off" fluid/>
               <label for="fone">Fone</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
