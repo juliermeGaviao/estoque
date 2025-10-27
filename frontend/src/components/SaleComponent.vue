@@ -10,7 +10,7 @@ import { useRouter } from 'vue-router'
 import { z } from 'zod'
 
 const props = defineProps({
-  id: { type: Number, default: null }
+  id: { type: [Number, String], default: null }
 })
 
 const router = useRouter()
@@ -135,7 +135,13 @@ onMounted(async () => {
     loadClient(fields.idCliente.value)
     loadProducts(fields.idTabela.value)
   } else {
-    loadTables(getUserId())
+    form.value.setFieldValue('idVendedor', getUserId())
+    await loadTables(getUserId())
+
+    if (tables.value?.length === 1) {
+      form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
+      loadProducts(tables.value[0].tabela.id)
+    }
   }
 
   loadUsers()
