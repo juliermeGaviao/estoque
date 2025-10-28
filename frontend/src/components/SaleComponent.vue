@@ -454,8 +454,17 @@ async function changePriceTable(idTabela) {
 }
 
 function clear() {
+  const states = form.value.states
+
   form.value.reset()
   itens.value = []
+
+  if (!eAdmin()) {
+    form.value.setValues({
+      idVendedor: states.idVendedor.value,
+      idTabela: states.idTabela.value
+    })
+  }
 }
 </script>
 
@@ -473,7 +482,7 @@ function clear() {
       </template>
 
       <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" @reset="clear" class="grid flex flex-column gap-2">
+        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
           <div class="grid grid-cols-12 gap-2">
             <div :class="'col-span-' + (pj ? 5 : 12)">
               <FormField v-slot="$field" name="idCliente">
@@ -550,7 +559,7 @@ function clear() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
           <div class="flex justify-end gap-2 mt-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised/>
             <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'"/>
             <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </div>
