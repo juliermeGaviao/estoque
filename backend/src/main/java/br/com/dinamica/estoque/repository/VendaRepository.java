@@ -17,7 +17,7 @@ public interface VendaRepository extends JpaRepository<Venda, Long>, JpaSpecific
 	            AVG(v.total) AS media_total,
 	            SUM(v.total) AS soma_total
 	        FROM venda v
-	        WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+	        WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
 	        GROUP BY DATE(v.data_alteracao)
 	        ORDER BY periodo
 	""", nativeQuery = true)
@@ -57,7 +57,7 @@ public interface VendaRepository extends JpaRepository<Venda, Long>, JpaSpecific
                 AVG(v.total) AS media_total,
                 SUM(v.total) AS soma_total
             FROM venda v JOIN usuario u ON u.id = v.id_vendedor
-            WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
             GROUP BY DATE(v.data_alteracao), v.id_vendedor
             ORDER BY periodo, u.email
     """, nativeQuery = true)

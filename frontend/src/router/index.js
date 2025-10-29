@@ -11,76 +11,80 @@ const router = createRouter({
             meta: { requiresAuth: true },
             children: [
                 {
-                    path: '/',
-                    component: () => import('@/views/Home.vue')
+                  path: '/',
+                  component: () => import('@/views/Home.vue')
                 },
                 {
-                    path: '/register/user',
-                    component: () => import('@/views/pages/register/user/List.vue')
+                  path: '/register/user',
+                  component: () => import('@/views/pages/register/user/List.vue')
                 },
                 {
-                    path: '/register/user/insert',
-                    component: () => import('@/views/pages/register/user/Insert.vue')
+                  path: '/register/user/insert',
+                  component: () => import('@/views/pages/register/user/Insert.vue')
                 },
                 {
-                    path: '/register/user/edit',
-                    component: () => import('@/views/pages/register/user/Edit.vue')
+                  path: '/register/user/edit',
+                  component: () => import('@/views/pages/register/user/Edit.vue')
                 },
                 {
-                    path: '/register/provider',
-                    component: () => import('@/views/pages/register/provider/List.vue')
+                  path: '/register/provider',
+                  component: () => import('@/views/pages/register/provider/List.vue')
                 },
                 {
-                    path: '/register/provider/edit',
-                    component: () => import('@/views/pages/register/provider/Edit.vue')
+                  path: '/register/provider/edit',
+                  component: () => import('@/views/pages/register/provider/Edit.vue')
                 },
                 {
-                    path: '/register/company',
-                    component: () => import('@/views/pages/register/company/List.vue')
+                  path: '/register/company',
+                  component: () => import('@/views/pages/register/company/List.vue')
                 },
                 {
-                    path: '/register/company/edit',
-                    component: () => import('@/views/pages/register/company/Edit.vue')
+                  path: '/register/company/edit',
+                  component: () => import('@/views/pages/register/company/Edit.vue')
                 },
                 {
-                    path: '/register/person',
-                    component: () => import('@/views/pages/register/person/List.vue')
+                  path: '/register/person',
+                  component: () => import('@/views/pages/register/person/List.vue')
                 },
                 {
-                    path: '/register/person/edit',
-                    component: () => import('@/views/pages/register/person/Edit.vue')
+                  path: '/register/person/edit',
+                  component: () => import('@/views/pages/register/person/Edit.vue')
                 },
                 {
-                    path: '/register/product-type',
-                    component: () => import('@/views/pages/register/product-type/List.vue')
+                  path: '/register/product-type',
+                  component: () => import('@/views/pages/register/product-type/List.vue')
                 },
                 {
-                    path: '/register/product-type/edit',
-                    component: () => import('@/views/pages/register/product-type/Edit.vue')
+                  path: '/register/product-type/edit',
+                  component: () => import('@/views/pages/register/product-type/Edit.vue')
                 },
                 {
-                    path: '/register/product',
-                    component: () => import('@/views/pages/register/product/List.vue')
+                  path: '/register/product',
+                  component: () => import('@/views/pages/register/product/List.vue')
                 },
                 {
-                    path: '/register/product/edit',
-                    component: () => import('@/views/pages/register/product/Edit.vue')
+                  path: '/register/product/edit',
+                  component: () => import('@/views/pages/register/product/Edit.vue')
                 },
                 {
-                    path: '/register/price-table',
-                    component: () => import('@/views/pages/register/price-table/List.vue')
+                  path: '/register/price-table',
+                  component: () => import('@/views/pages/register/price-table/List.vue')
                 },
                 {
-                    path: '/register/price-table/edit',
-                    component: () => import('@/views/pages/register/price-table/Edit.vue')
+                  path: '/register/price-table/edit',
+                  component: () => import('@/views/pages/register/price-table/Edit.vue')
                 },
                 {
-                    path: '/core/sale',
-                    component: () => import('@/views/pages/core/sale/List.vue')
+                  path: '/core/sale',
+                  component: () => import('@/views/pages/core/sale/List.vue')
                 },
                 {
-                    path: '/core/sale/edit',
-                    component: () => import('@/views/pages/core/sale/Edit.vue')
+                  path: '/core/sale/edit',
+                  component: () => import('@/views/pages/core/sale/Edit.vue')
+                },
+                {
+                  path: '/dashboard',
+                  component: () => import('@/views/pages/dashboard/Home.vue')
                 }
             ]
         },

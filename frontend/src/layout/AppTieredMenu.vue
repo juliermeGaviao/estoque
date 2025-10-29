@@ -50,7 +50,8 @@ const items = ref([
   },
   {
     label: 'Indicadores',
-    icon: 'pi pi-chart-bar'
+    icon: 'pi pi-chart-bar',
+    command: () => { router.push('/dashboard') }
   }
 ])
 
