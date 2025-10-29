@@ -11,6 +11,11 @@ import api from './util/api'
 
 import '@/assets/styles.scss'
 
+import { Chart as ChartJS } from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
+
+ChartJS.register(ChartDataLabels)
+
 const token = localStorage.getItem('token')
 if (token) {
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`

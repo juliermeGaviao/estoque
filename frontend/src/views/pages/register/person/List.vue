@@ -248,7 +248,7 @@ async function loadCompanies() {
           <Column field="empresa.nome" header="Empresa"/>
           <Column field="limite" header="Limite (R$)">
             <template #body="slotProps">
-              {{ formatNumber(slotProps.data.limite, 'pt-BR', { minimumFractionDigits: 2 } ) }}
+              {{ formatNumber(slotProps.data.limite ) }}
             </template>
           </Column>
           <Column field="fone" header="Fone">

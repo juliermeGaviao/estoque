@@ -603,14 +603,14 @@ function clear() {
           </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.precoUnitario, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.precoUnitario) }}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.precoUnitario) }}</div>
             </template>
           </Column>
           <Column field="total" header="Total (R$)">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</div>
+              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.total) }}</div>
+              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.total) }}</div>
             </template>
           </Column>
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">

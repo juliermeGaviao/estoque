@@ -65,6 +65,6 @@ export function onlyDigits(str) {
   return str.replace(/\D/g, '')
 }
 
-export function formatNumber(value, locale = 'pt-BR', options = {}) {
+export function formatNumber(value, locale = 'pt-BR', options = { style: 'decimal', minimumFractionDigits: 2 }) {
   return value ? new Intl.NumberFormat(locale, options).format(value) : null
 }

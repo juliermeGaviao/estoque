@@ -235,13 +235,13 @@ function limpar() {
           <Column field="cliente.nome" header="Cliente" sortable/>
           <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
           <Column field="subTotal" header="Subtotal (R$)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+            <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal) }}</template>
           </Column>
           <Column field="desconto" header="Desconto (%)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.desconto, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+            <template #body="slotProps">{{ formatNumber(slotProps.data.desconto) }}</template>
           </Column>
           <Column field="total" header="Total (R$)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.total, 'pt-BR', { style: 'decimal', minimumFractionDigits: 2 }) }}</template>
+            <template #body="slotProps">{{ formatNumber(slotProps.data.total) }}</template>
           </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
