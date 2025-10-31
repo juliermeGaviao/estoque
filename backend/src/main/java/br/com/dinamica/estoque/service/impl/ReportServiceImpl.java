@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -39,20 +38,17 @@ public class ReportServiceImpl implements ReportService {
 
 		List<SaleReportGroupDTO> result = new ArrayList<>();
 
-		records.forEach(linha -> {
+		for (Object[] linha : records) {
 			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
-			int index = Collections.binarySearch(result, new SaleReportGroupDTO(periodo));
-			SaleReportGroupDTO dto = null;
+			SaleReportGroupDTO dto = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 
-			if (index >= 0) {
-				dto = result.get(index);
-			} else {
-				dto = new SaleReportGroupDTO(periodo, null, new ArrayList<>());
+			if (dto == null) {
+				dto = new SaleReportGroupDTO(periodo, null, null);
 				result.add(dto);
 			}
 
-			dto.getIndicadores().add(new SaleMeasureDTO(((Number) linha[1]).longValue(), (BigDecimal) linha[2], (BigDecimal) linha[3]));
-		});
+			dto.setIndicadores(new SaleMeasureDTO(((Number) linha[1]).longValue(), (BigDecimal) linha[2], (BigDecimal) linha[3]));
+		}
 
 		return result;
 	}
@@ -71,31 +67,20 @@ public class ReportServiceImpl implements ReportService {
 
 		List<SaleReportGroupDTO> result = new ArrayList<>();
 
-		records.forEach(linha -> {
+		for (Object[] linha : records) {
 			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
 			String email = (String) linha[1];
-			SaleReportGroupDTO grupo = null;
-			int index = Collections.binarySearch(result, new SaleReportGroupDTO(periodo));
+			SaleReportGroupDTO grupo = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 
-			if (index >= 0) {
-				grupo = result.get(index);
-			} else {
+			if (grupo == null) {
 				grupo = new SaleReportGroupDTO(periodo, new ArrayList<>(), null);
 				result.add(grupo);
 			}
-
-			SaleReportGroupDTO dto = null;
-
-			index = Collections.binarySearch(grupo.getSubGrupos(), new SaleReportGroupDTO(email));
-			if (index >= 0) {
-				dto = grupo.getSubGrupos().get(index);
-			} else {
-				dto = new SaleReportGroupDTO(email, null, new ArrayList<>());
-				grupo.getSubGrupos().add(dto);
-			}
-
-			dto.getIndicadores().add(new SaleMeasureDTO(((Number) linha[2]).longValue(), (BigDecimal) linha[3], (BigDecimal) linha[4]));
-		});
+			
+			SaleMeasureDTO measureDto = new SaleMeasureDTO(((Number) linha[2]).longValue(), (BigDecimal) linha[3], (BigDecimal) linha[4]);
+			
+			grupo.getSubGrupos().add(new SaleReportGroupDTO(email, null, measureDto));
+		}
 
 		return result;
 	}
