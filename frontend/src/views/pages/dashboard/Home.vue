@@ -207,9 +207,9 @@ function getSalesmanReport(data, indicador) {
       </template>
       <template #content>
         <div class="flex justify-around">
-          <Chart type="bar" :data="salesmanQuantityReport" :options="salesmanQuantityReportOptions" class="w-[600px] h-[600px]"/>
-          <Chart type="bar" :data="salesmanAverageReport" :options="salesmanAverageReportOptions" class="w-[600px] h-[600px]"/>
-          <Chart type="bar" :data="salesmanTotalReport" :options="salesmanTotalReportOptions" class="w-[600px] h-[600px]"/>
+          <Chart type="bar" :data="salesmanQuantityReport" :options="salesmanQuantityReportOptions" class="w-[600px] h-[320px]"/>
+          <Chart type="bar" :data="salesmanAverageReport" :options="salesmanAverageReportOptions" class="w-[600px] h-[320px]"/>
+          <Chart type="bar" :data="salesmanTotalReport" :options="salesmanTotalReportOptions" class="w-[600px] h-[320px]"/>
         </div>
       </template>
     </Card>
