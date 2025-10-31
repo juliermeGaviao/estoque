@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import br.com.dinamica.estoque.dto.SaleMeasureDTO;
-import br.com.dinamica.estoque.dto.SaleReportGroupDTO;
+import br.com.dinamica.estoque.dto.ReportGroupDTO;
+import br.com.dinamica.estoque.dto.ReportMeasureDTO;
 import br.com.dinamica.estoque.repository.VendaRepository;
 import br.com.dinamica.estoque.service.ReportService;
 
@@ -25,7 +25,7 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public List<SaleReportGroupDTO> getSaleReport(Integer frequency) {
+	public List<ReportGroupDTO> getSaleReport(Integer frequency) {
 		List<Object[]> records = new ArrayList<>();
 
 		if (frequency.equals(1)) {
@@ -36,25 +36,25 @@ public class ReportServiceImpl implements ReportService {
 			records = this.vendaRepository.findRelatorioVendaMensal();
 		}
 
-		List<SaleReportGroupDTO> result = new ArrayList<>();
+		List<ReportGroupDTO> result = new ArrayList<>();
 
 		for (Object[] linha : records) {
 			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
-			SaleReportGroupDTO dto = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
+			ReportGroupDTO dto = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 
 			if (dto == null) {
-				dto = new SaleReportGroupDTO(periodo, null, null);
+				dto = new ReportGroupDTO(periodo, null, null);
 				result.add(dto);
 			}
 
-			dto.setIndicadores(new SaleMeasureDTO(((Number) linha[1]).longValue(), (BigDecimal) linha[2], (BigDecimal) linha[3]));
+			dto.setIndicadores(new ReportMeasureDTO(((Number) linha[1]).longValue(), (BigDecimal) linha[2], (BigDecimal) linha[3]));
 		}
 
 		return result;
 	}
 
 	@Override
-	public List<SaleReportGroupDTO> getSalesmanReport(Integer frequency) {
+	public List<ReportGroupDTO> getSalesmanReport(Integer frequency) {
 		List<Object[]> records = new ArrayList<>();
 
 		if (frequency.equals(1)) {
@@ -65,21 +65,21 @@ public class ReportServiceImpl implements ReportService {
 			records = this.vendaRepository.findRelatorioVendedorMensal();
 		}
 
-		List<SaleReportGroupDTO> result = new ArrayList<>();
+		List<ReportGroupDTO> result = new ArrayList<>();
 
 		for (Object[] linha : records) {
 			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
 			String email = (String) linha[1];
-			SaleReportGroupDTO grupo = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
+			ReportGroupDTO grupo = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 
 			if (grupo == null) {
-				grupo = new SaleReportGroupDTO(periodo, new ArrayList<>(), null);
+				grupo = new ReportGroupDTO(periodo, new ArrayList<>(), null);
 				result.add(grupo);
 			}
 			
-			SaleMeasureDTO measureDto = new SaleMeasureDTO(((Number) linha[2]).longValue(), (BigDecimal) linha[3], (BigDecimal) linha[4]);
+			ReportMeasureDTO measureDto = new ReportMeasureDTO(((Number) linha[2]).longValue(), (BigDecimal) linha[3], (BigDecimal) linha[4]);
 			
-			grupo.getSubGrupos().add(new SaleReportGroupDTO(email, null, measureDto));
+			grupo.getSubGrupos().add(new ReportGroupDTO(email, null, measureDto));
 		}
 
 		return result;

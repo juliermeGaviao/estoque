@@ -11,13 +11,13 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class SaleReportGroupDTO {
+public class ReportGroupDTO {
 
 	private String grupo;
-	private List<SaleReportGroupDTO> subGrupos;
-	private SaleMeasureDTO indicadores;
+	private List<ReportGroupDTO> subGrupos;
+	private ReportMeasureDTO indicadores;
 
-	public SaleReportGroupDTO(String grupo) {
+	public ReportGroupDTO(String grupo) {
 		this.grupo = grupo;
 	}
 

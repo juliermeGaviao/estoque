@@ -11,7 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class SaleMeasureDTO {
+public class ReportMeasureDTO {
 
 	private Long quantidadeVendas;
 	private BigDecimal mediaTotal;
