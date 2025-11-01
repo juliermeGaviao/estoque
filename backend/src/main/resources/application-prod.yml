@@ -4,7 +4,7 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:mysql://bohemia:3306/estoque?useSSL=false&serverTimezone=America/Sao_Paulo
+    url: jdbc:mysql://localhost:3306/estoque?useSSL=false&serverTimezone=America/Sao_Paulo
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: estoque
     password: 4Getit..

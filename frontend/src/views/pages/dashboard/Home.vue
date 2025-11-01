@@ -1,4 +1,5 @@
 <script setup>
+import BarReportComponent from '@/components/BarReportComponent.vue'
 import api from '@/util/api'
 import { formatNumber } from '@/util/util'
 import { useToast } from 'primevue/usetoast'
@@ -94,81 +95,9 @@ onMounted(() => {
   loading.value = true
 
   loadSalesReport()
-  loadSalesmanReport()
 
   loading.value = false
 })
-
-const salesmanFrequency = ref(1)
-
-const salesmanQuantityReport = ref({ labels: [], datasets: [] })
-const salesmanAverageReport = ref({ labels: [], datasets: [] })
-const salesmanTotalReport = ref({ labels: [], datasets: [] })
-
-const salesmanQuantityReportOptions = ref({
-  plugins: {
-    legend: { position: 'bottom', labels: { usePointStyle: true, color: getComputedStyle(document.documentElement).getPropertyValue('--p-text-color') } },
-    title: { display: true, text: 'Quantidade', font: { size: 18 }, fullSize: false },
-    datalabels: { color: '#000', font: { weight: 'bold', size: 12 }, rotation: -90 }
-  },
-})
-
-const salesmanAverageReportOptions = ref({
-  plugins: {
-    legend: { position: 'bottom', labels: { usePointStyle: true, color: getComputedStyle(document.documentElement).getPropertyValue('--p-text-color') } },
-    title: { display: true, text: 'Valor médio (R$)', font: { size: 18 }, fullSize: false },
-    datalabels: { color: '#000', font: { weight: 'bold', size: 12 }, rotation: -90, formatter: value =>  formatNumber(value) }
-  },
-})
-
-const salesmanTotalReportOptions = ref({
-  plugins: {
-    legend: { position: 'bottom', labels: { usePointStyle: true, color: getComputedStyle(document.documentElement).getPropertyValue('--p-text-color') } },
-    title: { display: true, text: 'Valor total (R$)', font: { size: 18 }, fullSize: false },
-    datalabels: { color: '#000', font: { weight: 'bold', size: 12 }, rotation: -90, formatter: value =>  formatNumber(value) }
-  },
-})
-
-async function loadSalesmanReport() {
-  try {
-    const response = await api.get("/report/salesman-report", { params: { frequency: salesmanFrequency.value } })
-
-    salesmanQuantityReport.value = getSalesmanReport(response.data, 'quantidadeVendas')
-    salesmanAverageReport.value = getSalesmanReport(response.data, 'mediaTotal')
-    salesmanTotalReport.value = getSalesmanReport(response.data, 'somaTotal')
-  } catch (error) {
-    toast.add({ severity: "error", summary: "Falha de Carga de Relatório de Vendedores", detail: "Requisição de Relatório de Vendedores terminou com o erro: " + error.response.data, life: 10000 })
-  }
-}
-
-function getSalesmanReport(data, indicador) {
-  const result = { labels: [], datasets: [] }
-  const datasets = {}
-
-  for (let periodo of data) {
-    result.labels.push(periodo.grupo)
-
-    for (let vendedor of periodo.subGrupos) {
-      if (!datasets[vendedor.grupo]) {
-        datasets[vendedor.grupo] = { label: vendedor.grupo, data: [], backgroundColor: backgroundColorArray[Object.keys(datasets).length], hoverBackgroundColor: hoverBackgroundColorArray[Object.keys(datasets).length] }
-      }
-    }
-  }
-
-  for (let periodo of data) {
-    for (let dataset in datasets) {
-      const grupo = periodo.subGrupos.find(subGrupo => subGrupo.grupo === dataset)
-
-      datasets[dataset].data.push(grupo ? grupo.indicadores[indicador] : null)
-    }
-  }
-
-  for (let dataset in datasets) {
-    result.datasets.push(datasets[dataset])
-  }
-
-  return result
-}
 </script>
 
 <template>
@@ -193,25 +122,7 @@ function getSalesmanReport(data, indicador) {
         </div>
       </template>
     </Card>
-    <Card class="mb-2">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Relatório de Vendedores</h3>
-          <div class="flex justify-end items-center">
-            <FloatLabel variant="on">
-              <Select id="idSalesmanFrequency" v-model="salesmanFrequency" :options="frequencyOptions" @update:modelValue="loadSalesmanReport" optionLabel="label" optionValue="id" class="w-[150px] mr-10"/>
-              <label for="idSalesmanFrequency">Periodicidade</label>
-            </FloatLabel>
-          </div>
-        </div>
-      </template>
-      <template #content>
-        <div class="flex justify-around">
-          <Chart type="bar" :data="salesmanQuantityReport" :options="salesmanQuantityReportOptions" class="w-[600px] h-[320px]"/>
-          <Chart type="bar" :data="salesmanAverageReport" :options="salesmanAverageReportOptions" class="w-[600px] h-[320px]"/>
-          <Chart type="bar" :data="salesmanTotalReport" :options="salesmanTotalReportOptions" class="w-[600px] h-[320px]"/>
-        </div>
-      </template>
-    </Card>
+    <BarReportComponent title="Relatório de Vendedores" endpoint="salesman-report"/>
+    <BarReportComponent title="Relatório por Tipo de Produto" endpoint="product-type-report"/>
   </BlockUI>
 </template>

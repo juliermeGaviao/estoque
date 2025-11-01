@@ -30,4 +30,9 @@ public class ReportController {
 		return ResponseEntity.ok(this.service.getSalesmanReport(frequency));
 	}
 
+	@GetMapping("/product-type-report")
+	public ResponseEntity<Object> getProductTypeReport(@RequestParam Integer frequency) {
+		return ResponseEntity.ok(this.service.getProductTypeReport(frequency));
+	}
+
 }

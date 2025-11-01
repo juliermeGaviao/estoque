@@ -65,6 +65,24 @@ public class ReportServiceImpl implements ReportService {
 			records = this.vendaRepository.findRelatorioVendedorMensal();
 		}
 
+		return this.buildReportData(frequency, records);
+	}
+
+	public List<ReportGroupDTO> getProductTypeReport(Integer frequency) {
+		List<Object[]> records = new ArrayList<>();
+
+		if (frequency.equals(1)) {
+			records = this.vendaRepository.findRelatorioTipoProdutoDiario();
+		} else if (frequency.equals(2)) {
+			records = this.vendaRepository.findRelatorioTipoProdutoSemanal();
+		} else if (frequency.equals(3)) {
+			records = this.vendaRepository.findRelatorioTipoProdutoMensal();
+		}
+
+		return this.buildReportData(frequency, records);
+	}
+
+	private List<ReportGroupDTO> buildReportData(Integer frequency, List<Object[]> records) {
 		List<ReportGroupDTO> result = new ArrayList<>();
 
 		for (Object[] linha : records) {
