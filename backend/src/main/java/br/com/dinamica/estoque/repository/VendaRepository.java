@@ -145,4 +145,73 @@ public interface VendaRepository extends JpaRepository<Venda, Long>, JpaSpecific
     """, nativeQuery = true)
 	List<Object[]> findRelatorioTipoProdutoMensal();
 
+	@Query(value = """
+            SELECT
+                DATE(v.data_alteracao) AS periodo,
+                MIN(v.nome) nome_empresa,
+                COUNT(*) AS quantidade_vendas,
+                AVG(v.total) AS media_total,
+                SUM(v.total) AS soma_total
+            FROM 
+                (SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente c ON c.id = v.id_cliente
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) AND c.tipo = 'J'
+                UNION
+                SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente_pessoa p ON p.id = v.id_cliente
+                JOIN cliente c ON c.id = p.id_empresa
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)) v
+            GROUP BY periodo, v.id
+            ORDER BY periodo, nome_empresa
+    """, nativeQuery = true)
+	List<Object[]> findRelatorioEmpresaDiario();
+
+	@Query(value = """
+            SELECT
+                DATE_ADD(DATE_SUB(CURDATE(), INTERVAL (WEEK(CURDATE()) - WEEK(v.data_alteracao)) WEEK), INTERVAL (7 - DAYOFWEEK(CURDATE())) DAY) AS periodo,
+                MIN(v.nome) nome_empresa,
+                COUNT(*) AS quantidade_vendas,
+                AVG(v.total) AS media_total,
+                SUM(v.total) AS soma_total
+            FROM 
+                (SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente c ON c.id = v.id_cliente
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 4 WEEK) AND c.tipo = 'J'
+                UNION
+                SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente_pessoa p ON p.id = v.id_cliente
+                JOIN cliente c ON c.id = p.id_empresa
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 4 WEEK)) v
+            GROUP BY periodo, v.id
+            ORDER BY periodo, nome_empresa
+    """, nativeQuery = true)
+	List<Object[]> findRelatorioEmpresaSemanal();
+
+	@Query(value = """
+            SELECT
+                DATE_FORMAT(v.data_alteracao, '%Y-%m') AS periodo,
+                MIN(v.nome) nome_empresa,
+                COUNT(*) AS quantidade_vendas,
+                AVG(v.total) AS media_total,
+                SUM(v.total) AS soma_total
+            FROM 
+                (SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente c ON c.id = v.id_cliente
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH) AND c.tipo = 'J'
+                UNION
+                SELECT v.data_alteracao, v.total, c.id, c.nome
+                FROM venda v
+                JOIN cliente_pessoa p ON p.id = v.id_cliente
+                JOIN cliente c ON c.id = p.id_empresa
+                WHERE v.data_alteracao >= DATE_SUB(CURDATE(), INTERVAL 4 MONTH)) v
+            GROUP BY periodo, v.id
+            ORDER BY periodo, nome_empresa
+    """, nativeQuery = true)
+	List<Object[]> findRelatorioEmpresaMensal();
+
 }

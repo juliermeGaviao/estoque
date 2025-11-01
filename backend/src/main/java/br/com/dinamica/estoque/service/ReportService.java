@@ -12,4 +12,6 @@ public interface ReportService {
 
 	List<ReportGroupDTO> getProductTypeReport(Integer frequency);
 
+	List<ReportGroupDTO> getCompanyReport(Integer frequency);
+
 }
