@@ -125,5 +125,6 @@ onMounted(() => {
     <BarReportComponent title="Relatório de Vendedores" endpoint="salesman-report"/>
     <BarReportComponent title="Relatório por Tipo de Produto" endpoint="product-type-report"/>
     <BarReportComponent title="Relatório de Empresas" endpoint="company-report"/>
+    <BarReportComponent title="Relatório de Fornecedores" endpoint="provider-report"/>
   </BlockUI>
 </template>
