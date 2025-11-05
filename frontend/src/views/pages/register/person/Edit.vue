@@ -17,15 +17,29 @@ const loading = ref(false)
 const confirm = useConfirm()
 
 const personForm = ref(null)
-const personFormValues = ref({ nome: '', idEmpresa: null, limite: null, fone: '', dataAniversario: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const personFormValues = ref({ nome: '', idEmpresa: null, cracha: null, limite: null, fone: '', dataAniversario: null, endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
 const personFormValidator = zodResolver(
   z.object({
     nome: z.string().min(1, { message: 'Nome é obrigatório.' }),
-    idEmpresa: z.number().optional(),
-    limite: z.number().optional(),
+    idEmpresa: z.number().nullable().optional(),
+    cracha: z.string().nullable().optional(),
+    limite: z.number().nullable().optional(),
     fone: z.string().optional(),
-    dataAniversario: z.date().optional(),
+    dataAniversario: z.any()
+      .refine(val => {
+        if (val === '' || !val) return false
+
+        if (val instanceof Date && !Number.isNaN(val.getTime())) return true
+
+        if (typeof val === 'string') {
+          const date = new Date(val)
+          return !Number.isNaN(date.getTime())
+        }
+
+        return false
+        }, { message: 'Data de aniversário é obrigatória.' }
+      ),
     endereco: z.string().optional(),
     bairro: z.string().optional(),
     cep: z.string().optional(),
@@ -65,6 +79,7 @@ async function load() {
       personForm.value.setValues({
         nome: res.data.nome,
         idEmpresa: res.data.empresa?.id,
+        cracha: res.data.cracha,
         limite: res.data.limite,
         fone: res.data.fone,
         dataAniversario: new Date(res.data.dataAniversario),
@@ -318,7 +333,15 @@ async function loadCompanies() {
             </div>
           </div>
           <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-4">
+            <div class="col-span-3">
+              <FormField name="cracha">
+                <FloatLabel variant="on">
+                  <InputText id="cracha" maxlength="50" autocomplete="off" fluid/>
+                  <label for="cracha">Crachá</label>
+                </FloatLabel>
+              </FormField>
+            </div>
+            <div class="col-span-3">
               <FormField name="limite">
                 <FloatLabel variant="on">
                   <InputNumber id="limite" :max="10000" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
@@ -326,7 +349,7 @@ async function loadCompanies() {
                 </FloatLabel>
               </FormField>
             </div>
-            <div class="col-span-4">
+            <div class="col-span-3">
               <FormField v-slot="$field" name="fone">
                 <FloatLabel variant="on">
                   <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
@@ -336,7 +359,7 @@ async function loadCompanies() {
               </FormField>
             </div>
 
-            <div class="col-span-4">
+            <div class="col-span-3">
               <FormField v-slot="$field" name="dataAniversario" initialValue="">
                 <FloatLabel variant="on" class="flex-1">
                   <DatePicker dateFormat="dd/mm/yy" fluid/>

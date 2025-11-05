@@ -246,6 +246,7 @@ async function loadCompanies() {
           <Column field="id" header="Id" sortable/>
           <Column field="nome" header="Nome" sortable/>
           <Column field="empresa.nome" header="Empresa"/>
+          <Column field="cracha" header="Crachá"/>
           <Column field="limite" header="Limite (R$)">
             <template #body="slotProps">
               {{ formatNumber(slotProps.data.limite ) }}

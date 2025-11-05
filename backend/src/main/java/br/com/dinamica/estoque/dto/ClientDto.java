@@ -36,4 +36,6 @@ public class ClientDto extends CommonClientDto {
 
     private BigDecimal limite;
 
+    private String cracha;
+
 }

@@ -24,6 +24,8 @@
 
             <column name="limite" type="decimal(10, 2)"/>
 
+            <column name="cracha" type="varchar(50)"/>
+
 		</createTable>
 
 	    <rollback>

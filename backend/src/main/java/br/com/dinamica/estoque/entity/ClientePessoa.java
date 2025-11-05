@@ -34,4 +34,7 @@ public class ClientePessoa extends Cliente {
     @Column(name = "limite", precision = 19, scale = 2, columnDefinition = "decimal")
     private BigDecimal limite;
 
+    @Column(name = "cracha", length = 50)
+    private String cracha;
+
 }
