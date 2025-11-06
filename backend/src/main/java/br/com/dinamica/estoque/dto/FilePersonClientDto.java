@@ -1,0 +1,18 @@
+package br.com.dinamica.estoque.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class FilePersonClientDto {
+
+	private Long id;
+
+	private CompanyFileDto arquivoEmpresa;
+
+	private ClientDto pessoaCliente;
+
+}
