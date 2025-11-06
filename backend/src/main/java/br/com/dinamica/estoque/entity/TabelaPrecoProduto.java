@@ -12,12 +12,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tabela_preco_produto")
+@Table(
+	name = "tabela_preco_produto",
+	uniqueConstraints = {
+        @UniqueConstraint(
+        	name = "uk_tabela_preco_produto_produto_tabela",
+        	columnNames = {"id_produto", "id_tabela_preco"}
+        )
+    }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
