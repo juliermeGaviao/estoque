@@ -8,5 +8,10 @@
     "name": "cors.allowed-origins",
     "type": "java.lang.String",
     "description": "A description for 'cors.allowed-origins'"
+  },
+  {
+    "name": "estoque.sistema-arquivos",
+    "type": "java.lang.String",
+    "description": "A description for 'estoque.sistema-arquivos'"
   }
 ]}

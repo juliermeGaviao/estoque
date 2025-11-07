@@ -43,6 +43,10 @@ public class ArquivoClientePessoa {
     @JoinColumn(name = "id_cliente_pessoa", nullable = false)
     private ClientePessoa pessoaCliente;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario usuario;
+
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
 

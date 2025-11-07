@@ -1,23 +1,42 @@
 package br.com.dinamica.estoque.service.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
+import br.com.dinamica.estoque.dto.EmployeeDto;
+import br.com.dinamica.estoque.entity.ArquivoClientePessoa;
+import br.com.dinamica.estoque.entity.ArquivoEmpresa;
 import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.ClienteEmpresa;
 import br.com.dinamica.estoque.entity.ClientePessoa;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.repository.ArquivoClientePessoaRepository;
+import br.com.dinamica.estoque.repository.ArquivoEmpresaRepository;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.repository.ContatoClientePessoaRepository;
@@ -37,13 +56,30 @@ public class ClientServiceImpl implements ClientService {
 
 	private ContatoClientePessoaRepository contatoClientePessoaRepository;
 
+	private ArquivoEmpresaRepository arquivoEmpresaRepository;
+
+	private ArquivoClientePessoaRepository arquivoClientePessoaRepository;
+
 	private ModelMapper modelMapper;
 
-	public ClientServiceImpl(ClienteRepository repository, ContatoClienteEmpresaRepository contatoClienteEmpresaRepository, ContatoClientePessoaRepository contatoClientePessoaRepository, ModelMapper modelMapper) {
+	private String fileSystem;
+
+	public ClientServiceImpl(
+			ClienteRepository repository,
+			ContatoClienteEmpresaRepository contatoClienteEmpresaRepository,
+			ContatoClientePessoaRepository contatoClientePessoaRepository,
+			ArquivoEmpresaRepository arquivoEmpresaRepository,
+			ArquivoClientePessoaRepository arquivoClientePessoaRepository,
+			ModelMapper modelMapper,
+			@Value("${estoque.sistema-arquivos}") String fileSystem
+	) {
 		this.repository = repository;
 		this.contatoClienteEmpresaRepository = contatoClienteEmpresaRepository;
 		this.contatoClientePessoaRepository = contatoClientePessoaRepository;
+		this.arquivoEmpresaRepository = arquivoEmpresaRepository;
+		this.arquivoClientePessoaRepository = arquivoClientePessoaRepository;
 		this.modelMapper = modelMapper;
+		this.fileSystem = fileSystem;
 
 		this.modelMapper.addMappings(new PropertyMap<ClientDto, ClientePessoa>() {
             @Override
@@ -161,4 +197,72 @@ public class ClientServiceImpl implements ClientService {
 		this.repository.deleteById(id);
 	}
 
+	@Override
+	public void loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException {
+		Cliente empresa = this.repository.findById(idEmpresa).orElseThrow();
+		ArquivoEmpresa arquivoEmpresa = new ArquivoEmpresa();
+        Date agora = DateUtil.now();
+
+		arquivoEmpresa.setEmpresa((ClienteEmpresa) empresa);
+		arquivoEmpresa.setArquivo(file.getOriginalFilename());
+		arquivoEmpresa.setUsuario(usuario);
+		arquivoEmpresa.setDataCriacao(agora);
+		arquivoEmpresa.setDataAlteracao(agora);
+
+		arquivoEmpresa = this.arquivoEmpresaRepository.saveAndFlush(arquivoEmpresa);
+
+		Path diretorio = Paths.get(this.fileSystem + "/empregados/" + arquivoEmpresa.getId());
+		Files.createDirectories(diretorio);
+		Path arquivo = diretorio.resolve(file.getOriginalFilename());
+
+		try (InputStream inputStream = file.getInputStream()) {
+			Files.copy(inputStream, arquivo, StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		CsvMapper csvMapper = new CsvMapper();
+		CsvSchema schema = CsvSchema.emptySchema().withHeader();
+		try (Reader reader = Files.newBufferedReader(arquivo)) {
+            MappingIterator<EmployeeDto> it = csvMapper.readerFor(EmployeeDto.class).with(schema).readValues(reader);
+
+            while (it.hasNext()) {
+            	EmployeeDto pessoa = it.next();
+
+            	if (pessoa.getNome() == null || pessoa.getCracha() == null || pessoa.getDataAniversario() == null || pessoa.getLimite() == null) {
+            		continue;
+            	}
+
+            	Optional<ClientePessoa> entity = this.repository.getEmployee(idEmpresa, pessoa.getCracha());
+            	ClientePessoa clientePessoa;
+
+            	if (entity.isPresent()) {
+            		clientePessoa = entity.get();
+            	} else {
+            		clientePessoa = new ClientePessoa();
+            	}
+
+            	clientePessoa.setNome(pessoa.getNome());
+            	clientePessoa.setEmpresa(empresa);
+            	clientePessoa.setCracha(pessoa.getCracha());
+            	clientePessoa.setDataAniversario(pessoa.getDataAniversario());
+            	clientePessoa.setLimite(new BigDecimal(pessoa.getLimite()));
+            	clientePessoa.setUsuario(usuario);
+            	if (clientePessoa.getId() == null) {
+            		clientePessoa.setDataCriacao(agora);
+            	}
+            	clientePessoa.setDataAlteracao(agora);
+
+            	clientePessoa = this.repository.saveAndFlush(clientePessoa);
+
+            	ArquivoClientePessoa arquivoClientePessoa = new ArquivoClientePessoa();
+
+            	arquivoClientePessoa.setArquivoEmpresa(arquivoEmpresa);
+            	arquivoClientePessoa.setPessoaCliente(clientePessoa);
+            	arquivoClientePessoa.setUsuario(usuario);
+            	arquivoClientePessoa.setDataCriacao(agora);
+            	arquivoClientePessoa.setDataAlteracao(agora);
+
+            	this.arquivoClientePessoaRepository.saveAndFlush(arquivoClientePessoa);
+            }
+        }
+	}
 }

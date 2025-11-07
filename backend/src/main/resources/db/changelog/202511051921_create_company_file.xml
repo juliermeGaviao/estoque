@@ -10,9 +10,9 @@
 
 		<createTable tableName="arquivo_empresa">
 
-			<column name="id" type="bigint">
-				<constraints primaryKey="true" nullable="false"/>
-			</column>
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
 
             <column name="id_empresa" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_arquivo_empresa_empresa" references="cliente_empresa(id)"/>
@@ -20,6 +20,10 @@
 
             <column name="arquivo" type="varchar(255)">
                 <constraints nullable="false"/>
+            </column>
+
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_arquivo_empresa_usuario" references="usuario(id)"/>
             </column>
 
             <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">

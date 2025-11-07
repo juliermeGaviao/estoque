@@ -1,11 +1,13 @@
 package br.com.dinamica.estoque.service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
@@ -24,5 +26,7 @@ public interface ClientService {
 	ClientDto save(ClientDto dto, Usuario usuario);
 
 	void delete(Long id);
+
+	void loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException;
 
 }

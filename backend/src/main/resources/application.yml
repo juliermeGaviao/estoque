@@ -9,3 +9,6 @@ spring:
 
 jwt:
   secret: xJ8D+U6f49Pd2sC6TzJ7oXv6nE1aBqYFgk3gNvp+E4M=
+
+estoque:
+  sistema-arquivos: /opt/estoque

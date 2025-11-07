@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
@@ -147,6 +149,26 @@ public class ClientController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao remover " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("/load-employees")
+	public ResponseEntity<Object> loadEmployees(
+			@RequestParam Long idEmpresa,
+			@RequestParam MultipartFile file,
+			@AuthenticationPrincipal Usuario usuario) {
+		try {
+			this.service.loadEmployees(idEmpresa, file, usuario);
+
+			return ResponseEntity.ok().build();
+		} catch (NoSuchElementException e) {
+			String mensagem = "Empresa não encontrada de id: " + idEmpresa;
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		} catch (IOException | RuntimeException e) {
+			String mensagem = "Erro ao carregar empregados da empresa: " + idEmpresa + ".";
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
 		}

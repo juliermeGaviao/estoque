@@ -10,7 +10,7 @@
 
 		<createTable tableName="arquivo_cliente_pessoa">
 
-			<column name="id" type="bigint">
+			<column name="id" type="bigint" autoIncrement="true">
 				<constraints primaryKey="true" nullable="false"/>
 			</column>
 
@@ -20,6 +20,10 @@
 
             <column name="id_cliente_pessoa" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_arquivo_cliente_pessoa_cliente_pessoa" references="cliente_pessoa(id)"/>
+            </column>
+
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_arquivo_cliente_pessoa_usuario" references="usuario(id)"/>
             </column>
 
             <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
