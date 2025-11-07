@@ -160,9 +160,7 @@ public class ClientController {
 			@RequestParam MultipartFile file,
 			@AuthenticationPrincipal Usuario usuario) {
 		try {
-			this.service.loadEmployees(idEmpresa, file, usuario);
-
-			return ResponseEntity.ok().build();
+			return ResponseEntity.ok(this.service.loadEmployees(idEmpresa, file, usuario));
 		} catch (NoSuchElementException e) {
 			String mensagem = "Empresa não encontrada de id: " + idEmpresa;
 			log.error(mensagem, e);

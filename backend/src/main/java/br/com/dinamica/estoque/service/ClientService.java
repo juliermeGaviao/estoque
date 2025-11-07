@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
+import br.com.dinamica.estoque.dto.ResultadoCargaEmpregadosDto;
 import br.com.dinamica.estoque.entity.Usuario;
 
 public interface ClientService {
@@ -27,6 +28,6 @@ public interface ClientService {
 
 	void delete(Long id);
 
-	void loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException;
+	ResultadoCargaEmpregadosDto loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException;
 
 }

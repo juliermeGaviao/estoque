@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
 import br.com.dinamica.estoque.dto.EmployeeDto;
+import br.com.dinamica.estoque.dto.ResultadoCargaEmpregadosDto;
 import br.com.dinamica.estoque.entity.ArquivoClientePessoa;
 import br.com.dinamica.estoque.entity.ArquivoEmpresa;
 import br.com.dinamica.estoque.entity.Cliente;
@@ -198,7 +199,7 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
-	public void loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException {
+	public ResultadoCargaEmpregadosDto loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException {
 		Cliente empresa = this.repository.findById(idEmpresa).orElseThrow();
 		ArquivoEmpresa arquivoEmpresa = new ArquivoEmpresa();
         Date agora = DateUtil.now();
@@ -221,12 +222,15 @@ public class ClientServiceImpl implements ClientService {
 
 		CsvMapper csvMapper = new CsvMapper();
 		CsvSchema schema = CsvSchema.emptySchema().withHeader();
+		long carregados = 0;
+		long total = 0;
 		try (Reader reader = Files.newBufferedReader(arquivo)) {
             MappingIterator<EmployeeDto> it = csvMapper.readerFor(EmployeeDto.class).with(schema).readValues(reader);
 
             while (it.hasNext()) {
             	EmployeeDto pessoa = it.next();
 
+            	total++;
             	if (pessoa.getNome() == null || pessoa.getCracha() == null || pessoa.getDataAniversario() == null || pessoa.getLimite() == null) {
             		continue;
             	}
@@ -262,7 +266,11 @@ public class ClientServiceImpl implements ClientService {
             	arquivoClientePessoa.setDataAlteracao(agora);
 
             	this.arquivoClientePessoaRepository.saveAndFlush(arquivoClientePessoa);
+            	carregados++;
             }
         }
+
+		return new ResultadoCargaEmpregadosDto(carregados, total);
 	}
+
 }

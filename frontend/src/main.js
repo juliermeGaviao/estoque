@@ -14,6 +14,7 @@ import '@/assets/styles.scss'
 import { Chart as ChartJS } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 
+
 ChartJS.register(ChartDataLabels)
 
 const token = localStorage.getItem('token')
@@ -25,12 +26,20 @@ const app = createApp(App)
 
 app.use(router)
 app.use(PrimeVue, {
-    theme: {
-        preset: Aura,
-        options: {
-            darkModeSelector: '.app-dark'
-        }
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: '.app-dark'
     }
+  },
+  locale: {
+    choose: 'Selecionar',
+    upload: 'Enviar',
+    cancel: 'Cancelar',
+    fileSizeTypes: ['B', 'KB', 'MB', 'GB', 'TB'],
+    invalidFileSizeMessage: 'Arquivo não pode ultrapassar 10MB',
+    noFileChosenMessage: 'Nenhum arquivo selecionado'
+  }
 })
 app.use(ToastService)
 app.use(ConfirmationService)
