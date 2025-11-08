@@ -1,8 +1,6 @@
 package br.com.dinamica.estoque.service;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
+import br.com.dinamica.estoque.dto.PersonFilterDto;
 import br.com.dinamica.estoque.dto.ResultadoCargaEmpregadosDto;
 import br.com.dinamica.estoque.entity.Usuario;
 
@@ -22,7 +21,7 @@ public interface ClientService {
 
 	Page<ClientDto> list(String razaoSocial, String nome, String cnpj, String fone, Pageable pageable);
 
-	Page<ClientDto> list(String nome, Long idEmpresa, String fone, BigDecimal minLimite, BigDecimal maxLimite, Date minAniversario, Date maxAniversario, Pageable pageable);
+	Page<ClientDto> list(PersonFilterDto filter, Pageable pageable);
 
 	ClientDto save(ClientDto dto, Usuario usuario);
 

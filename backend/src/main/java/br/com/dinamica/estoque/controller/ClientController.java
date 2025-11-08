@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
 import br.com.dinamica.estoque.dto.PageResponse;
+import br.com.dinamica.estoque.dto.PersonFilterDto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.ClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -112,7 +113,7 @@ public class ClientController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ClientDto> result = this.service.list(nome, idEmpresa, fone, minLimite, maxLimite, minAniversario, maxAniversario, pageable);
+			Page<ClientDto> result = this.service.list(new PersonFilterDto(nome, idEmpresa, fone, minLimite, maxLimite, minAniversario, maxAniversario), pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

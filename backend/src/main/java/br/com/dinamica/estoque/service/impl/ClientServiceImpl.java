@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import br.com.dinamica.estoque.dto.ClientDto;
 import br.com.dinamica.estoque.dto.CommonClientDto;
 import br.com.dinamica.estoque.dto.EmployeeDto;
+import br.com.dinamica.estoque.dto.PersonFilterDto;
 import br.com.dinamica.estoque.dto.ResultadoCargaEmpregadosDto;
 import br.com.dinamica.estoque.entity.ArquivoClientePessoa;
 import br.com.dinamica.estoque.entity.ArquivoEmpresa;
@@ -128,35 +129,35 @@ public class ClientServiceImpl implements ClientService {
 	}
 
 	@Override
-	public Page<ClientDto> list(String nome, Long idEmpresa, String fone, BigDecimal minLimite, BigDecimal maxLimite, Date minAniversario, Date maxAniversario, Pageable pageable) {
+	public Page<ClientDto> list(PersonFilterDto filter, Pageable pageable) {
         Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClientePessoa.class);
 
-        if (nome != null && !nome.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
+        if (filter.getNome() != null && !filter.getNome().isBlank()) {
+        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + filter.getNome().toLowerCase() + "%"));
         }
 
-        if (idEmpresa != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("empresa").get("id"), idEmpresa));
+        if (filter.getIdEmpresa() != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("empresa").get("id"), filter.getIdEmpresa()));
         }
 
-        if (fone != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+        if (filter.getFone() != null) {
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), filter.getFone()));
         }
 
-        if (minLimite != null && maxLimite != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(LIMITE), minLimite, maxLimite));
-        } else if (minLimite != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(LIMITE), minLimite));
-        } else if (maxLimite != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(LIMITE), maxLimite));
+        if (filter.getMinLimite() != null && filter.getMaxLimite() != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get(LIMITE), filter.getMinLimite(), filter.getMaxLimite()));
+        } else if (filter.getMinLimite() != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(LIMITE), filter.getMinLimite()));
+        } else if (filter.getMaxLimite() != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(LIMITE), filter.getMaxLimite()));
         }
 
-        if (minAniversario != null && maxAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(DATA_ANIVERSARIO), minAniversario, maxAniversario));
-        } else if (minAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_ANIVERSARIO), minAniversario));
-        } else if (maxAniversario != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DATA_ANIVERSARIO), maxAniversario));
+        if (filter.getMinAniversario() != null && filter.getMaxAniversario() != null) {
+            specification = specification.and((root, query, cb) -> cb.between(root.get(DATA_ANIVERSARIO), filter.getMinAniversario(), filter.getMaxAniversario()));
+        } else if (filter.getMinAniversario() != null) {
+            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_ANIVERSARIO), filter.getMinAniversario()));
+        } else if (filter.getMaxAniversario() != null) {
+            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DATA_ANIVERSARIO), filter.getMaxAniversario()));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));

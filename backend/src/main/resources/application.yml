@@ -12,3 +12,7 @@ jwt:
 
 estoque:
   sistema-arquivos: /opt/estoque
+
+server:
+  servlet:
+    context-path: /api/v1
