@@ -16,3 +16,4 @@ estoque:
 server:
   servlet:
     context-path: /api
+  address: 127.0.0.1
