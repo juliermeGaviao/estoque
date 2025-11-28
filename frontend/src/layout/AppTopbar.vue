@@ -13,7 +13,7 @@ const { toggleDarkMode, isDarkTheme } = useLayout()
           <app-tiered-menu></app-tiered-menu>
           <router-link to="/" class="layout-topbar-logo">
             <Image src="/logo35.png"/>
-            <span>Estoque</span>
+            <span>Chocolate-se</span>
           </router-link>
         </div>
 
