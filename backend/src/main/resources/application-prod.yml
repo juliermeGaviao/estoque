@@ -19,4 +19,4 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
 cors:
-  allowed-origins: https://bohemia
+  allowed-origins: https://chocolate-se.com.br
