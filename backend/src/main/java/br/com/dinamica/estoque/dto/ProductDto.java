@@ -21,6 +21,4 @@ public class ProductDto {
 
     private Integer peso;
 
-    private Boolean ativo;
-
 }

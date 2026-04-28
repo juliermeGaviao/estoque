@@ -123,7 +123,7 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 	    @SuppressWarnings("unchecked")
 		List<Object[]> content = query.getResultList();
 
-	    Query countQuery = entityManager.createNativeQuery("SELECT count(*) FROM produto p WHERE p.ativo = 1");
+	    Query countQuery = entityManager.createNativeQuery("SELECT count(*) FROM produto p");
 	    long total = ((Number) countQuery.getSingleResult()).longValue();
 		
 	    List<PriceTableProductDto> result = content.stream().map(linha -> {
@@ -208,7 +208,6 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 				JOIN tipo_produto tp ON tp.id = p.id_tipo_produto
 				JOIN fornecedor f ON f.id = p.id_fornecedor
 				LEFT JOIN tabela_preco_produto tpp ON p.id = tpp.id_produto AND tpp.id_tabela_preco = :idTabelaPreco
-				WHERE p.ativo = 1
 				""";
 
 		if (filter.getNome() != null) {

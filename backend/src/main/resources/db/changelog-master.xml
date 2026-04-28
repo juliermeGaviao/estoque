@@ -27,5 +27,6 @@
     <include file="db/changelog/202510071832_create_item_sale.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202511051921_create_company_file.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202511061819_create_file_person_client.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202603162226_alter_product.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

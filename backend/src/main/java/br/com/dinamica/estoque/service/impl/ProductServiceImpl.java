@@ -82,10 +82,6 @@ public class ProductServiceImpl implements ProductService {
             specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("peso"), filter.getMaxPeso()));
         }
 
-        if (filter.getAtivo() != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), filter.getAtivo()));
-        }
-
 		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProductDto.class));
 	}
 

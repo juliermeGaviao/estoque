@@ -12,7 +12,7 @@ const toast = useToast()
 const loading = ref(false)
 
 const form = ref(null)
-const formValues = ref({ nome: '', idTipoProduto: null, idFornecedor: null, referencia: '', peso: '', ativo: true })
+const formValues = ref({ nome: '', idTipoProduto: null, idFornecedor: null, referencia: '', peso: '' })
 
 const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
@@ -22,8 +22,7 @@ const formValidator = zodResolver(
     idTipoProduto: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
     idFornecedor: z.int().positive({ message: 'Tipo de Produto é obrigatório.' }),
     referencia: z.string().min(1, { message: 'Código de Referência é obrigatório.' }),
-    peso: z.int().min(1, { message: 'Peso do Produto é obrigatório.' }).max(10000, 'Limite de peso é 10kg'),
-    ativo: z.boolean( { required_error: 'O campo Ativo é obrigatório.' } )
+    peso: z.int().min(1, { message: 'Peso do Produto é obrigatório.' }).max(10000, 'Limite de peso é 10kg')
   })
 )
 
@@ -41,8 +40,7 @@ async function load() {
         idTipoProduto: res.data.tipoProduto.id,
         idFornecedor: res.data.fornecedor.id,
         referencia: res.data.referencia,
-        peso: res.data.peso,
-        ativo: res.data.ativo
+        peso: res.data.peso
       })
     }
   } catch (error) {
@@ -205,16 +203,6 @@ async function loadProviders() {
                 <FloatLabel variant="on">
                   <InputNumber name="peso" :max="10000" fluid/>
                   <label for="peso">Peso (em gramas)</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="ativo">
-                <FloatLabel variant="on">
-                  <Select v-bind="$field" :options="validade" optionLabel="label" optionValue="value" fluid/>
-                  <label for="ativo">Ativo</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>

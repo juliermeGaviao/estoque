@@ -58,7 +58,6 @@ public class ProductController {
 			@RequestParam(required = false) Long idFornecedor,
 			@RequestParam(required = false) Integer minPeso,
 			@RequestParam(required = false) Integer maxPeso,
-			@RequestParam(required = false) Boolean ativo,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -68,7 +67,7 @@ public class ProductController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<ProductDto> result = this.service.list(new ProductFilterDto(nome, referencia, idTipoProduto, idFornecedor, minPeso, maxPeso, ativo), pageable);
+			Page<ProductDto> result = this.service.list(new ProductFilterDto(nome, referencia, idTipoProduto, idFornecedor, minPeso, maxPeso), pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {

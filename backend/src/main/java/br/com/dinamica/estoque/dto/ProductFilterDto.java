@@ -16,5 +16,4 @@ public class ProductFilterDto {
 	private Long idFornecedor;
 	private Integer minPeso;
 	private Integer maxPeso;
-	private Boolean ativo;
 }

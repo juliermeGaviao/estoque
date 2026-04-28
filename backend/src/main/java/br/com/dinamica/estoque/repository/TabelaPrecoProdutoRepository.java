@@ -21,9 +21,8 @@ public interface TabelaPrecoProdutoRepository extends JpaRepository<TabelaPrecoP
 			JOIN tipo_produto tp ON tp.id = p.id_tipo_produto
 			JOIN fornecedor f ON f.id = p.id_fornecedor
 			LEFT JOIN tabela_preco_produto tpp ON p.id = tpp.id_produto AND tpp.id_tabela_preco = :idTabelaPreco
-			WHERE p.ativo = 1
 			""",
-			countQuery = "SELECT count(*) FROM produto p WHERE p.ativo = 1",
+			countQuery = "SELECT count(*) FROM produto p",
 			nativeQuery = true)
 	Page<Object[]> getProductsByTable(@Param("idTabelaPreco") Long idTabelaPreco, Pageable pageable);
 

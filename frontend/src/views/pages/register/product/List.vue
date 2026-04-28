@@ -139,9 +139,8 @@ async function loadProviders() {
 }
 
 const form = ref(null)
-const formValues = ref({ nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, minPeso: null, maxPeso: null, ativo: null })
+const formValues = ref({ nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, minPeso: null, maxPeso: null })
 const filterValues = ref({ ... formValues.value })
-const validade = [ { value: true, label: 'Sim' }, { value: false, label: 'Não' } ]
 
 const filter = async ({ valid, values }) => {
   if (!valid) return
@@ -222,16 +221,6 @@ function limpar() {
               </FormField>
             </div>
             <div class="col-span-2">
-              <FormField name="ativo">
-                <FloatLabel variant="on">
-                  <Select :options="validade" optionLabel="label" optionValue="value" fluid/>
-                  <label for="ativo">Ativo</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-          </div>
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-12">
               <FormField class="flex justify-end gap-2">
                 <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
                 <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
@@ -250,11 +239,6 @@ function limpar() {
           <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
           <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
           <Column field="peso" header="Peso (em gramas)" sortable/>
-          <Column field="ativo" header="Ativo" sortable>
-            <template #body="slotProps">
-              {{ slotProps.data.ativo ? 'Sim' : 'Não' }}
-            </template>
-          </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
