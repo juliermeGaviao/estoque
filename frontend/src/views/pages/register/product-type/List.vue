@@ -39,7 +39,12 @@ async function load(params) {
   try {
     const response = await api.get('/product-type/list', { params: query })
 
-    data.value = response.data.content
+    data.value = response.data.content.map(item => ({
+      ...item,
+      editando: false,
+      edicao: { ...item }
+    }))
+
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produtos', detail: 'Requisição de lista de tipos de produtos terminou com o erro: ' + error.response.data, life: 10000 })
@@ -68,11 +73,8 @@ function onSort(event) {
 }
 
 function edit(entity) {
-  if (entity?.id) {
-    router.push(`/register/product-type/edit?id=${entity.id}`)
-  } else {
-    router.push('/register/product-type/edit')
-  }
+  entity.edicao.nome = entity.nome
+  entity.editando = true
 }
 
 const confirmDelete = entity => {
@@ -125,6 +127,47 @@ function limpar() {
     load( { ...filterValues.value } )
   })
 }
+
+function addItem() {
+  data.value.push({
+    id: null,
+    nome: '',
+    edicao: { id: null, rnome: '' },
+    editando: true
+  })
+}
+
+async function commit(item) {
+  if (!item.edicao.nome || !item.edicao.nome.trim().length) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome de tipo de produto é obrigatório.', life: 10000 })
+    return
+  }
+
+  item.nome = item.edicao.nome
+  item.editando = false
+
+  try {
+    const response = await api.post('/product-type', { id: item.id, nome: item.nome})
+
+    if (response.status === 200) {
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: `Tipo de Produto ${item.id ? 'atualizado' : 'criado'} com sucesso`, life: 10000 })
+      item.id = response.data.id
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Tipo de Produto', detail: 'Requisição de alteração de tipo de produto terminou com o erro: ' + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+function cancel(item) {
+  item.editando = false
+
+  if (!item.id) {
+    data.value.splice(data.value.indexOf(item), 1)
+  }
+}
+
 </script>
 
 <template>
@@ -157,16 +200,25 @@ function limpar() {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
+          <Column field="nome" header="Nome">
+            <template #body="slotProps">
+              <div v-show="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+              <div v-show="slotProps.data.editando">
+                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+              </div>
+            </template>
+          </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Tipo de Produto'"/>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Tipo de Produto'"/>
             </template>
 
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
+              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-show="slotProps.data.editando"/>
+              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
             </template>
           </Column>
         </DataTable>

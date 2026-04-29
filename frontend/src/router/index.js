@@ -55,10 +55,6 @@ const router = createRouter({
                   component: () => import('@/views/pages/register/product-type/List.vue')
                 },
                 {
-                  path: '/register/product-type/edit',
-                  component: () => import('@/views/pages/register/product-type/Edit.vue')
-                },
-                {
                   path: '/register/product',
                   component: () => import('@/views/pages/register/product/List.vue')
                 },
