@@ -44,6 +44,12 @@ async function load() {
   try {
     const response = await api.get('/price-table/list', { params: params })
 
+    data.value = response.data.content.map(item => ({
+      ...item,
+      editando: false,
+      edicao: { nome: item.nome }
+    }))
+
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
@@ -80,11 +86,9 @@ function onClear() {
 }
 
 function edit(entity) {
-  if (entity?.id) {
-    router.push(`/register/price-table/edit?id=${entity.id}`)
-  } else {
-    router.push('/register/price-table/edit')
-  }
+  entity.editando = true
+
+  entity.edicao = { nome: entity.nome }
 }
 
 const confirmDelete = entity => {
@@ -115,6 +119,47 @@ const confirmDelete = entity => {
     }
   })
 }
+
+function addItem() {
+  data.value.push({
+    id: null,
+    nome: null,
+    edicao: { nome: null },
+    editando: true
+  })
+}
+
+async function commit(item) {
+  if (!item.edicao.nome || !item.edicao.nome.trim().length) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome é obrigatório.', life: 10000 })
+    return
+  }
+
+  item.editando = false
+  item.nome = item.edicao.nome
+
+  try {
+    const response = await api.post('/price-table', item)
+
+    if (response.status === 200) {
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: `Tabela de preços ${item.id ? 'atualizada' : 'criada'} com sucesso`, life: 10000 })
+
+      load()
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de tabela de preços terminou com o erro: ` + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+function cancel(item) {
+  item.editando = false
+
+  if (!item.id) {
+    data.value.splice(data.value.indexOf(item), 1)
+  }
+}
 </script>
 
 <template>
@@ -138,16 +183,25 @@ const confirmDelete = entity => {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
+          <Column field="nome" header="Nome" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+              <div v-if="slotProps.data.editando">
+                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+              </div>
+            </template>
+          </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Tabela de Preços'"/>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Nova Tabela de Preços'"/>
             </template>
 
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
+              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
+              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
             </template>
           </Column>
         </DataTable>
