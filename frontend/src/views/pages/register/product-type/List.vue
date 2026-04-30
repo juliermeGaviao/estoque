@@ -131,8 +131,8 @@ function limpar() {
 function addItem() {
   data.value.push({
     id: null,
-    nome: '',
-    edicao: { id: null, rnome: '' },
+    nome: null,
+    edicao: { id: null, nome: null },
     editando: true
   })
 }
@@ -200,7 +200,7 @@ function cancel(item) {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome">
+          <Column field="nome" header="Nome" sortable>
             <template #body="slotProps">
               <div v-show="!slotProps.data.editando">{{slotProps.data.nome}}</div>
               <div v-show="slotProps.data.editando">

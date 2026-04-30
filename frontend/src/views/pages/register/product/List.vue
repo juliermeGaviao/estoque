@@ -39,7 +39,12 @@ async function load(params) {
   try {
     const response = await api.get("/product/list", { params: query })
 
-    data.value = response.data.content
+    data.value = response.data.content.map(item => ({
+      ...item,
+      editando: false,
+      edicao: { nome: item.nome, idTipoProduto: item.tipoProduto.id, idFornecedor: item.fornecedor.id, referencia: item.referencia, peso: item.peso }
+    }))
+
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
@@ -70,11 +75,13 @@ function onSort(event) {
 }
 
 function edit(entity) {
-  if (entity?.id) {
-    router.push(`/register/product/edit?id=${entity.id}`)
-  } else {
-    router.push('/register/product/edit')
-  }
+  entity.editando = true
+
+  entity.edicao.nome = entity.nome
+  entity.edicao.referencia = entity.referencia
+  entity.edicao.idTipoProduto = entity.tipoProduto.id
+  entity.edicao.idFornecedor = entity.fornecedor.id
+  entity.edicao.peso = entity.peso
 }
 
 const confirmDelete = entity => {
@@ -96,9 +103,10 @@ const confirmDelete = entity => {
       try {
         await api.delete(`/product?id=${entity.id}`)
 
-        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Produto removida com sucesso', life: 10000 })
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Produto removido com sucesso', life: 10000 })
 
-        load()
+        page.value = 0
+        load( { ...filterValues.value } )
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Falha de Remoção de Produto', detail: 'Requisição de remoção de produto terminou com o erro: ' + error.response.data, life: 10000 })
       }
@@ -158,6 +166,58 @@ function limpar() {
     sortField.value = null
     load( { ...filterValues.value } )
   })
+}
+
+function addItem() {
+  data.value.unshift({
+    id: null,
+    nome: null,
+    tipoProduto: { id: null },
+    fornecedor: { id: null },
+    referencia: null,
+    peso: null,
+    edicao: { nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, peso: null },
+    editando: true
+  })
+}
+
+async function commit(item) {
+  if (!item.edicao.nome || !item.edicao.nome.trim().length || !item.edicao.idTipoProduto || !item.edicao.idFornecedor
+      || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || !item.edicao.peso > 0) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência e peso são obrigatórios.', life: 10000 })
+    return
+  }
+
+  item.editando = false
+  const { editando, edicao, ...atributos } = item
+
+  atributos.nome = edicao.nome
+  atributos.tipoProduto.id = edicao.idTipoProduto
+  atributos.fornecedor.id = edicao.idFornecedor
+  atributos.referencia = edicao.referencia
+  atributos.peso = edicao.peso
+
+  try {
+    const response = await api.post('/product', atributos)
+
+    if (response.status === 200) {
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: `Produto ${item.id ? 'atualizado' : 'criado'} com sucesso`, life: 10000 })
+
+      load( { ...filterValues.value } )
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
+  } finally {
+    loading.value = false
+  }
+}
+
+function cancel(item) {
+  item.editando = false
+
+  if (!item.id) {
+    data.value.splice(data.value.indexOf(item), 1)
+  }
 }
 
 </script>
@@ -234,20 +294,57 @@ function limpar() {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
-          <Column field="referencia" header="Referência" sortable/>
-          <Column field="tipoProduto.nome" header="Tipo de Produto" sortable/>
-          <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
-          <Column field="peso" header="Peso (em gramas)" sortable/>
+          <Column field="nome" header="Nome" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+              <div v-if="slotProps.data.editando">
+                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+              </div>
+            </template>
+          </Column>
+          <Column field="referencia" header="Referência" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.referencia}}</div>
+              <div v-if="slotProps.data.editando">
+                <InputText v-model="slotProps.data.edicao.referencia" maxlength="100" autocomplete="off" fluid/>
+              </div>
+            </template>
+          </Column>
+          <Column header="Tipo de Produto" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.tipoProduto.nome}}</div>
+              <div v-if="slotProps.data.editando">
+                <Select v-model="slotProps.data.edicao.idTipoProduto" :options="tipos" optionLabel="nome" optionValue="id" fluid/>
+              </div>
+            </template>
+          </Column>
+          <Column header="Fornecedor" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.fornecedor.fantasia}}</div>
+              <div v-if="slotProps.data.editando">
+                <Select v-model="slotProps.data.edicao.idFornecedor" :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+              </div>
+            </template>
+          </Column>
+          <Column field="peso" header="Peso (em gramas)" sortable>
+            <template #body="slotProps">
+              <div v-if="!slotProps.data.editando">{{slotProps.data.peso}}</div>
+              <div v-if="slotProps.data.editando">
+                <InputNumber v-model="slotProps.data.edicao.peso" :max="10000" fluid/>
+              </div>
+            </template>
+          </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Tipo de Produto'"/>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Produto'"/>
             </template>
 
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
+              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
+              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
+              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
             </template>
           </Column>
         </DataTable>
