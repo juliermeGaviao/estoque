@@ -1,4 +1,5 @@
 <script setup>
+import ProductPriceListComponent from '@/components/ProductPriceListComponent.vue'
 import api from '@/util/api'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
@@ -160,6 +161,17 @@ function cancel(item) {
     data.value.splice(data.value.indexOf(item), 1)
   }
 }
+
+const visible = ref(false)
+const idTabelaPreco = ref(null)
+const nomeSelecionado = ref('')
+
+function openTable(item) {
+  idTabelaPreco.value = item.id
+  nomeSelecionado.value = item.nome
+
+  visible.value = true
+}
 </script>
 
 <template>
@@ -198,6 +210,7 @@ function cancel(item) {
             </template>
 
             <template #body="slotProps">
+              <Button icon="pi pi-dollar" class="p-button-sm p-button-text p-mr-2" @click="openTable(slotProps.data)" v-tooltip.bottom="'Preencher Preços'" v-if="slotProps.data.id"/>
               <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
               <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
               <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
@@ -208,4 +221,7 @@ function cancel(item) {
       </template>
     </Card>
   </BlockUI>
+  <Dialog v-model:visible="visible" modal :closable="false" style="width: 90%">
+    <ProductPriceListComponent v-if="visible" :id="idTabelaPreco" :nomeTabelaPreco="nomeSelecionado" @close="visible = false"/>
+  </Dialog>
 </template>
