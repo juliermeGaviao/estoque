@@ -17,7 +17,9 @@ const props = defineProps({
 })
 
 watch(() => props.id, () => {
+  loading.value = true
   load()
+  loading.value = false
 }, { immediate: true })
 
 onMounted(async () => {
@@ -47,8 +49,6 @@ async function load() {
     }
   }
 
-  loading.value = true
-
   try {
     const response = await api.get("/price-table-product/list-product", { params: query })
 
@@ -56,8 +56,6 @@ async function load() {
     data.value = response.data.content
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -65,9 +63,7 @@ function onPage(event) {
   page.value = event.page
   size.value = event.rows
 
-  loading.value = true
-  load()
-  loading.value = false
+  savePrices(false)
 }
 
 function onSort(event) {
@@ -75,31 +71,25 @@ function onSort(event) {
   sortField.value = event.sortField
   sortOrder.value = event.sortOrder
 
-  loading.value = true
-  load()
-  loading.value = false
+  savePrices(false)
 }
 
-async function savePrices() {
-  if (!id.value) return
+async function savePrices(emitirAviso) {
+  if (!props.id) return
 
-  const payload = []
-
-  for (let line of data.value) {
-    payload.push({
-      id: line.id,
-      produto: { id: line.produto.id },
-      tabela: { id: Number.parseInt(id.value) },
-      preco: line.preco
-    })
-  }
+  const payload = data.value.map(item => ({
+      id: item.id,
+      produto: { id: item.produto.id },
+      tabela: { id: props.id },
+      preco: item.preco
+  }))
 
   loading.value = true
 
   try {
     const response = await api.post('/price-table-product/save-prices', payload)
 
-    if (response.status === 200) {
+    if (response.status === 200 && emitirAviso === true) {
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Lista de Preços atualizada com sucesso', life: 10000 })
     }
   } catch (error) {
@@ -175,7 +165,7 @@ function closeDialog() {
         </DataTable>
         <div class="flex justify-end gap-2 mt-4">
           <Button label="Limpar" icon="pi pi-times" @click="cleanPrices" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" @click="savePrices" raised/>
+          <Button label="Salvar" icon="pi pi-save" @click="savePrices(true)" raised/>
         </div>
       </template>
     </Card>
