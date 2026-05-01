@@ -484,7 +484,7 @@ function clear() {
       <template #content>
         <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
           <div class="grid grid-cols-12 gap-2">
-            <div :class="'col-span-' + (pj ? 5 : 12)">
+            <div :class="pj ? 'col-span-5' : 'col-span-12'">
               <FormField v-slot="$field" name="idCliente">
                 <FloatLabel variant="on">
                   <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @update:modelValue="loadClient($event)"/>
