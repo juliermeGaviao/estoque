@@ -63,10 +63,6 @@ const router = createRouter({
                   component: () => import('@/views/pages/register/price-table/List.vue')
                 },
                 {
-                  path: '/register/price-table/edit',
-                  component: () => import('@/views/pages/register/price-table/Edit.vue')
-                },
-                {
                   path: '/core/sale',
                   component: () => import('@/views/pages/core/sale/List.vue')
                 },
