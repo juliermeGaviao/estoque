@@ -122,4 +122,30 @@ public class SaleItemController {
 		}
 	}
 
+	@GetMapping("/list-by-price-table")
+	public ResponseEntity<Object> getItensByPriceTable(@RequestParam(required = false) Long idTabelaPreco) {
+		try {
+			List<SaleItemDto> result = this.service.getItensByPriceTable(idTabelaPreco);
+
+			return ResponseEntity.ok(result);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao listar por tabela de preços " + ENTITIES.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@GetMapping("/list-by-sale")
+	public ResponseEntity<Object> list(@RequestParam(required = false) Long idVenda) {
+		try {
+			List<SaleItemDto> result = this.service.getItensBySale(idVenda);
+
+			return ResponseEntity.ok(result);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao listar por venda " + ENTITIES.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
 }

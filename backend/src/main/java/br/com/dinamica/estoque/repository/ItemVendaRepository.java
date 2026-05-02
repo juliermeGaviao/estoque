@@ -1,7 +1,11 @@
 package br.com.dinamica.estoque.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.entity.ItemVenda;
@@ -10,5 +14,23 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
 
 	@Transactional
     Long deleteByVenda_Id(Long vendaId);
+
+	@Query(value = """
+            SELECT tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, tpp.preco
+            FROM TabelaPrecoProduto tpp
+            WHERE tpp.tabela.id = :idTabelaPreco
+            ORDER BY tpp.produto.nome
+        """)
+	List<Object[]> getItensByPriceTable(@Param("idTabelaPreco") Long idTabelaPreco);
+
+	@Query(value = """
+            SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, iv.quantidade, tpp.preco, iv.total
+            FROM TabelaPrecoProduto tpp
+            JOIN Venda v ON v.tabela.id = tpp.tabela.id
+            LEFT JOIN ItemVenda iv ON iv.tabelaPrecoProduto = tpp AND iv.venda.id = v.id
+            WHERE v.id = :idVenda
+            ORDER BY tpp.produto.nome
+        """)
+	List<Object[]> getItensBySale(@Param("idVenda") Long idVenda);
 
 }

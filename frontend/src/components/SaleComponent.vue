@@ -3,7 +3,6 @@ import api from '@/util/api'
 import { eAdmin, getUserId } from '@/util/auth'
 import { formatNumber } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
-import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -17,7 +16,6 @@ const props = defineProps({
 const router = useRouter()
 const toast = useToast()
 const loading = ref(false)
-const confirm = useConfirm()
 
 const form = ref(null)
 const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
@@ -66,10 +64,10 @@ const submitAction = ref('')
 const save = async ({ valid, values }) => {
   if (!valid) return
 
-  const filter = itens.value.filter(item => item.editando === false)
+  const filter = itens.value.filter(item => item.quantidade && item.quantidade > 0)
 
   if (filter.length === 0) {
-    toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Ao menos um item de venda deve ser informado.', life: 10000 })
+    toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Ao menos um item de venda deve compor a venda.', life: 10000 })
     return
   }
 
@@ -92,9 +90,11 @@ const save = async ({ valid, values }) => {
     if (response.status === 200) {
       id.value = response.data.id
 
-      for (let item of itens.value) {
-        item.venda.id = response.data.id
-      }
+      itens.value.forEach(item => {
+        if (item.quantidade && item.quantidade > 0) {
+          item.venda = { id: response.data.id }
+        }
+      })
 
       await saveItens()
 
@@ -104,7 +104,7 @@ const save = async ({ valid, values }) => {
         itens.value = []
       } else {
         await load(id.value)
-        loadItens(id.value)
+        loadItensBySale(id.value)
       }
 
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda salva com sucesso', life: 10000 })
@@ -118,7 +118,7 @@ const save = async ({ valid, values }) => {
 
 async function saveItens() {
   try {
-    await api.post('/sale-item/save-items', itens.value.filter(item => item.editando === false))
+    await api.post('/sale-item/save-items', itens.value.filter(item => item.quantidade && item.quantidade > 0))
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação dos Itens de Venda', detail: 'Requisição de alteração dos itens de venda terminou com o erro: ' + error.response.data, life: 10000 })
   }
@@ -129,19 +129,18 @@ onMounted(async () => {
 
   if (id.value) {
     await load(id.value)
-    loadItens(id.value)
+    loadItensBySale(id.value)
 
     const fields = form.value.states
     loadTables(fields.idVendedor.value)
     loadClient(fields.idCliente.value)
-    loadProducts(fields.idTabela.value)
   } else {
     await loadTables(getUserId())
     
     if (tables.value?.length === 1) {
       form.value.setFieldValue('idVendedor', getUserId())
       form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-      loadProducts(tables.value[0].tabela.id)
+      loadItensByPriceTable(tables.value[0].tabela.id)
     }
   }
 
@@ -166,22 +165,11 @@ async function loadUsers() {
 
 const itens = ref([])
 
-async function loadItens(idVenda) {
-  const query = {
-    idVenda: idVenda,
-    page: 0,
-    size: 10000,
-  }
-
+async function loadItensBySale(idVenda) {
   try {
-    const response = await api.get("/sale-item/list", { params: query })
+    const response = await api.get("/sale-item/list-by-sale", { params: { idVenda: idVenda} })
 
-    itens.value = response.data.content
-    for (let item of itens.value) {
-      item.edicao = { ...item.tabelaPrecoProduto }
-      item.editando = false
-      item.temProduto = true
-    }
+    itens.value = response.data
 
     evaluateTotal()
   } catch (error) {
@@ -189,18 +177,16 @@ async function loadItens(idVenda) {
   }
 }
 
-function addItem() {
-  itens.value.push({
-    id: null,
-    venda: { id: id.value },
-    tabelaPrecoProduto: { id: null, produto: { nome: null, referencia: null }, quantidade: null, precoUnitario: null, total: null },
-    quantidade: null,
-    precoUnitario: null,
-    total: null,
-    edicao: { id: null, referencia: null, nome: null, quantidade: null, precoUnitario: null, total: null },
-    editando: true,
-    temProduto: false
-  })
+async function loadItensByPriceTable(idTabelaPreco) {
+  try {
+    const response = await api.get("/sale-item/list-by-price-table", { params: { idTabelaPreco: idTabelaPreco} })
+
+    itens.value = response.data
+
+    evaluateTotal()
+  } catch (error) {
+    toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
+  }
 }
 
 const tables = ref([])
@@ -212,18 +198,6 @@ async function loadTables(idVendedor) {
     tables.value = response.data.content
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Tabelas de Preço do Vendedor", detail: "Requisição de lista de Tabelas de Preço do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
-  }
-}
-
-const products = ref([])
-
-async function loadProducts(idTabela) {
-  try {
-    const response = await api.get("/price-table-product/list", { params: { idTabelaPreco: idTabela, page: 0, size: 10000, sort: 'produto.nome,asc' } })
-
-    products.value = response.data.content
-  } catch (error) {
-    toast.add({ severity: "error", summary: "Falha de Carga de Produtos para o Vendedor", detail: "Requisição de lista de Produtos para o Vendedor terminou com o erro: " + error.response.data, life: 10000 })
   }
 }
 
@@ -261,56 +235,8 @@ const loadClient = async (value) => {
   }
 }
 
-function edit(item) {
-  if (item.id) {
-    item.edicao = {
-      id: item.tabelaPrecoProduto.id,
-      referencia: item.tabelaPrecoProduto.produto.nome,
-      nome: item.tabelaPrecoProduto.produto.nome,
-      quantidade: item.quantidade,
-      precoUnitario: item.precoUnitario,
-      total: item.total
-    }
-
-    item.temProduto = true
-  } else if (!item.edicao) {
-    item.edicao = { id: null, nome: null, referencia: null, quantidade: null, precoUnitario: null, total: null }
-  }
-
-  item.editando = true
-  evaluateItem(item)
-}
-
-function cancel(item) {
-  item.editando = false
-
-  if (!item.id && (!item.edicao.quantidade || Number.parseInt(item.edicao.quantidade) <= 0)) {
-    itens.value.splice(itens.value.indexOf(item), 1)
-  }
-
-  evaluateTotal()
-}
-
-function setProduct(idTabelaPrecoProduto, item) {
-  const product = products.value.find(product => idTabelaPrecoProduto === product.id)
-
-  item.edicao.id = product.id
-  item.edicao.referencia = product.produto.referencia
-  item.edicao.nome = product.produto.nome
-  item.edicao.precoUnitario = product.preco
-  item.temProduto = true
-
-  evaluateItem(item)
-}
-
-function evaluateItem(item) {
-  item.edicao.total = item.edicao?.quantidade * item.edicao.precoUnitario
-
-  evaluateTotal()
-}
-
 function setAmount(evento, item) {
-  item.edicao.total = Number.parseInt(evento.value) * item.edicao.precoUnitario
+  item.total = evento.value ? Number.parseInt(evento.value) * item.precoUnitario : null
 
   evaluateTotal()
 }
@@ -318,78 +244,15 @@ function setAmount(evento, item) {
 function evaluateTotal() {
   let subTotal = 0
 
-  for (const item of itens.value) {
-    if (item.editando) {
-      subTotal += item.edicao.total ? item.edicao.total : 0
-    } else {
-      subTotal += item.total ? item.total : 0
-    }
-  }
+  itens.value.forEach(item => {
+    subTotal += item.total ? item.total : 0
+  })
 
   const total = form.value?.states?.desconto?.value ? (subTotal - (subTotal * form.value.states.desconto.value / 100)) : subTotal
 
   form.value.setValues({ subTotal: Number.parseFloat(subTotal.toFixed(2)), total: Number.parseFloat(total.toFixed(2)) })
 }
 
-function commit(item) {
-  if (!item.temProduto) {
-    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Item de venda está sem produto associado.', life: 10000 })
-    return
-  }
-
-  if (!item.edicao.quantidade || Number.parseInt(item.edicao.quantidade) <= 0) {
-    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Quantidade de itens deve ter valor maior que zero.', life: 10000 })
-    return
-  }
-
-  const product = products.value.find(product => item.edicao.id === product.id)
-
-  item.tabelaPrecoProduto = product
-  item.precoUnitario = item.edicao.precoUnitario
-  item.quantidade = item.edicao.quantidade
-  item.total = item.edicao.quantidade * item.edicao.precoUnitario
-
-  item.editando = false
-
-  evaluateTotal()
-}
-
-const confirmDelete = item => {
-  confirm.require({
-    message: 'Deseja remover o item venda?',
-    header: "Alerta",
-    icon: 'pi pi-info-circle',
-    rejectProps: {
-      label: 'Cancelar',
-      severity: 'secondary',
-      raised: true
-    },
-    acceptProps: {
-      label: 'Remover',
-      severity: 'danger',
-      raised: true
-    },
-    accept: async () => {
-      deleteItemSale(item)
-    }
-  })
-}
-
-async function deleteItemSale(item) {
-  if (item.id) {
-    try {
-      await api.delete(`/sale-item?id=${item.id}`)
-      
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Item de Venda removido com sucesso', life: 10000 })
-      
-      load(item.venda.id)
-    } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Remoção do Item de Venda', detail: 'Requisição de remoção de item de venda terminou com o erro: ' + error.response.data, life: 10000 })
-    }
-  }
-
-  itens.value.splice(itens.value.indexOf(item), 1)
-}
 function changeDiscount(event) {
   const subTotal = form.value?.states?.subTotal?.value
   const value = typeof event.value === 'string' ? event.value.replace(',', '.') : event.value
@@ -404,53 +267,21 @@ async function changeSalesman(idVendedor) {
 
   if (tables.value.length === 1) {
     form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-    loadProducts(tables.value[0].tabela.id)
+    loadItensByPriceTable(tables.value[0].tabela.id)
   } else {
     form.value.setFieldValue('idTabela', null)
-    products.value = []
+    itens.value = []
   }
 }
 
 async function changePriceTable(idTabela) {
-  const oldValue = form.value.states.idTabela.value
+  if (id.value) {
+    loadItensBySale(id.value)
+  } else {
+    loadItensByPriceTable(idTabela)
+  }
 
-  confirm.require({
-    message: 'Alterar a tabela de preços pode remover itens da venda cujos produtos não existam ou não tenham preço definido para a nova tabela escolhida. Deseja continuar?',
-    header: "Alerta",
-    icon: 'pi pi-info-circle',
-    rejectProps: {
-      label: 'Cancelar',
-      severity: 'secondary',
-      raised: true
-    },
-    acceptProps: {
-      label: 'Prosseguir',
-      severity: 'danger',
-      raised: true
-    },
-    accept: async () => {
-      await loadProducts(idTabela)
-
-      for (let item of itens.value) {
-        if (item.tabelaPrecoProduto?.produto?.id) {
-          const tabelaPrecoProduto = products.value.find(product => product.produto.id === item.tabelaPrecoProduto?.produto?.id)
-
-          if (tabelaPrecoProduto) {
-            item.tabelaPrecoProduto = tabelaPrecoProduto
-            item.precoUnitario = tabelaPrecoProduto.preco
-            item.total = item.quantidade * tabelaPrecoProduto.preco
-          } else {
-            deleteItemSale(item)
-          }
-        } else {
-          deleteItemSale(item)
-        }
-      }
-
-      evaluateTotal()
-    },
-    reject: () => form.value.setFieldValue('idTabela', oldValue)
-  })
+  evaluateTotal()
 }
 
 function clear() {
@@ -559,9 +390,9 @@ function clear() {
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
           <div class="flex justify-end gap-2 mt-2">
-            <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised/>
-            <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'"/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+            <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised size="small"/>
+            <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'" size="small"/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised size="small"/>
           </div>
         </Form>
       </template>
@@ -579,49 +410,21 @@ function clear() {
       <template #content>
         <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
           <Column field="id" header="Id"/>
-          <Column header="Referência">
-            <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ slotProps.data.tabelaPrecoProduto.produto.referencia }}</div>
-              <div v-show="slotProps.data.editando">
-                <Select v-model="slotProps.data.edicao.id" :options="products" optionLabel="produto.referencia" optionValue="id" filter fluid @update:modelValue="setProduct($event, slotProps.data)"/>
-              </div>
-            </template>
-          </Column>
-          <Column field="tabelaPrecoProduto.produto.nome" header="Nome">
-            <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{slotProps.data.tabelaPrecoProduto.produto.nome}}</div>
-              <div v-show="slotProps.data.editando">{{slotProps.data.edicao.nome}}</div>
-            </template>
-          </Column>
+          <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
+          <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
           <Column field="quantidade" header="Quantidade">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{slotProps.data.quantidade}}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto">
-                <InputNumber v-model="slotProps.data.edicao.quantidade" :max="10000" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="evaluateItem(slotProps.data)"/>
-              </div>
+              <InputNumber v-model="slotProps.data.quantidade" :max="10000" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" size="small"/>
             </template>
           </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.precoUnitario) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.precoUnitario) }}</div>
+              {{ formatNumber(slotProps.data.precoUnitario) }}
             </template>
           </Column>
           <Column field="total" header="Total (R$)">
             <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{ formatNumber(slotProps.data.total) }}</div>
-              <div v-show="slotProps.data.editando && slotProps.data.temProduto">{{ formatNumber(slotProps.data.edicao.total) }}</div>
-            </template>
-          </Column>
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Nova Tabela de Preços'"/>
-            </template>
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
-              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-show="slotProps.data.editando"/>
-              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
+              {{ formatNumber(slotProps.data.total) }}
             </template>
           </Column>
         </DataTable>

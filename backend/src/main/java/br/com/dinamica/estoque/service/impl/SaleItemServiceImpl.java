@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.service.impl;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -9,7 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import br.com.dinamica.estoque.dto.PriceTableProductDto;
+import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.SaleDto;
 import br.com.dinamica.estoque.dto.SaleItemDto;
 import br.com.dinamica.estoque.entity.ItemVenda;
 import br.com.dinamica.estoque.entity.TabelaPrecoProduto;
@@ -121,13 +126,89 @@ public class SaleItemServiceImpl implements SaleItemService {
 	}
 
 	@Override
+	@Transactional
 	public List<SaleItemDto> save(List<SaleItemDto> list, Usuario usuario) {
-		return list.stream().map(dto -> this.save(dto, usuario)).toList();
+		this.repository.deleteByVenda_Id(list.getFirst().getVenda().getId());
+
+		return list.stream().map(dto -> this.saveNew(dto, usuario)).toList();
 	}
 
 	@Override
 	public void delete(Long id) {
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public List<SaleItemDto> getItensByPriceTable(Long idTabelaPreco) {
+		List<Object[]> result = this.repository.getItensByPriceTable(idTabelaPreco);
+
+		return result.stream().map(linha -> {
+			SaleItemDto dto = new SaleItemDto();
+			PriceTableProductDto priceTableProductDto = new PriceTableProductDto();
+			ProductDto productDto = new ProductDto();
+
+			dto.setTabelaPrecoProduto(priceTableProductDto);
+			priceTableProductDto.setProduto(productDto);
+
+			productDto.setId((Long) linha[0]);
+			priceTableProductDto.setId((Long) linha[1]);
+			productDto.setNome((String) linha[2]);
+			productDto.setReferencia((String) linha[3]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
+
+			return dto;
+		}).toList();
+	}
+
+	@Override
+	public List<SaleItemDto> getItensBySale(Long idVenda) {
+		List<Object[]> result = this.repository.getItensBySale(idVenda);
+
+		return result.stream().map(linha -> {
+			SaleItemDto dto = new SaleItemDto();
+			SaleDto saleDto = new SaleDto();
+			PriceTableProductDto priceTableProductDto = new PriceTableProductDto();
+			ProductDto productDto = new ProductDto();
+
+			dto.setTabelaPrecoProduto(priceTableProductDto);
+			dto.setVenda(saleDto);
+			priceTableProductDto.setProduto(productDto);
+
+			dto.setId((Long) linha[0]);
+			saleDto.setId((Long) linha[1]);
+			productDto.setId((Long) linha[2]);
+			priceTableProductDto.setId((Long) linha[3]);
+			productDto.setNome((String) linha[4]);
+			productDto.setReferencia((String) linha[5]);
+			dto.setQuantidade((Integer) linha[6]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
+			dto.setTotal(linha[8] != null ? BigDecimal.valueOf(((Number) linha[8]).doubleValue()) : null);
+
+			return dto;
+		}).toList();
+	}
+
+	private SaleItemDto saveNew(SaleItemDto dto, Usuario usuario) {
+		ItemVenda entity = new ItemVenda();
+        Date agora = DateUtil.now();
+
+		this.modelMapper.map(dto, entity);
+		entity.setId(null);
+
+		Venda venda = this.vendaRepository.findById(dto.getVenda().getId()).orElseThrow();
+		TabelaPrecoProduto tabelaPrecoProduto = this.tabelaPrecoProdutoRepository.findById(dto.getTabelaPrecoProduto().getId()).orElseThrow();
+
+		entity.setVenda(venda);
+		entity.setTabelaPrecoProduto(tabelaPrecoProduto);
+		entity.setUsuario(usuario);
+		entity.setDataCriacao(agora);
+		entity.setDataAlteracao(agora);
+
+		entity = this.repository.save(entity);
+
+		return this.modelMapper.map(entity, SaleItemDto.class);
 	}
 
 }
