@@ -36,26 +36,22 @@ const formValidator = zodResolver(
 const id = ref(props.id)
 
 async function load(idVenda) {
-  loading.value = true
-
   try {
-    const res = await api.get('/sale', { params: { id: idVenda } })
+    const response = await api.get('/sale', { params: { id: idVenda } })
 
     if (form.value) {
       form.value.setValues({
-        idCliente: res.data.cliente.id,
-        idVendedor: res.data.vendedor.id,
-        idTabela: res.data.tabela.id,
-        subTotal: res.data.subTotal,
-        desconto: res.data.desconto,
-        total: res.data.total,
-        observacoes: res.data.observacoes
+        idCliente: response.data.cliente.id,
+        idVendedor: response.data.vendedor.id,
+        idTabela: response.data.tabela.id,
+        subTotal: response.data.subTotal,
+        desconto: response.data.desconto,
+        total: response.data.total,
+        observacoes: response.data.observacoes
       })
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga da Venda', detail: 'Requisição de venda terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -67,7 +63,7 @@ const save = async ({ valid, values }) => {
   const filter = itens.value.filter(item => item.quantidade && item.quantidade > 0)
 
   if (filter.length === 0) {
-    toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Ao menos um item de venda deve compor a venda.', life: 10000 })
+    toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Venda sem itens.', life: 10000 })
     return
   }
 
@@ -96,15 +92,14 @@ const save = async ({ valid, values }) => {
         }
       })
 
-      await saveItens()
+      await api.post('/sale-item/save-items', itens.value.filter(item => item.quantidade && item.quantidade > 0))
 
       if (submitAction.value === 'saveNew') {
-        form.value.reset()
         id.value = null
-        itens.value = []
+        clear()
       } else {
         await load(id.value)
-        loadItensBySale(id.value)
+        loadItens('list-by-sale', { idVenda: id.value })
       }
 
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Venda salva com sucesso', life: 10000 })
@@ -116,38 +111,30 @@ const save = async ({ valid, values }) => {
   }
 }
 
-async function saveItens() {
-  try {
-    await api.post('/sale-item/save-items', itens.value.filter(item => item.quantidade && item.quantidade > 0))
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação dos Itens de Venda', detail: 'Requisição de alteração dos itens de venda terminou com o erro: ' + error.response.data, life: 10000 })
+async function loadTableProducts() {
+  if (!eAdmin()) {
+    form.value.setFieldValue('idVendedor', getUserId())
+    form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
+    loadItens('list-by-price-table', { idTabelaPreco: tables.value[0].tabela.id })
   }
 }
 
 onMounted(async () => {
-  loading.value = true
-
   if (id.value) {
     await load(id.value)
-    loadItensBySale(id.value)
 
-    const fields = form.value.states
+    const fields = form.value?.states
+    
     loadTables(fields.idVendedor.value)
     loadClient(fields.idCliente.value)
+    loadItens('list-by-sale', { idVenda: id.value })
   } else {
     await loadTables(getUserId())
-    
-    if (tables.value?.length === 1) {
-      form.value.setFieldValue('idVendedor', getUserId())
-      form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-      loadItensByPriceTable(tables.value[0].tabela.id)
-    }
+    loadTableProducts()
   }
 
   loadUsers()
   loadClients()
-
-  loading.value = false
 })
 
 
@@ -156,7 +143,7 @@ let users = ref([])
 async function loadUsers() {
   try {
     const response = await api.get('/user/list', { params: { page: 0, size: 10000, sort: 'email,asc' } })
-
+  
     users.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Vendedores', detail: 'Requisição de lista de Vendedores terminou com o erro: ' + error.response.data, life: 10000 })
@@ -165,21 +152,9 @@ async function loadUsers() {
 
 const itens = ref([])
 
-async function loadItensBySale(idVenda) {
+async function loadItens(path, parameters) {
   try {
-    const response = await api.get("/sale-item/list-by-sale", { params: { idVenda: idVenda} })
-
-    itens.value = response.data
-
-    evaluateTotal()
-  } catch (error) {
-    toast.add({ severity: "error", summary: "Falha de Carga de Itens de Venda", detail: "Requisição de lista de itens de venda terminou com o erro: " + error.response.data, life: 10000 })
-  }
-}
-
-async function loadItensByPriceTable(idTabelaPreco) {
-  try {
-    const response = await api.get("/sale-item/list-by-price-table", { params: { idTabelaPreco: idTabelaPreco} })
+    const response = await api.get(`/sale-item/${path}`, { params: parameters })
 
     itens.value = response.data
 
@@ -204,34 +179,26 @@ async function loadTables(idVendedor) {
 const clients = ref([])
 
 async function loadClients() {
-  loading.value = true
-
   try {
     const response = await api.get('/client/find-all')
 
     clients.value = response.data
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de Clientes terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de clientes terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
 const pj = ref(false)
 
 const loadClient = async (value) => {
-  loading.value = true
-
   try {
-    const res = await api.get('/client', { params: { id: value } })
+    const response = await api.get('/client', { params: { id: value } })
 
-    pj.value = res.data.cnpj?.length > 0
+    pj.value = response.data.cnpj?.length > 0
 
-    form.value.setFieldValue('razaoSocial', res.data.razaoSocial)
+    form.value.setFieldValue('razaoSocial', response.data.razaoSocial)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Cliente', detail: 'Requisição de cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -254,10 +221,9 @@ function evaluateTotal() {
 }
 
 function changeDiscount(event) {
-  const subTotal = form.value?.states?.subTotal?.value
-  const value = typeof event.value === 'string' ? event.value.replace(',', '.') : event.value
-  const desconto = event.value ? Number.parseFloat(value) : 0
-  const total = value ? subTotal - (subTotal * Math.min(desconto, 99.99) / 100) : subTotal
+  const subTotal = form.value?.states?.subTotal?.value || 0
+  const desconto = event.value ? Number.parseFloat(event.value) : 0
+  const total = subTotal - (subTotal * Math.min(desconto, 99.99) / 100)
 
   form.value.setFieldValue('total', Number.parseFloat(total.toFixed(2)))
 }
@@ -266,42 +232,34 @@ async function changeSalesman(idVendedor) {
   await loadTables(idVendedor)
 
   if (tables.value.length === 1) {
-    form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-    loadItensByPriceTable(tables.value[0].tabela.id)
+    const idTabela = tables.value[0].tabela.id
+    form.value.setFieldValue('idTabela', idTabela)
+    await loadItens('list-by-price-table', { idTabelaPreco: idTabela })
   } else {
     form.value.setFieldValue('idTabela', null)
     itens.value = []
+    evaluateTotal()
   }
 }
 
-async function changePriceTable(idTabela) {
+function changePriceTable(idTabela) {
   if (id.value) {
-    loadItensBySale(id.value)
+    loadItens('list-by-sale', { idVenda: id.value })
   } else {
-    loadItensByPriceTable(idTabela)
+    loadItens('list-by-price-table', { idTabelaPreco: idTabela })
   }
-
-  evaluateTotal()
 }
 
 function clear() {
-  const states = form.value.states
-
   form.value.reset()
+  pj.value = false
   itens.value = []
-
-  if (!eAdmin()) {
-    form.value.setValues({
-      idVendedor: states.idVendedor.value,
-      idTabela: states.idTabela.value
-    })
-  }
+  loadTableProducts()
 }
 </script>
 
 <template>
-  <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
+  <BlockUI :blocked="loading">
     <Card class="mb-4">
       <template #title>
         <div class="grid grid-cols-2">
@@ -346,7 +304,7 @@ function clear() {
             <div class="col-span-6">
               <FormField v-slot="$field" name="idTabela">
                 <FloatLabel variant="on">
-                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @value-change="changePriceTable($event)"/>
+                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @update:modelValue="changePriceTable($event)"/>
                   <label for="idTabela">Tabela de Preços</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>

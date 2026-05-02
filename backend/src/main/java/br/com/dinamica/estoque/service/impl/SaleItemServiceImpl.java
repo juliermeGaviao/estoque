@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -128,9 +129,19 @@ public class SaleItemServiceImpl implements SaleItemService {
 	@Override
 	@Transactional
 	public List<SaleItemDto> save(List<SaleItemDto> list, Usuario usuario) {
-		this.repository.deleteByVenda_Id(list.getFirst().getVenda().getId());
+		List<Long> ids = new ArrayList<>();
 
-		return list.stream().map(dto -> this.saveNew(dto, usuario)).toList();
+		List<SaleItemDto> result = list.stream().map(dto -> {
+			SaleItemDto entity = this.save(dto, usuario);
+
+			ids.add(entity.getId());
+
+			return entity;
+		}).toList();
+
+		this.repository.deleteByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
+
+		return result;
 	}
 
 	@Override
@@ -188,27 +199,6 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 			return dto;
 		}).toList();
-	}
-
-	private SaleItemDto saveNew(SaleItemDto dto, Usuario usuario) {
-		ItemVenda entity = new ItemVenda();
-        Date agora = DateUtil.now();
-
-		this.modelMapper.map(dto, entity);
-		entity.setId(null);
-
-		Venda venda = this.vendaRepository.findById(dto.getVenda().getId()).orElseThrow();
-		TabelaPrecoProduto tabelaPrecoProduto = this.tabelaPrecoProdutoRepository.findById(dto.getTabelaPrecoProduto().getId()).orElseThrow();
-
-		entity.setVenda(venda);
-		entity.setTabelaPrecoProduto(tabelaPrecoProduto);
-		entity.setUsuario(usuario);
-		entity.setDataCriacao(agora);
-		entity.setDataAlteracao(agora);
-
-		entity = this.repository.save(entity);
-
-		return this.modelMapper.map(entity, SaleItemDto.class);
 	}
 
 }
