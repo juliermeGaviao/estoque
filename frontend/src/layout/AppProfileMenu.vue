@@ -8,20 +8,9 @@ const router = useRouter()
 const menu = ref()
 
 const items = computed(() => [
-  {
-    label: 'Minha Conta',
-    icon: 'pi pi-cog',
-    command: () => { router.push(`/register/user/edit?id=${getUserId()}`) }
-  },
-  eAdmin() && {
-    label: 'Gestão de Usuários',
-    icon: 'pi pi-users',
-    command: () => { router.push('/register/user') }
-  },
-  {
-    label: 'Sair',
-    icon: 'pi pi-sign-out',
-    command: () => {
+  { label: 'Minha Conta', icon: 'pi pi-cog', command: () => router.push(`/register/user/edit?id=${getUserId()}`) },
+  eAdmin() && { label: 'Gestão de Usuários', icon: 'pi pi-users', command: () => router.push('/register/user') },
+  { label: 'Sair', icon: 'pi pi-sign-out', command: () => {
       logout()
       router.push('/auth/login')
     }
