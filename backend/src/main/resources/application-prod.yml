@@ -7,7 +7,7 @@ spring:
     url: jdbc:mysql://localhost:3306/estoque?useSSL=false&serverTimezone=America/Sao_Paulo&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: estoque
-    password: 4Getit..
+    password: S3nh4F0rt3.
 
 
   jpa:

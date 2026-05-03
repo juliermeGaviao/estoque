@@ -4,10 +4,10 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:mysql://localhost:3306/estoque?useSSL=false&serverTimezone=America/Sao_Paulo
+    url: jdbc:mysql://localhost:3306/estoque2?useSSL=false&serverTimezone=America/Sao_Paulo
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: estoque
-    password: 4Getit..
+    password: S3nh4F0rt3.
 
 
   jpa:
