@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -104,6 +105,19 @@ public class ProductController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao remover " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("save-all")
+	public ResponseEntity<Object> save(@RequestBody List<ProductDto> dto, @AuthenticationPrincipal Usuario usuario) {
+		try {
+			this.service.save(dto, usuario);
+
+			return ResponseEntity.ok().build();
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
 		}

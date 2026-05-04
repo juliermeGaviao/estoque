@@ -21,4 +21,6 @@ public class ProductDto {
 
     private Integer peso;
 
+    private Integer estoque;
+
 }

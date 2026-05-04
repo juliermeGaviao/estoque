@@ -43,6 +43,9 @@ public class Produto {
     @Column(name = "peso", nullable = false)
     private Integer peso;
 
+    @Column(name = "estoque", nullable = false)
+    private Integer estoque;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario usuario;

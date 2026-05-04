@@ -30,9 +30,13 @@
 				<constraints nullable="false"/>
 			</column>
 
-			<column name="peso" type="int">
-				<constraints nullable="false"/>
-			</column>
+            <column name="peso" type="int">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="estoque" type="int">
+                <constraints nullable="false"/>
+            </column>
 
             <column name="id_usuario" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_produto_usuario" references="usuario(id)"/>

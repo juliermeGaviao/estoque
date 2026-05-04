@@ -3,9 +3,6 @@ import api from '@/util/api'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -16,6 +13,7 @@ const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
+const first = ref(0)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
@@ -42,14 +40,15 @@ async function load(params) {
     data.value = response.data.content.map(item => ({
       ...item,
       editando: false,
-      edicao: { nome: item.nome, idTipoProduto: item.tipoProduto.id, idFornecedor: item.fornecedor.id, referencia: item.referencia, peso: item.peso }
+      edicao: { nome: item.nome, idTipoProduto: item.tipoProduto.id, idFornecedor: item.fornecedor.id, referencia: item.referencia, peso: item.peso, estoque: item.estoque }
     }))
 
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
+    await nextTick()
+    setTimeout(() => loading.value = false, 50)
   }
 }
 
@@ -59,19 +58,53 @@ onMounted(async () => {
   loadProviders()
 })
 
-function onPage(event) {
-  page.value = event.page
-  size.value = event.rows
+async function onPage(event) {
+  const result = await saveAll(false)
 
-  load( { ...filterValues.value } )
+  if (result) {
+    page.value = event.page
+    size.value = event.rows
+    first.value = event.first
+  
+    load( { ...filterValues.value } )
+  } else {
+    const currentFirst = page.value * size.value
+
+    first.value = -1
+    await nextTick()
+    first.value = currentFirst
+  }
 }
 
-function onSort(event) {
-  page.value = 0
-  sortField.value = event.sortField
-  sortOrder.value = event.sortOrder
+async function onSort(event) {
+  const result = await saveAll(false)
 
-  load( { ...filterValues.value } )
+  if (result) {
+    first.value = 0
+    page.value = 0
+    sortField.value = event.sortField
+    sortOrder.value = event.sortOrder
+
+    load( { ...filterValues.value } )
+  } else {
+    const oldField = sortField.value
+    const oldOrder = sortOrder.value
+    const oldFirst = page.value * size.value
+
+    sortField.value = oldField === null ? undefined : null 
+    sortOrder.value = 0 
+    first.value = -1
+
+    await nextTick()
+
+    sortField.value = oldField
+    sortOrder.value = oldOrder
+    first.value = oldFirst
+
+    if (event.originalEvent) {
+      event.originalEvent.preventDefault();
+    }
+  }
 }
 
 function edit(entity) {
@@ -82,6 +115,7 @@ function edit(entity) {
   entity.edicao.idTipoProduto = entity.tipoProduto.id
   entity.edicao.idFornecedor = entity.fornecedor.id
   entity.edicao.peso = entity.peso
+  entity.edicao.estoque = entity.estoque
 }
 
 const confirmDelete = entity => {
@@ -126,7 +160,8 @@ async function loadProductTypes() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produto', detail: 'Requisição de lista de Tipos de Produto terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
+    await nextTick()
+    setTimeout(() => loading.value = false, 50)
   }
 }
 
@@ -142,7 +177,8 @@ async function loadProviders() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
+    await nextTick()
+    setTimeout(() => loading.value = false, 50)
   }
 }
 
@@ -176,15 +212,17 @@ function addItem() {
     fornecedor: { id: null },
     referencia: null,
     peso: null,
-    edicao: { nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, peso: null },
+    estoque: null,
+    edicao: { nome: null, idTipoProduto: null, idFornecedor: null, referencia: null, peso: null, estoque: null },
     editando: true
   })
 }
 
 async function commit(item) {
   if (!item.edicao.nome || !item.edicao.nome.trim().length || !item.edicao.idTipoProduto || !item.edicao.idFornecedor
-      || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || !item.edicao.peso > 0) {
-    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência e peso são obrigatórios.', life: 10000 })
+      || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || item.edicao.peso <= 0
+      || item.edicao.estoque === null || item.edicao.estoque < 0) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência, peso e unidades em estoque são obrigatórios.', life: 10000 })
     return
   }
 
@@ -196,6 +234,9 @@ async function commit(item) {
   atributos.fornecedor.id = edicao.idFornecedor
   atributos.referencia = edicao.referencia
   atributos.peso = edicao.peso
+  atributos.estoque = edicao.estoque
+
+  loading.value = true
 
   try {
     const response = await api.post('/product', atributos)
@@ -208,7 +249,8 @@ async function commit(item) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
   } finally {
-    loading.value = false
+    await nextTick()
+    setTimeout(() => loading.value = false, 50)
   }
 }
 
@@ -217,6 +259,65 @@ function cancel(item) {
 
   if (!item.id) {
     data.value.splice(data.value.indexOf(item), 1)
+  }
+}
+
+async function saveAll(emitirMensagem) {
+  for (const item of data.value) {
+    if (item.editando) {
+      if (!item.edicao.nome || !item.edicao.nome.trim().length || !item.edicao.idTipoProduto || !item.edicao.idFornecedor
+          || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || !item.edicao.peso > 0
+          || item.edicao.estoque === null || item.edicao.estoque < 0) {
+        toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência, peso e unidades em estoque são obrigatórios.', life: 10000 })
+        return false
+      }
+    } else if (item.edicao.estoque === null || item.edicao.estoque < 0) {
+      toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Unidades em estoque é obrigatório.', life: 10000 })
+      return false
+    }
+  }
+
+  data.value.forEach(item => {
+    if (item.editando) {
+      item.nome = item.edicao.nome
+      item.tipoProduto.id = item.edicao.idTipoProduto
+      item.fornecedor.id = item.edicao.idFornecedor
+      item.referencia = item.edicao.referencia
+      item.peso = item.edicao.peso
+      item.estoque = item.edicao.estoque
+      item.editando = false
+    }
+
+    item.estoque = item.edicao.estoque
+  })
+
+  loading.value = true
+
+  try {
+    const response = await api.post('/product/save-all', data.value)
+
+    if (response.status === 200) {
+      if (emitirMensagem) {
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: `Produtos salvos com sucesso`, life: 10000 })
+      }
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
+
+    return false
+  } finally {
+    await nextTick()
+    setTimeout(() => loading.value = false, 50)
+  }
+
+  return true
+}
+
+async function clickAndSaveAll() {
+  const result = await saveAll(true)
+
+  if (result) {
+    load( { ...filterValues.value } )
   }
 }
 
@@ -290,10 +391,10 @@ function cancel(item) {
         </Form>
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+          :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
-          <Column field="id" header="Id" sortable/>
+          <Column field="id" header="Id" sortable><template #body="slotProps">{{slotProps.data.id}}</template></Column>
           <Column field="nome" header="Nome" sortable>
             <template #body="slotProps">
               <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
@@ -310,7 +411,7 @@ function cancel(item) {
               </div>
             </template>
           </Column>
-          <Column header="Tipo de Produto" sortable>
+          <Column field="tipoProduto.nome" header="Tipo de Produto" sortable>
             <template #body="slotProps">
               <div v-if="!slotProps.data.editando">{{slotProps.data.tipoProduto.nome}}</div>
               <div v-if="slotProps.data.editando">
@@ -318,7 +419,7 @@ function cancel(item) {
               </div>
             </template>
           </Column>
-          <Column header="Fornecedor" sortable>
+          <Column field="fornecedor.fantasia" header="Fornecedor" sortable>
             <template #body="slotProps">
               <div v-if="!slotProps.data.editando">{{slotProps.data.fornecedor.fantasia}}</div>
               <div v-if="slotProps.data.editando">
@@ -332,6 +433,11 @@ function cancel(item) {
               <div v-if="slotProps.data.editando">
                 <InputNumber v-model="slotProps.data.edicao.peso" :max="10000" fluid/>
               </div>
+            </template>
+          </Column>
+          <Column field="estoque" header="Unidades em Estoque" sortable>
+            <template #body="slotProps">
+              <InputNumber v-model="slotProps.data.edicao.estoque" :max="10000" fluid/>
             </template>
           </Column>
 
@@ -348,6 +454,10 @@ function cancel(item) {
             </template>
           </Column>
         </DataTable>
+
+        <div class="flex justify-end mt-4">
+          <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
+        </div>
       </template>
     </Card>
   </BlockUI>
