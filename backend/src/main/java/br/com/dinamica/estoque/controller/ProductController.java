@@ -111,9 +111,9 @@ public class ProductController {
 	}
 
 	@PostMapping("save-all")
-	public ResponseEntity<Object> save(@RequestBody List<ProductDto> dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody List<ProductDto> dtos, @AuthenticationPrincipal Usuario usuario) {
 		try {
-			this.service.save(dto, usuario);
+			this.service.save(dtos, usuario);
 
 			return ResponseEntity.ok().build();
 		} catch (RuntimeException e) {

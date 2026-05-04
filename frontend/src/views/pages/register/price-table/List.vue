@@ -3,10 +3,7 @@ import ProductPriceListComponent from '@/components/ProductPriceListComponent.vu
 import api from '@/util/api'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
+import { nextTick, onMounted, ref } from 'vue'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -17,6 +14,7 @@ const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
+const first = ref(0)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
@@ -62,18 +60,52 @@ async function load() {
 
 onMounted(load)
 
-function onPage(event) {
-  page.value = event.page
-  size.value = event.rows
-  load()
+async function onPage(event) {
+  const result = await saveAll(false)
+
+  if (result) {
+    page.value = event.page
+    size.value = event.rows
+    first.value = event.first
+
+    load()
+  } else {
+    const currentFirst = page.value * size.value
+
+    first.value = -1
+    await nextTick()
+    first.value = currentFirst
+  }
 }
 
-function onSort(event) {
-  page.value = 0
-  sortField.value = event.sortField
-  sortOrder.value = event.sortOrder
+async function onSort(event) {
+  const result = await saveAll(false)
 
-  load()
+  if (result) {
+    page.value = 0
+    sortField.value = event.sortField
+    sortOrder.value = event.sortOrder
+
+    load()
+  } else {
+    const oldField = sortField.value
+    const oldOrder = sortOrder.value
+    const oldFirst = page.value * size.value
+
+    sortField.value = oldField === null ? undefined : null 
+    sortOrder.value = 0 
+    first.value = -1
+
+    await nextTick()
+
+    sortField.value = oldField
+    sortOrder.value = oldOrder
+    first.value = oldFirst
+
+    if (event.originalEvent) {
+      event.originalEvent.preventDefault();
+    }
+  }
 }
 
 function onFilter() {
@@ -172,6 +204,54 @@ function openTable(item) {
 
   visible.value = true
 }
+
+async function saveAll(emitirMensagem) {
+  for (const item of data.value) {
+    if (item.editando) {
+      if (!item.edicao.nome || !item.edicao.nome.trim().length) {
+        toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome é obrigatório.', life: 10000 })
+        return false
+      }
+    }
+  }
+
+  data.value.forEach(item => {
+    if (item.editando) {
+      item.nome = item.edicao.nome
+      item.editando = false
+    }
+  })
+
+  loading.value = true
+
+  try {
+    const response = await api.post('/price-table/save-all', data.value)
+
+    if (response.status === 200) {
+      if (emitirMensagem) {
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: `Tabelas de preços salvas com sucesso`, life: 10000 })
+      }
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de salvamento de tabelas de preços terminou com o erro: ` + error.response.data, life: 10000 })
+
+    return false
+  } finally {
+    await nextTick()
+    setTimeout(() => loading.value = false, 100)
+  }
+
+  return true
+}
+
+async function clickAndSaveAll() {
+  const result = await saveAll(true)
+
+  if (result) {
+    load()
+  }
+}
+
 </script>
 
 <template>
@@ -191,7 +271,7 @@ function openTable(item) {
         </Form>
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+          :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
@@ -218,6 +298,10 @@ function openTable(item) {
             </template>
           </Column>
         </DataTable>
+
+        <div class="flex justify-end mt-4">
+          <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
+        </div>
       </template>
     </Card>
   </BlockUI>

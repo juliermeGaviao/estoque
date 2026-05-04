@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -76,6 +77,11 @@ public class ProductTypeServiceImpl implements ProductTypeService {
 	public void delete(Long id) {
 		this.produtoRepository.deleteByTipoProduto_Id(id);
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public void save(List<ProductTypeDto> dtos, Usuario usuario) {
+		dtos.forEach(dto -> this.save(dto, usuario));
 	}
 
 }

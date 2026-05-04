@@ -65,7 +65,7 @@ async function onPage(event) {
     page.value = event.page
     size.value = event.rows
     first.value = event.first
-  
+
     load( { ...filterValues.value } )
   } else {
     const currentFirst = page.value * size.value
@@ -284,7 +284,6 @@ async function saveAll(emitirMensagem) {
       item.fornecedor.id = item.edicao.idFornecedor
       item.referencia = item.edicao.referencia
       item.peso = item.edicao.peso
-      item.estoque = item.edicao.estoque
       item.editando = false
     }
 
@@ -302,7 +301,7 @@ async function saveAll(emitirMensagem) {
       }
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de salvamento de produtos terminou com o erro: ` + error.response.data, life: 10000 })
 
     return false
   } finally {

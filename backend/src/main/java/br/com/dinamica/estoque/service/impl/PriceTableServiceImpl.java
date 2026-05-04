@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -83,6 +84,11 @@ public class PriceTableServiceImpl implements PriceTableService {
 		this.usuarioTabelaPrecoRepository.deleteByTabela_Id(id);
 		
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public void save(List<PriceTableDto> dtos, Usuario usuario) {
+		dtos.forEach(dto -> this.save(dto, usuario));
 	}
 
 }
