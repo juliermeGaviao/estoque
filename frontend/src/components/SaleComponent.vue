@@ -60,10 +60,17 @@ const submitAction = ref('')
 const save = async ({ valid, values }) => {
   if (!valid) return
 
-  const filter = itens.value.filter(item => item.quantidade && item.quantidade > 0)
+  const quantidades = itens.value.filter(item => item.quantidade && item.quantidade > 0)
 
-  if (filter.length === 0) {
+  if (quantidades.length === 0) {
     toast.add({ severity: 'error', summary: 'Itens de Venda necessários', detail: 'Venda sem itens.', life: 10000 })
+    return
+  }
+
+  const estoques = itens.value.filter(item => item.quantidade && item.quantidade > item.tabelaPrecoProduto.produto.estoque)
+
+  if (estoques.length > 0) {
+    toast.add({ severity: 'error', summary: 'Itens de Venda fora de estoque', detail: 'Há itens com quantidade maior que o estoque de seu produto.', life: 10000 })
     return
   }
 
@@ -367,12 +374,13 @@ function clear() {
 
       <template #content>
         <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
-          <Column field="id" header="Id"/>
+          <Column field="id" header="Id" v-if="id"/>
           <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
           <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
+          <Column field="tabelaPrecoProduto.produto.estoque" header="Em Estoque"/>
           <Column field="quantidade" header="Quantidade">
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :max="10000" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" size="small"/>
+              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.tabelaPrecoProduto.produto.estoque" :step="1" showButtons buttonLayout="horizontal" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="setAmount($event, slotProps.data)" size="small"/>
             </template>
           </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">

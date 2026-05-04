@@ -17,7 +17,7 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
     Long deleteByVenda_Id(Long vendaId);
 
 	@Query(value = """
-            SELECT tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, tpp.preco
+            SELECT tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, tpp.preco, tpp.produto.estoque
             FROM TabelaPrecoProduto tpp
             WHERE tpp.tabela.id = :idTabelaPreco
             ORDER BY tpp.produto.nome
@@ -25,7 +25,7 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
 	List<Object[]> getItensByPriceTable(@Param("idTabelaPreco") Long idTabelaPreco);
 
 	@Query(value = """
-            SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, iv.quantidade, tpp.preco, iv.total
+            SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, iv.quantidade, tpp.preco, iv.total, tpp.produto.estoque
             FROM TabelaPrecoProduto tpp
             JOIN Venda v ON v.tabela.id = tpp.tabela.id
             LEFT JOIN ItemVenda iv ON iv.tabelaPrecoProduto = tpp AND iv.venda.id = v.id

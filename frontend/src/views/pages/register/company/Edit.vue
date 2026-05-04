@@ -476,14 +476,12 @@ function togglePopover(event) {
                   Ele é do formato CSV, ou seja, as linhas representam campos separados por "," (vírgula).
                 </p>
                 <p>A primeira linha do arquivo é a linha de cabeçalho identificando os campos de dados do colaboradores e deve conter, obrigatoriamente, o seguinte conteúdo:</p>
-                <p>
-                  <ul style="list-style-type: disc; margin-left: 1.5rem;">
-                    <li>nome: contém o nome completo do colaborador;</li>
-                    <li>numero-cracha: valor alfanumérico que identifica o colaborador na empresa;</li>
-                    <li>data-aniversario: é a data de nascimento do colaborador no formato dd/mm/aaaa;</li>
-                    <li>limite-gasto: valor em R$ limite para desconto na folha de pagamento. Não é necessário informar os centavos;</li>
-                  </ul>
-                </p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem;">
+                  <li>nome: contém o nome completo do colaborador;</li>
+                  <li>numero-cracha: valor alfanumérico que identifica o colaborador na empresa;</li>
+                  <li>data-aniversario: é a data de nascimento do colaborador no formato dd/mm/aaaa;</li>
+                  <li>limite-gasto: valor em R$ limite para desconto na folha de pagamento. Não é necessário informar os centavos;</li>
+                </ul>
                 <p>Assim, as demais linhas devem conter os dados dos colaboradores separados por vírgula e seguindo as regras enunciadas nos tópicos acima.</p>
                 <p>Exemplo:</p>
                 <p>nome, numero-cracha, data-aniversario, limite-gasto<br/>

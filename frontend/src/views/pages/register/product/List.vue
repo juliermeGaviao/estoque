@@ -430,13 +430,13 @@ async function clickAndSaveAll() {
             <template #body="slotProps">
               <div v-if="!slotProps.data.editando">{{slotProps.data.peso}}</div>
               <div v-if="slotProps.data.editando">
-                <InputNumber v-model="slotProps.data.edicao.peso" :max="10000" fluid/>
+                <InputNumber v-model="slotProps.data.edicao.peso" :min="1" :max="10000" fluid/>
               </div>
             </template>
           </Column>
           <Column field="estoque" header="Unidades em Estoque" sortable>
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.edicao.estoque" :max="10000" fluid/>
+              <InputNumber v-model="slotProps.data.edicao.estoque" :min="0" :step="1" showButtons buttonLayout="horizontal" fluid/>
             </template>
           </Column>
 

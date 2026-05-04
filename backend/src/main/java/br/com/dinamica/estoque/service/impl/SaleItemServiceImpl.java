@@ -167,6 +167,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 			productDto.setReferencia((String) linha[3]);
 			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
 			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
+			productDto.setEstoque((Integer) linha[5]);
 
 			return dto;
 		}).toList();
@@ -196,6 +197,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
 			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
 			dto.setTotal(linha[8] != null ? BigDecimal.valueOf(((Number) linha[8]).doubleValue()) : null);
+			productDto.setEstoque((Integer) linha[9]);
 
 			return dto;
 		}).toList();
