@@ -24,24 +24,29 @@ import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
+import br.com.dinamica.estoque.service.InventoryService;
 import br.com.dinamica.estoque.service.SaleItemService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class SaleItemServiceImpl implements SaleItemService {
-	
+
 	private ItemVendaRepository repository;
 
 	private VendaRepository vendaRepository;
 
 	private TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository;
 
+	private InventoryService inventoryService;
+
 	private ModelMapper modelMapper;
 
-	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository, ModelMapper modelMapper) {
+	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository,
+			InventoryService inventoryService, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.vendaRepository = vendaRepository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
+		this.inventoryService = inventoryService;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<SaleItemDto, ItemVenda>() {
@@ -132,14 +137,29 @@ public class SaleItemServiceImpl implements SaleItemService {
 		List<Long> ids = new ArrayList<>();
 
 		List<SaleItemDto> result = list.stream().map(dto -> {
-			SaleItemDto entity = this.save(dto, usuario);
+			Long idProduto = dto.getTabelaPrecoProduto().getProduto().getId();
 
+			if (dto.getId() != null) {
+				ItemVenda itemVenda = this.repository.findById(dto.getId()).orElseThrow();
+
+				this.inventoryService.addAmount(idProduto, itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
+			} else {
+				this.inventoryService.addAmount(idProduto, -dto.getQuantidade(), usuario);
+			}
+
+			SaleItemDto entity = this.save(dto, usuario);
+			
 			ids.add(entity.getId());
 
 			return entity;
 		}).toList();
 
-		this.repository.deleteByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
+		List<ItemVenda> toBeDeleted = this.repository.getItensByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
+
+		toBeDeleted.stream().forEach(item -> {
+			this.inventoryService.addAmount(item.getTabelaPrecoProduto().getProduto().getId(), item.getQuantidade(), usuario);
+			this.repository.delete(item);
+		});
 
 		return result;
 	}

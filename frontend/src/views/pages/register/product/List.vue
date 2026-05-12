@@ -287,7 +287,7 @@ async function saveAll(emitirMensagem) {
       item.editando = false
     }
 
-    item.estoque = item.edicao.estoque
+    item.estoque = item.edicao.estoque - item.estoque
   })
 
   loading.value = true

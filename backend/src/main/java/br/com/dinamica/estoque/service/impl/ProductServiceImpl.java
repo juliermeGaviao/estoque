@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.ProductDto;
 import br.com.dinamica.estoque.dto.ProductFilterDto;
+import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.Fornecedor;
 import br.com.dinamica.estoque.entity.Produto;
 import br.com.dinamica.estoque.entity.TipoProduto;
@@ -19,6 +20,7 @@ import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.repository.TipoProdutoRepository;
+import br.com.dinamica.estoque.service.InventoryService;
 import br.com.dinamica.estoque.service.ProductService;
 import br.com.dinamica.estoque.util.DateUtil;
 
@@ -31,12 +33,16 @@ public class ProductServiceImpl implements ProductService {
 
 	private FornecedorRepository fornecedorRepository;
 
+	private InventoryService inventoryService;
+
 	private ModelMapper modelMapper;
 
-	public ProductServiceImpl(ProdutoRepository repository, TipoProdutoRepository tipoProdutoRepository, FornecedorRepository fornecedorRepository, ModelMapper modelMapper) {
+	public ProductServiceImpl(ProdutoRepository repository, TipoProdutoRepository tipoProdutoRepository, FornecedorRepository fornecedorRepository,
+			InventoryService inventoryService, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.tipoProdutoRepository = tipoProdutoRepository;
 		this.fornecedorRepository = fornecedorRepository;
+		this.inventoryService = inventoryService;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ProductDto, Produto>() {
@@ -83,7 +89,13 @@ public class ProductServiceImpl implements ProductService {
             specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("peso"), filter.getMaxPeso()));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProductDto.class));
+		return this.repository.findAll(specification, pageable).map(entity -> {
+			ProductDto result = this.modelMapper.map(entity, ProductDto.class);
+
+			result.setEstoque(inventoryService.getAmount(entity.getId()));
+
+			return result;
+		});
 	}
 
 	@Override
@@ -111,7 +123,13 @@ public class ProductServiceImpl implements ProductService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, ProductDto.class);
+		Estoque estoque = this.inventoryService.addAmount(entity.getId(), dto.getEstoque(), usuario);
+
+		ProductDto result = this.modelMapper.map(entity, ProductDto.class);
+
+		result.setEstoque(estoque != null && estoque.getSaldo() != null ? estoque.getSaldo() : 0);
+
+		return result;
 	}
 
 	@Override

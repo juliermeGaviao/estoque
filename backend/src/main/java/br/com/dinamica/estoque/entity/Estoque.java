@@ -4,6 +4,8 @@ import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,32 +18,29 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "produto")
+@Table(name = "estoque")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Produto {
+public class Estoque {
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tipo_produto", nullable = false)
-    private TipoProduto tipoProduto;
+    @JoinColumn(name = "id_produto")
+    private Produto produto;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_fornecedor", nullable = false)
-    private Fornecedor fornecedor;
+    @Column(name = "quantidade", nullable = false)
+    private Integer quantidade;
 
-    @Column(name = "referencia", nullable = false, length = 100)
-    private String referencia;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_operacao", nullable = false, columnDefinition = "ENUM('C', 'D')")
+    private TipoOperacao tipoOperacao;
 
-    @Column(name = "nome", nullable = false, length = 255)
-    private String nome;
-
-    @Column(name = "peso", nullable = false)
-    private Integer peso;
+    @Column(name = "saldo", nullable = false)
+    private Integer saldo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false)
@@ -49,8 +48,5 @@ public class Produto {
 
     @Column(name = "data_criacao", nullable = false)
     private Date dataCriacao;
-
-    @Column(name = "data_alteracao", nullable = false)
-    private Date dataAlteracao;
 
 }
