@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.dto;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,12 +9,14 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockTransferDto {
+public class PurchaseOrderDto {
 
 	private Long id;
 
-    private PurchaseOrderDto pontoVendaOrigem;
+    private String numeroPedido;
 
-    private PurchaseOrderDto pontoVendaDestino;
+    private ProviderDto fornecedor;
+
+    private Date dataPedido;
 
 }

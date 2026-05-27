@@ -9,14 +9,14 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PurchasePointDto {
-
-	private Long id;
+public class PurchaseOrderFilterDto {
 
     private String numeroPedido;
 
-    private ProviderDto fornecedor;
+    private Long idFornecedor;
 
-    private Date dataPedido;
+    private Date minDataPedido;
+
+    private Date maxDataPedido;
 
 }

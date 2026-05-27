@@ -16,7 +16,7 @@ public class StockDto {
 
     private SalePointDto pontoVenda;
 
-    private PurchasePointDto pedidoCompra;
+    private PurchaseOrderDto pedidoCompra;
 
     private SaleDto venda;
 
