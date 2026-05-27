@@ -1,20 +1,16 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout'
 import AppConfigurator from './AppConfigurator.vue'
+import AppMainMenu from './AppMainMenu.vue'
 import AppProfileMenu from './AppProfileMenu.vue'
-import AppTieredMenu from './AppTieredMenu.vue'
 
 const { toggleDarkMode, isDarkTheme } = useLayout()
 </script>
 
 <template>
     <div class="layout-topbar">
-        <div class="layout-topbar-logo-container">
-          <app-tiered-menu></app-tiered-menu>
-          <router-link to="/" class="layout-topbar-logo">
-            <Image src="/logo35.png"/>
-            <span>Chocolate-se</span>
-          </router-link>
+        <div class="layout-topbar-logo-container w-full grow">
+          <app-main-menu></app-main-menu>
         </div>
 
         <div class="layout-topbar-actions">

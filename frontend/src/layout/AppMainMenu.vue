@@ -1,5 +1,4 @@
 <script setup>
-import TieredMenu from 'primevue/tieredmenu'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { eAdmin } from '../util/auth'
@@ -8,6 +7,7 @@ const router = useRouter()
 const menu = ref()
 
 const items = computed(() => [
+  { label: 'Início', icon: 'pi pi-home', command: () => router.push('/') },
   { label: 'Vendas', icon: 'pi pi-shopping-cart', command: () => router.push('/core/sale') },
   eAdmin() && {
     label: 'Cadastro',
@@ -32,8 +32,5 @@ const toggleMenu = (event) => {
 </script>
 
 <template>
-  <button class="layout-menu-button layout-topbar-action" @click="toggleMenu($event)">
-    <i class="pi pi-bars"></i>
-  </button>
-  <TieredMenu ref="menu" :model="items" popup/>
+  <Menubar :model="items"/>
 </template>

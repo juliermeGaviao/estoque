@@ -26,6 +26,10 @@
                 <constraints nullable="false" foreignKeyName="fk_venda_tabela_preco" references="tabela_preco(id)"/>
             </column>
 
+            <column name="id_ponto_venda" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_ponto_venda" references="ponto_venda(id)"/>
+            </column>
+
             <column name="sub_total" type="decimal(10, 2)">
                 <constraints nullable="false"/>
             </column>
