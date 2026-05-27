@@ -28,8 +28,9 @@
     <include file="db/changelog/202510071832_create_item_sale.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202511051921_create_company_file.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202511061819_create_file_person_client.xml" relativeToChangelogFile="false"/>
-    <include file="db/changelog/202605262116_create_purchase_point.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202605262116_create_purchase_order.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202605262125_create_stock_transfer.xml" relativeToChangelogFile="false"/>
     <include file="db/changelog/202605262301_create_stock.xml" relativeToChangelogFile="false"/>
+    <include file="db/changelog/202605271853_create_user_sale_point.xml" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
