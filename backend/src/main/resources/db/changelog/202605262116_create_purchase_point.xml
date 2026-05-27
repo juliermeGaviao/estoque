@@ -22,7 +22,7 @@
                 <constraints nullable="false" foreignKeyName="fk_pedido_fornecedor" references="fornecedor(id)"/>
             </column>
 
-            <column name="data_pedido" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+            <column name="data_pedido" type="date">
                 <constraints nullable="false"/>
             </column>
 

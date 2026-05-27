@@ -26,6 +26,10 @@
                 <constraints nullable="false"/>
             </column>
 
+            <column name="data_alteracao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
 		</createTable>
 
 	    <rollback>
