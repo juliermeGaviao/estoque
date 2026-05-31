@@ -1,13 +1,11 @@
 package br.com.dinamica.estoque.controller;
 
-import java.util.Date;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,24 +18,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
-import br.com.dinamica.estoque.dto.PurchaseOrderDto;
-import br.com.dinamica.estoque.dto.PurchaseOrderFilterDto;
+import br.com.dinamica.estoque.dto.UserSalePointDto;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.service.PurchaseOrderService;
+import br.com.dinamica.estoque.service.UserSalePointService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/purchase-order")
+@RequestMapping("/user-sale-point")
 @Slf4j
-public class PurchaseOrderController {
+public class UserSalePointController {
 
-	private static final String ENTITY = "Pedido de compra";
-	private static final String ENTITIES = "Pedidos de venda";
+	private static final String ENTITY = "Usuário no Ponto de venda";
+	private static final String ENTITIES = "Usuários no Ponto de venda";
 	private static final String NOT_FOUND = ENTITY + " não encontrado: ";
 
-	private PurchaseOrderService service;
+	private UserSalePointService service;
 
-	public PurchaseOrderController(PurchaseOrderService service) {
+	public UserSalePointController(UserSalePointService service) {
 		this.service = service;
 	}
 
@@ -54,10 +51,8 @@ public class PurchaseOrderController {
 
 	@GetMapping("/list")
 	public ResponseEntity<Object> list(
-			@RequestParam(required = false) String numeroPedido,
-			@RequestParam(required = false) Long idFornecedor,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minDataPedido,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxDataPedido,
+			@RequestParam(required = false) Long idUsuario,
+			@RequestParam(required = false) Long idPontoVenda,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -67,7 +62,7 @@ public class PurchaseOrderController {
 
 			Pageable pageable = PageRequest.of(page, size, sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortField).descending() : Sort.by(sortField).ascending());
 
-			Page<PurchaseOrderDto> result = this.service.list(new PurchaseOrderFilterDto(numeroPedido, idFornecedor, minDataPedido, maxDataPedido), pageable);
+			Page<UserSalePointDto> result = this.service.list(idUsuario, idPontoVenda, pageable);
 
 			return ResponseEntity.ok(PageResponse.from(result));
 		} catch (RuntimeException e) {
@@ -78,7 +73,7 @@ public class PurchaseOrderController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody PurchaseOrderDto dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody UserSalePointDto dto, @AuthenticationPrincipal Usuario usuario) {
 		try {
 			return ResponseEntity.ok(this.service.save(dto, usuario));
 		} catch (NoSuchElementException e) {

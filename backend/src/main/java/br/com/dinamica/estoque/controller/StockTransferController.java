@@ -24,7 +24,7 @@ import br.com.dinamica.estoque.service.StockTransferService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/sale-point")
+@RequestMapping("/stock-transfer")
 @Slf4j
 public class StockTransferController {
 

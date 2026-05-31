@@ -18,16 +18,16 @@
                 <constraints nullable="false" foreignKeyName="fk_estoque_produto" references="produto(id)"/>
             </column>
 
+            <column name="id_ponto_venda" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_estoque_pv" references="ponto_venda(id)"/>
+            </column>
+
             <column name="id_pedido_compra" type="bigint">
                 <constraints foreignKeyName="fk_estoque_pedido" references="pedido_compra(id)"/>
             </column>
 
             <column name="id_venda" type="bigint">
                 <constraints foreignKeyName="fk_estoque_venda" references="venda(id)"/>
-            </column>
-
-            <column name="id_ponto_venda" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_estoque_pv" references="ponto_venda(id)"/>
             </column>
             
             <column name="id_transferencia_estoque" type="bigint">
