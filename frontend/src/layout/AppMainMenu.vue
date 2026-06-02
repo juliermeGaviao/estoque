@@ -9,12 +9,21 @@ const menu = ref()
 const items = computed(() => [
   { label: 'Início', icon: 'pi pi-home', command: () => router.push('/') },
   { label: 'Vendas', icon: 'pi pi-shopping-cart', command: () => router.push('/core/sale') },
-  eAdmin() && {
+  {
+    label: 'Estoque',
+    icon: 'pi pi-box',
+    visible: eAdmin(),
+    items: [
+      { label: 'Pedido de Compra', icon: 'pi pi-file-edit', command: () => router.push('/register/provider') },
+      { label: 'Transferência', icon: 'pi pi-truck', command: () => router.push('/register/provider') }
+    ]
+  },
+  {
     label: 'Cadastro',
     icon: 'pi pi-id-card',
+    visible: eAdmin(),
     items: [
       { label: 'Fornecedor', icon: 'pi pi-building-columns', command: () => router.push('/register/provider') },
-      { label: 'Pedido de Compra', icon: 'pi pi-box', command: () => router.push('/register/provider') },
       { label: 'Ponto de Venda', icon: 'pi pi-shop', command: () => router.push('/register/provider') },
       { separator: true }, 
       { label: 'Cliente Empresa', icon: 'pi pi-building', command: () => router.push('/register/company') },
@@ -25,7 +34,7 @@ const items = computed(() => [
       { label: 'Tabela de Preços', icon: 'pi pi-dollar', command: () => router.push('/register/price-table') }
     ]
   },
-  eAdmin() && { label: 'Indicadores', icon: 'pi pi-chart-bar', command: () => router.push('/dashboard') }
+  { label: 'Indicadores', icon: 'pi pi-chart-bar', visible: eAdmin(), command: () => router.push('/dashboard') }
 ].filter(Boolean))
 
 const toggleMenu = (event) => {

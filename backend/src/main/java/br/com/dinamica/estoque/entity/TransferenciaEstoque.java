@@ -23,6 +23,10 @@ public class TransferenciaEstoque {
     @JoinColumn(name = "id_ponto_venda_destino", nullable = false, foreignKey = @ForeignKey(name = "fk_transf_pv_destino"))
     private PontoVenda pontoVendaDestino;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "data_transferencia", nullable = false)
+    private Date dataTransferencia;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_usuario", nullable = false, foreignKey = @ForeignKey(name = "fk_transferencia_estoque_usuario"))
     private Usuario usuario;

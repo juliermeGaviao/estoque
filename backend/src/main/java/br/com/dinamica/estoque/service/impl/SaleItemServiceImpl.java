@@ -24,7 +24,7 @@ import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
-import br.com.dinamica.estoque.service.InventoryService;
+import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.service.SaleItemService;
 import br.com.dinamica.estoque.util.DateUtil;
 
@@ -37,12 +37,12 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 	private TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository;
 
-	private InventoryService inventoryService;
+	private StockService inventoryService;
 
 	private ModelMapper modelMapper;
 
 	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository,
-			InventoryService inventoryService, ModelMapper modelMapper) {
+			StockService inventoryService, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.vendaRepository = vendaRepository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
@@ -142,9 +142,9 @@ public class SaleItemServiceImpl implements SaleItemService {
 			if (dto.getId() != null) {
 				ItemVenda itemVenda = this.repository.findById(dto.getId()).orElseThrow();
 
-				this.inventoryService.addAmount(idProduto, itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
+				this.inventoryService.addStock(idProduto, itemVenda.getVenda().getPontoVenda().getId(), itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
 			} else {
-				this.inventoryService.addAmount(idProduto, -dto.getQuantidade(), usuario);
+				this.inventoryService.addStock(idProduto, dto.getVenda().getPontoVenda().getId(), -dto.getQuantidade(), usuario);
 			}
 
 			SaleItemDto entity = this.save(dto, usuario);
@@ -157,7 +157,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 		List<ItemVenda> toBeDeleted = this.repository.getItensByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
 
 		toBeDeleted.stream().forEach(item -> {
-			this.inventoryService.addAmount(item.getTabelaPrecoProduto().getProduto().getId(), item.getQuantidade(), usuario);
+			this.inventoryService.addStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getQuantidade(), usuario);
 			this.repository.delete(item);
 		});
 

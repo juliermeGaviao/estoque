@@ -220,9 +220,8 @@ function addItem() {
 
 async function commit(item) {
   if (!item.edicao.nome || !item.edicao.nome.trim().length || !item.edicao.idTipoProduto || !item.edicao.idFornecedor
-      || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || item.edicao.peso <= 0
-      || item.edicao.estoque === null || item.edicao.estoque < 0) {
-    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência, peso e unidades em estoque são obrigatórios.', life: 10000 })
+      || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || item.edicao.peso <= 0) {
+    toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência e peso são obrigatórios.', life: 10000 })
     return
   }
 
@@ -266,9 +265,8 @@ async function saveAll(emitirMensagem) {
   for (const item of data.value) {
     if (item.editando) {
       if (!item.edicao.nome || !item.edicao.nome.trim().length || !item.edicao.idTipoProduto || !item.edicao.idFornecedor
-          || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || !item.edicao.peso > 0
-          || item.edicao.estoque === null || item.edicao.estoque < 0) {
-        toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência, peso e unidades em estoque são obrigatórios.', life: 10000 })
+          || !item.edicao.referencia || !item.edicao.referencia.trim().length || !item.edicao.peso || !item.edicao.peso > 0) {
+        toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome, tipo de produto, fornecedor, referência e peso são obrigatórios.', life: 10000 })
         return false
       }
     } else if (item.edicao.estoque === null || item.edicao.estoque < 0) {
@@ -434,11 +432,7 @@ async function clickAndSaveAll() {
               </div>
             </template>
           </Column>
-          <Column field="estoque" header="Unidades em Estoque" sortable>
-            <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.edicao.estoque" :min="0" :step="1" showButtons buttonLayout="horizontal" fluid/>
-            </template>
-          </Column>
+          <Column field="estoque" header="Unidades em Estoque"/>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>

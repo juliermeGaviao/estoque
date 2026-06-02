@@ -9,7 +9,10 @@ import br.com.dinamica.estoque.entity.Estoque;
 
 public interface EstoqueRepository extends JpaRepository<Estoque, Long>, JpaSpecificationExecutor<Estoque> {
 
-	@Query("FROM Estoque e WHERE e.produto.id = :idProduto AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = :idProduto)")
-	Estoque getInventoryByProduct(@Param("idProduto") Long idProduto);
+	@Query("SELECT SUM(e.saldo) FROM Estoque e WHERE e.id IN (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = :idProduto GROUP BY s.pontoVenda.id)")
+	Integer getStockByProduct(@Param("idProduto") Long idProduto);
+
+	@Query("FROM Estoque e WHERE e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = :idProduto AND s.pontoVenda.id = :idPontoVenda)")
+	Estoque getStockByProductAndSalePoint(@Param("idProduto") Long idProduto, @Param("idPontoVenda") Long idPontoVenda);
 
 }

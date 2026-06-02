@@ -21,6 +21,8 @@ public class SaleDto {
 
     private BigDecimal subTotal;
 
+    private SalePointDto pontoVenda;
+
     private Float desconto;
 
     private BigDecimal total;

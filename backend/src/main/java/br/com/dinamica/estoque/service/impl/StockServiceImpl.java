@@ -7,28 +7,28 @@ import br.com.dinamica.estoque.entity.TipoOperacao;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
-import br.com.dinamica.estoque.service.InventoryService;
+import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
-public class InventoryServiceImpl implements InventoryService {
+public class StockServiceImpl implements StockService {
 
 	private EstoqueRepository repository;
 
 	private ProdutoRepository produtoRepository;
 
-	public InventoryServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository) {
+	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository) {
 		this.repository = repository;
 		this.produtoRepository = produtoRepository;
 	}
 
 	@Override
-	public Estoque addAmount(Long idProduto, Integer amount, Usuario usuario) {
+	public Estoque addStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario) {
 		if (amount == null || amount.compareTo(0) == 0) {
 			return null;
 		}
 
-		Estoque current = this.repository.getInventoryByProduct(idProduto);
+		Estoque current = this.repository.getStockByProductAndSalePoint(idProduto, idPontoVenda);
 		Estoque inventory = new Estoque();
 		
 		inventory.setProduto(this.produtoRepository.findById(idProduto).orElseThrow());
@@ -42,9 +42,9 @@ public class InventoryServiceImpl implements InventoryService {
 	}
 
 	@Override
-	public Integer getAmount(Long idProduto) {
-		Estoque result = this.repository.getInventoryByProduct(idProduto);
+	public Integer getStock(Long idProduto) {
+		Integer result = this.repository.getStockByProduct(idProduto);
 
-		return result != null ? result.getSaldo() : 0;
+		return result != null ? result : 0;
 	}
 }
