@@ -35,6 +35,10 @@ const router = createRouter({
                   component: () => import('@/views/pages/register/provider/Edit.vue')
                 },
                 {
+                  path: '/register/sale-point',
+                  component: () => import('@/views/pages/register/sale-point/List.vue')
+                },
+                {
                   path: '/register/company',
                   component: () => import('@/views/pages/register/company/List.vue')
                 },

@@ -24,7 +24,7 @@ const items = computed(() => [
     visible: eAdmin(),
     items: [
       { label: 'Fornecedor', icon: 'pi pi-building-columns', command: () => router.push('/register/provider') },
-      { label: 'Ponto de Venda', icon: 'pi pi-shop', command: () => router.push('/register/provider') },
+      { label: 'Ponto de Venda', icon: 'pi pi-shop', command: () => router.push('/register/sale-point') },
       { separator: true }, 
       { label: 'Cliente Empresa', icon: 'pi pi-building', command: () => router.push('/register/company') },
       { label: 'Cliente Pessoa', icon: 'pi pi-users', command: () => router.push('/register/person') },

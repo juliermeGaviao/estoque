@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.util.Date;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -52,6 +53,7 @@ public class SalePointServiceImpl implements SalePointService {
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
+			entity.setDataAlteracao(agora);
 		} else {
 			entity = new PontoVenda();
 
@@ -71,6 +73,11 @@ public class SalePointServiceImpl implements SalePointService {
 	@Override
 	public void delete(Long id) {
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public void save(List<SalePointDto> dtos, Usuario usuario) {
+		dtos.forEach(dto -> this.save(dto, usuario));
 	}
 
 }

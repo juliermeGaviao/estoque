@@ -6,6 +6,7 @@ import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.TipoOperacao;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
+import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -17,9 +18,12 @@ public class StockServiceImpl implements StockService {
 
 	private ProdutoRepository produtoRepository;
 
-	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository) {
+	private PontoVendaRepository pontoVendaRepository;
+
+	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository) {
 		this.repository = repository;
 		this.produtoRepository = produtoRepository;
+		this.pontoVendaRepository = pontoVendaRepository;
 	}
 
 	@Override
@@ -29,16 +33,17 @@ public class StockServiceImpl implements StockService {
 		}
 
 		Estoque current = this.repository.getStockByProductAndSalePoint(idProduto, idPontoVenda);
-		Estoque inventory = new Estoque();
+		Estoque stock = new Estoque();
 		
-		inventory.setProduto(this.produtoRepository.findById(idProduto).orElseThrow());
-		inventory.setQuantidade(Math.abs(amount));
-		inventory.setTipoOperacao(amount.compareTo(0) > 0 ? TipoOperacao.C : TipoOperacao.D);
-		inventory.setSaldo((current != null && current.getSaldo() != null ? current.getSaldo() : 0) + amount);
-		inventory.setUsuario(usuario);
-		inventory.setDataCriacao(DateUtil.now());
+		stock.setProduto(this.produtoRepository.findById(idProduto).orElseThrow());
+		stock.setPontoVenda(this.pontoVendaRepository.findById(idPontoVenda).orElseThrow());
+		stock.setQuantidade(Math.abs(amount));
+		stock.setTipoOperacao(amount.compareTo(0) > 0 ? TipoOperacao.C : TipoOperacao.D);
+		stock.setSaldo((current != null && current.getSaldo() != null ? current.getSaldo() : 0) + amount);
+		stock.setUsuario(usuario);
+		stock.setDataCriacao(DateUtil.now());
 
-		return this.repository.save(inventory);
+		return this.repository.save(stock);
 	}
 
 	@Override
