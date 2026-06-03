@@ -7,6 +7,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +33,16 @@ public class ProductServiceImpl implements ProductService {
 
 	private FornecedorRepository fornecedorRepository;
 
-	private StockService inventoryService;
+	private StockService stockService;
 
 	private ModelMapper modelMapper;
 
 	public ProductServiceImpl(ProdutoRepository repository, TipoProdutoRepository tipoProdutoRepository, FornecedorRepository fornecedorRepository,
-			StockService inventoryService, ModelMapper modelMapper) {
+			StockService stockService, ModelMapper modelMapper) {
 		this.repository = repository;
 		this.tipoProdutoRepository = tipoProdutoRepository;
 		this.fornecedorRepository = fornecedorRepository;
-		this.inventoryService = inventoryService;
+		this.stockService = stockService;
 		this.modelMapper = modelMapper;
 
 		this.modelMapper.addMappings(new PropertyMap<ProductDto, Produto>() {
@@ -91,7 +92,7 @@ public class ProductServiceImpl implements ProductService {
 		return this.repository.findAll(specification, pageable).map(entity -> {
 			ProductDto result = this.modelMapper.map(entity, ProductDto.class);
 
-			result.setEstoque(inventoryService.getStock(entity.getId()));
+			result.setEstoque(this.stockService.getStock(entity.getId()));
 
 			return result;
 		});
@@ -122,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
 
 		entity = this.repository.save(entity);
 
-		Integer saldo = this.inventoryService.getStock(entity.getId());
+		Integer saldo = this.stockService.getStock(entity.getId());
 
 		ProductDto result = this.modelMapper.map(entity, ProductDto.class);
 
@@ -139,6 +140,11 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public void save(List<ProductDto> dtos, Usuario usuario) {
 		dtos.forEach(dto -> this.save(dto, usuario));
+	}
+
+	@Override
+	public List<ProductDto> findAll() {
+		return this.repository.findAll(Sort.by("nome").ascending()).stream().map(entity -> this.modelMapper.map(entity, ProductDto.class)).toList();
 	}
 
 }
