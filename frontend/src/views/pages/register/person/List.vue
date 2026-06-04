@@ -217,7 +217,7 @@ async function loadCompanies() {
             <div class="col-span-2">
               <FormField name="minAniversario">
                 <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" fluid/>
+                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
                   <label for="minAniversario">Data de Aniversário Mínima</label>
                 </FloatLabel>
               </FormField>
@@ -225,7 +225,7 @@ async function loadCompanies() {
             <div class="col-span-2">
               <FormField name="maxAniversario">
                 <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" fluid/>
+                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
                   <label for="maxAniversario">Data de Aniversário Máxima</label>
                 </FloatLabel>
               </FormField>

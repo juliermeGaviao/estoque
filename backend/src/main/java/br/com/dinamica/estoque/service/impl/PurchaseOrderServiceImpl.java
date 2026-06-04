@@ -12,6 +12,7 @@ import br.com.dinamica.estoque.dto.PurchaseOrderDto;
 import br.com.dinamica.estoque.dto.PurchaseOrderFilterDto;
 import br.com.dinamica.estoque.entity.PedidoCompra;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.repository.PedidoCompraRepository;
 import br.com.dinamica.estoque.service.PurchaseOrderService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -23,10 +24,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
 	private PedidoCompraRepository repository;
 
+	private FornecedorRepository providerRepository;
+
 	private ModelMapper modelMapper;
 
-	public PurchaseOrderServiceImpl(PedidoCompraRepository repository, ModelMapper modelMapper) {
+	public PurchaseOrderServiceImpl(PedidoCompraRepository repository, FornecedorRepository providerRepository, ModelMapper modelMapper) {
 		this.repository = repository;
+		this.providerRepository = providerRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -75,6 +79,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
 		this.modelMapper.map(dto, entity);
 
+		entity.setFornecedor(this.providerRepository.findById(dto.getFornecedor().getId()).orElseThrow());
+		entity.setDataCriacao(agora);
 		entity.setUsuario(usuario);
 
 		entity = this.repository.save(entity);

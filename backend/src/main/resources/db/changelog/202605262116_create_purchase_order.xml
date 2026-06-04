@@ -15,7 +15,7 @@
 			</column>
 
             <column name="numero_pedido" type="varchar(100)">
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_pedido_compra_numero_pedido"/>
             </column>
 
             <column name="id_fornecedor" type="bigint">

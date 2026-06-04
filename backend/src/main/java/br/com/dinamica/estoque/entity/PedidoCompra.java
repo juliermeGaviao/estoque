@@ -15,7 +15,7 @@ public class PedidoCompra {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_pedido", nullable = false, length = 100)
+    @Column(name = "numero_pedido", nullable = false, length = 100, unique = true)
     private String numeroPedido;
 
     @ManyToOne(fetch = FetchType.LAZY)

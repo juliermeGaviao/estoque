@@ -7,7 +7,6 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -140,11 +139,6 @@ public class ProductServiceImpl implements ProductService {
 	@Override
 	public void save(List<ProductDto> dtos, Usuario usuario) {
 		dtos.forEach(dto -> this.save(dto, usuario));
-	}
-
-	@Override
-	public List<ProductDto> findAll() {
-		return this.repository.findAll(Sort.by("nome").ascending()).stream().map(entity -> this.modelMapper.map(entity, ProductDto.class)).toList();
 	}
 
 }

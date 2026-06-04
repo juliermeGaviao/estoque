@@ -17,7 +17,7 @@ export function formatDate(isoString) {
 
   const date = new Date(isoString)
 
-  const data = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const data = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
 
   return `${data}`
 }
@@ -27,11 +27,19 @@ export function formatDateTime(isoString) {
 
   const date = new Date(isoString)
 
-  const data = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const data = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
 
-  const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'UTC' })
 
   return `${data} ${hora}`
+}
+
+export function toDate(isoString) {
+  if (!isoString) return null
+
+  const [year, month, day] = isoString.split('-').map(Number)
+
+  return new Date(year, month - 1, day)
 }
 
 export function formatPhone(value) {

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.ProductFilterDto;
 import br.com.dinamica.estoque.dto.PurchaseOrderDto;
 import br.com.dinamica.estoque.dto.PurchaseOrderFilterDto;
 import br.com.dinamica.estoque.dto.StockDto;
@@ -36,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PurchaseOrderController {
 
-	private static final Long HUB = 1L;
+	private static final Long LOGISTIC_HUB = 1L;
 
 	private static final String ENTITY = "Pedido de compra";
 	private static final String ENTITIES = "Pedidos de venda";
@@ -73,7 +74,7 @@ public class PurchaseOrderController {
 			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxDataPedido,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id,asc") String[] sort) {
+			@RequestParam(defaultValue = "id,desc") String[] sort) {
 		try {
 			String sortField = sort[0];
 			String sortDirection = sort.length > 1 ? sort[1] : "asc";
@@ -96,7 +97,7 @@ public class PurchaseOrderController {
 			PurchaseOrderDto result = this.service.save(dto, usuario);
 
 			dto.getEstoque().forEach(estoque -> {
-				this.stockService.addStock(estoque.getIdProduto(), HUB, result.getId(), estoque.getQuantidade(), usuario);
+				this.stockService.addStock(estoque.getIdProduto(), LOGISTIC_HUB, result.getId(), estoque.getQuantidade(), usuario);
 			});
 
 			return ResponseEntity.ok(result);
@@ -129,12 +130,18 @@ public class PurchaseOrderController {
 	}
 
 	@GetMapping("/list-products")
-	public ResponseEntity<Object> listProducts() {
+	public ResponseEntity<Object> listProducts(@RequestParam(required = true) Long idFornecedor) {
 		try {
-			List<ProductDto> result = this.productService.findAll();
+			ProductFilterDto productFilter = new ProductFilterDto();
 
-			return ResponseEntity.ok(result.stream().map(dto -> {
-				dto.setEstoque(this.stockService.getStockSalePoint(dto.getId(), HUB));
+			productFilter.setIdFornecedor(idFornecedor);
+
+			Pageable pageable = PageRequest.of(0, 10000, Sort.by("nome").ascending());
+
+			Page<ProductDto> result = this.productService.list(productFilter, pageable);
+
+			return ResponseEntity.ok(result.stream().filter(dto -> idFornecedor.equals(dto.getFornecedor().getId())).map(dto -> {
+				dto.setEstoque(this.stockService.getStock(dto.getId()));
 
 				return dto;
 			}).toList());
@@ -146,7 +153,7 @@ public class PurchaseOrderController {
 	}
 
 	@GetMapping("/list-purchase-order-products")
-	public ResponseEntity<Object> listPurchaseOrderProducts(@RequestParam(required = false) Long idPedidoCompra) {
+	public ResponseEntity<Object> listPurchaseOrderProducts(@RequestParam(required = true) Long idPedidoCompra) {
 		try {
 			List<StockDto> result = this.stockService.getPurchaseOrderProducts(idPedidoCompra);
 

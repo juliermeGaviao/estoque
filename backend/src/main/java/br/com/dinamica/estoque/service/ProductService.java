@@ -21,6 +21,4 @@ public interface ProductService {
 
 	void save(List<ProductDto> dtos, Usuario usuario);
 
-	List<ProductDto> findAll();
-
 }

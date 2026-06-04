@@ -389,7 +389,7 @@ async function clickAndSaveAll() {
 
         <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
           :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+          :rowsPerPageOptions="[15, 30, 60, 100]" size="small" class="mt-6">
 
           <Column field="id" header="Id" sortable><template #body="slotProps">{{slotProps.data.id}}</template></Column>
           <Column field="nome" header="Nome" sortable>
@@ -432,7 +432,7 @@ async function clickAndSaveAll() {
               </div>
             </template>
           </Column>
-          <Column field="estoque" header="Unidades em Estoque"/>
+          <Column field="estoque" header="Em Estoque"/>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>

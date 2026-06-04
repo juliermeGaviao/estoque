@@ -362,7 +362,7 @@ async function loadCompanies() {
             <div class="col-span-3">
               <FormField v-slot="$field" name="dataAniversario" initialValue="">
                 <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" fluid/>
+                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
                   <label for="dataAniversario">Data de Aniversário</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
