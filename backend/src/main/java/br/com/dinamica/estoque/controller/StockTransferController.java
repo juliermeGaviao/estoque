@@ -55,7 +55,7 @@ public class StockTransferController {
 			@RequestParam(required = false) Long idPontoVendaDestino,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
-			@RequestParam(defaultValue = "id,asc") String[] sort) {
+			@RequestParam(defaultValue = "id,desc") String[] sort) {
 		try {
 			String sortField = sort[0];
 			String sortDirection = sort.length > 1 ? sort[1] : "asc";

@@ -13,9 +13,9 @@ public class StockTransferDto {
 
 	private Long id;
 
-    private PurchaseOrderDto pontoVendaOrigem;
+    private SalePointDto pontoVendaOrigem;
 
-    private PurchaseOrderDto pontoVendaDestino;
+    private SalePointDto pontoVendaDestino;
 
     private Date dataTransferencia;
 
