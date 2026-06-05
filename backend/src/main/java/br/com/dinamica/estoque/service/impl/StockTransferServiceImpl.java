@@ -1,8 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.StockTransferDto;
 import br.com.dinamica.estoque.entity.TransferenciaEstoque;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.StockTransferMapper;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.TransferenciaEstoqueRepository;
 import br.com.dinamica.estoque.service.StockTransferService;
@@ -23,9 +23,9 @@ public class StockTransferServiceImpl implements StockTransferService {
 
 	private PontoVendaRepository pontoVendaRepository;
 
-	private ModelMapper modelMapper;
+	private StockTransferMapper modelMapper;
 
-	public StockTransferServiceImpl(TransferenciaEstoqueRepository repository, PontoVendaRepository pontoVendaRepository, ModelMapper modelMapper) {
+	public StockTransferServiceImpl(TransferenciaEstoqueRepository repository, PontoVendaRepository pontoVendaRepository, StockTransferMapper modelMapper) {
 		this.repository = repository;
 		this.pontoVendaRepository = pontoVendaRepository;
 		this.modelMapper = modelMapper;
@@ -35,28 +35,28 @@ public class StockTransferServiceImpl implements StockTransferService {
 	public StockTransferDto get(Long id) {
 		TransferenciaEstoque entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, StockTransferDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<StockTransferDto> list(Long idPontoVendaOrigem, Long idPontoVendaDestino, Pageable pageable) {
-        Specification<TransferenciaEstoque> specification = (root, query, cb) -> null;
+        Specification<TransferenciaEstoque> specification = (_, _, _) -> null;
 
         if (idPontoVendaOrigem != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("pontoVendaOrigem").get("id"), idPontoVendaOrigem));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("pontoVendaOrigem").get("id"), idPontoVendaOrigem));
         }
 
         if (idPontoVendaDestino != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("pontoVendaDestino").get("id"), idPontoVendaDestino));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("pontoVendaDestino").get("id"), idPontoVendaDestino));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, StockTransferDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public StockTransferDto save(StockTransferDto dto, Usuario usuario) {
 		TransferenciaEstoque entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -66,7 +66,7 @@ public class StockTransferServiceImpl implements StockTransferService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		entity.setPontoVendaOrigem(this.pontoVendaRepository.findById(dto.getPontoVendaOrigem().getId()).orElseThrow());
 		entity.setPontoVendaDestino(this.pontoVendaRepository.findById(dto.getPontoVendaDestino().getId()).orElseThrow());
@@ -74,7 +74,7 @@ public class StockTransferServiceImpl implements StockTransferService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, StockTransferDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

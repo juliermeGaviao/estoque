@@ -1,9 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -14,6 +12,7 @@ import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
+import br.com.dinamica.estoque.mapper.SaleMapper;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
@@ -35,36 +34,21 @@ public class SaleServiceImpl implements SaleService {
 
 	private ClienteRepository clienteRepository;
 
-	private ModelMapper modelMapper;
+	private SaleMapper modelMapper;
 
-	public SaleServiceImpl(
-			VendaRepository repository,
-			ItemVendaRepository itemVendaRepository,
-			UsuarioRepository usuarioRepository,
-			TabelaPrecoRepository precoTabelaRepository,
-			ClienteRepository clienteRepository,
-			ModelMapper modelMapper) {
+	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ClienteRepository clienteRepository, SaleMapper modelMapper) {
 		this.repository = repository;
 		this.itemVendaRepository = itemVendaRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.precoTabelaRepository = precoTabelaRepository;
 		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<SaleDto, Venda>() {
-            @Override
-            protected void configure() {
-                skip(destination.getCliente());
-                skip(destination.getVendedor());
-                skip(destination.getTabela());
-            }
-        });
 	}
 
 	@Override
 	public SaleDto get(Long id) {
 		Venda entity = this.repository.findById(id).orElseThrow();
-		SaleDto result = this.modelMapper.map(entity, SaleDto.class);
+		SaleDto result = this.modelMapper.toDto(entity);
 
 		result.getVendedor().setPerfis(null);
 
@@ -75,30 +59,30 @@ public class SaleServiceImpl implements SaleService {
 
 	@Override
 	public Page<SaleDto> list(Long idCliente, Long idVendedor, Float minDesconto, Float maxDesconto, String observacoes, Pageable pageable) {
-        Specification<Venda> specification = (root, query, cb) -> null;
+        Specification<Venda> specification = (_, _, _) -> null;
 
         if (idCliente != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idCliente));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("cliente").get("id"), idCliente));
         }
 
         if (idVendedor != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("vendedor").get("id"), idVendedor));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("vendedor").get("id"), idVendedor));
         }
 
         if (minDesconto != null && maxDesconto != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(DISCOUNT_FIELD), minDesconto, maxDesconto));
+            specification = specification.and((root, _, cb) -> cb.between(root.get(DISCOUNT_FIELD), minDesconto, maxDesconto));
         } else if (minDesconto != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minDesconto));
+            specification = specification.and((root, _, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minDesconto));
         } else if (maxDesconto != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxDesconto));
+            specification = specification.and((root, _, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxDesconto));
         }
 
         if (observacoes != null && !observacoes.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("observacoes")), "%" + observacoes.toLowerCase() + "%"));
+        	specification = specification.and((root, _, cb) -> cb.like(cb.lower(root.get("observacoes")), "%" + observacoes.toLowerCase() + "%"));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> {
-			SaleDto result = this.modelMapper.map(entity, SaleDto.class);
+			SaleDto result = this.modelMapper.toDto(entity);
 
 			result.getVendedor().setPerfis(null);
 
@@ -109,7 +93,7 @@ public class SaleServiceImpl implements SaleService {
 	@Override
 	public SaleDto save(SaleDto dto, Usuario usuario) {
 		Venda entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -119,7 +103,7 @@ public class SaleServiceImpl implements SaleService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
@@ -133,7 +117,7 @@ public class SaleServiceImpl implements SaleService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, SaleDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

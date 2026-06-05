@@ -1,13 +1,11 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +21,7 @@ import br.com.dinamica.estoque.entity.Produto;
 import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.TabelaPrecoProduto;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.PriceTableProductMapper;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
@@ -46,7 +45,7 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 
 	private EntityManager entityManager;
 
-	private ModelMapper modelMapper;
+	private PriceTableProductMapper modelMapper;
 
 	private ProdutoRepository produtoRepository;
 
@@ -55,47 +54,39 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 	private TabelaPrecoRepository tabelaPrecoRepository;
 
 	public PriceTableProductServiceImpl(TabelaPrecoProdutoRepository repository, TabelaPrecoRepository tabelaPrecoRepository, ProdutoRepository produtoRepository,
-			EntityManager entityManager, ModelMapper modelMapper) {
+			EntityManager entityManager, PriceTableProductMapper modelMapper) {
 		this.repository = repository;
 		this.tabelaPrecoRepository = tabelaPrecoRepository;
 		this.produtoRepository = produtoRepository;
 		this.entityManager = entityManager;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<TabelaPrecoProduto, PriceTableProductDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getProduto().getTipoProduto());
-                skip(destination.getProduto().getFornecedor());
-            }
-        });
 	}
 
 	@Override
 	public PriceTableProductDto get(Long id) {
 		TabelaPrecoProduto entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, PriceTableProductDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<PriceTableProductDto> list(Long idTabelaPreco, Long idProduto, Pageable pageable) {
-        Specification<TabelaPrecoProduto> specification = (root, query, cb) -> null;
+        Specification<TabelaPrecoProduto> specification = (_, _, _) -> null;
 
         if (idTabelaPreco != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("tabela").get("id"), idTabelaPreco));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("tabela").get("id"), idTabelaPreco));
         }
 
         if (idProduto != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("produto").get("id"), idProduto));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("produto").get("id"), idProduto));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PriceTableProductDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public PriceTableProductDto save(PriceTableProductDto dto, Usuario usuario) {
-		return this.modelMapper.map(this.savePrice(dto, usuario), PriceTableProductDto.class);
+		return this.modelMapper.toDto(this.savePrice(dto, usuario));
 	}
 
 	@Override
@@ -247,7 +238,7 @@ public class PriceTableProductServiceImpl implements PriceTableProductService {
 
 	private TabelaPrecoProduto savePrice(PriceTableProductDto dto, Usuario usuario) {
 		TabelaPrecoProduto entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();

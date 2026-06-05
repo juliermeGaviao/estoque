@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,8 +15,8 @@ public class PurchaseOrderFilterDto {
 
     private Long idFornecedor;
 
-    private Date minDataPedido;
+    private LocalDate minDataPedido;
 
-    private Date maxDataPedido;
+    private LocalDate maxDataPedido;
 
 }

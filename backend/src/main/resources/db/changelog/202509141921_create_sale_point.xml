@@ -32,6 +32,11 @@
 
 		</createTable>
 
+        <insert tableName="ponto_venda">
+            <column name="nome">Pedacinho de Gramado</column>
+            <column name="id_usuario">1</column>
+        </insert>
+
 	    <rollback>
 	        <dropTable tableName="ponto_venda"/>
 	    </rollback>

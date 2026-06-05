@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -18,7 +18,7 @@ public class PurchaseOrderDto {
 
     private ProviderDto fornecedor;
 
-    private Date dataPedido;
+    private LocalDate dataPedido;
 
     private List<StockProductDto> estoque;
 

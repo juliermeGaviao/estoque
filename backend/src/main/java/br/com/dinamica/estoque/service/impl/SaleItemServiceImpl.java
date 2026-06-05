@@ -1,12 +1,10 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,11 +19,12 @@ import br.com.dinamica.estoque.entity.ItemVenda;
 import br.com.dinamica.estoque.entity.TabelaPrecoProduto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
+import br.com.dinamica.estoque.mapper.SaleItemMapper;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
-import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.service.SaleItemService;
+import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
@@ -39,29 +38,21 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 	private StockService inventoryService;
 
-	private ModelMapper modelMapper;
+	private SaleItemMapper modelMapper;
 
 	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository,
-			StockService inventoryService, ModelMapper modelMapper) {
+			StockService inventoryService, SaleItemMapper modelMapper) {
 		this.repository = repository;
 		this.vendaRepository = vendaRepository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
 		this.inventoryService = inventoryService;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<SaleItemDto, ItemVenda>() {
-            @Override
-            protected void configure() {
-                skip(destination.getVenda());
-                skip(destination.getTabelaPrecoProduto());
-            }
-        });
 	}
 
 	@Override
 	public SaleItemDto get(Long id) {
 		ItemVenda entity = this.repository.findById(id).orElseThrow();
-		SaleItemDto result = this.modelMapper.map(entity, SaleItemDto.class);
+		SaleItemDto result = this.modelMapper.toDto(entity);
 
 		result.getVenda().getVendedor().setPerfis(null);
 		result.getTabelaPrecoProduto().getProduto().setTipoProduto(null);
@@ -74,26 +65,26 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 	@Override
 	public Page<SaleItemDto> list(Long idVenda, Long idTabelaPrecoProduto, Integer minQuantidade, Integer maxQuantidade, Pageable pageable) {
-        Specification<ItemVenda> specification = (root, query, cb) -> null;
+        Specification<ItemVenda> specification = (_, _, _) -> null;
 
         if (idVenda != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("venda").get("id"), idVenda));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("venda").get("id"), idVenda));
         }
 
         if (idTabelaPrecoProduto != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("tabelaPrecoProduto").get("id"), idTabelaPrecoProduto));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("tabelaPrecoProduto").get("id"), idTabelaPrecoProduto));
         }
 
         if (minQuantidade != null && maxQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(DISCOUNT_FIELD), minQuantidade, maxQuantidade));
+            specification = specification.and((root, _, cb) -> cb.between(root.get(DISCOUNT_FIELD), minQuantidade, maxQuantidade));
         } else if (minQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minQuantidade));
+            specification = specification.and((root, _, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minQuantidade));
         } else if (maxQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxQuantidade));
+            specification = specification.and((root, _, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxQuantidade));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> {
-			SaleItemDto result = this.modelMapper.map(entity, SaleItemDto.class);
+			SaleItemDto result = this.modelMapper.toDto(entity);
 
 			result.getVenda().getVendedor().setPerfis(null);
 			result.getTabelaPrecoProduto().getProduto().setTipoProduto(null);
@@ -106,7 +97,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 	@Override
 	public SaleItemDto save(SaleItemDto dto, Usuario usuario) {
 		ItemVenda entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -116,7 +107,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Venda venda = this.vendaRepository.findById(dto.getVenda().getId()).orElseThrow();
 		TabelaPrecoProduto tabelaPrecoProduto = this.tabelaPrecoProdutoRepository.findById(dto.getTabelaPrecoProduto().getId()).orElseThrow();
@@ -128,7 +119,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, SaleItemDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

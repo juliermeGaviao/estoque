@@ -2,14 +2,13 @@ package br.com.dinamica.estoque.service.impl;
 
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.StockDto;
 import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.TipoOperacao;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.StockMapper;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
 import br.com.dinamica.estoque.repository.PedidoCompraRepository;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
@@ -28,16 +27,14 @@ public class StockServiceImpl implements StockService {
 
 	private PedidoCompraRepository pedidoCompraRepository;
 
-	private ModelMapper modelMapper;
+	private StockMapper modelMapper;
 
-	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, PedidoCompraRepository pedidoCompraRepository, ModelMapper modelMapper) {
+	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, PedidoCompraRepository pedidoCompraRepository, StockMapper modelMapper) {
 		this.repository = repository;
 		this.produtoRepository = produtoRepository;
 		this.pontoVendaRepository = pontoVendaRepository;
 		this.pedidoCompraRepository = pedidoCompraRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 	}
 
 	@Override
@@ -85,7 +82,7 @@ public class StockServiceImpl implements StockService {
 
 	@Override
 	public List<StockDto> getPurchaseOrderProducts(Long idPedidoCompra) {
-		return this.repository.getStockByPurchaseOrder(idPedidoCompra).stream().map(entity -> this.modelMapper.map(entity, StockDto.class)).toList();
+		return this.repository.getStockByPurchaseOrder(idPedidoCompra).stream().map(this.modelMapper::toDto).toList();
 	}
 
 	private Estoque getNewStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario) {

@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +17,6 @@ public class StockTransferDto {
 
     private SalePointDto pontoVendaDestino;
 
-    private Date dataTransferencia;
+    private LocalDate dataTransferencia;
 
 }

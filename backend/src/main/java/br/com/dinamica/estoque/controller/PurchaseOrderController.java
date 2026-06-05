@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -70,8 +70,8 @@ public class PurchaseOrderController {
 	public ResponseEntity<Object> list(
 			@RequestParam(required = false) String numeroPedido,
 			@RequestParam(required = false) Long idFornecedor,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minDataPedido,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxDataPedido,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate minDataPedido,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate maxDataPedido,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,desc") String[] sort) {

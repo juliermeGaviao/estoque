@@ -1,8 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.entity.Fornecedor;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.ProviderMapper;
 import br.com.dinamica.estoque.repository.ContatoFornecedorRepository;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderService;
@@ -23,9 +23,9 @@ public class ProviderServiceImpl implements ProviderService {
 
 	private ContatoFornecedorRepository contatoFornecedorRepository;
 
-	private ModelMapper modelMapper;
+	private ProviderMapper modelMapper;
 
-	public ProviderServiceImpl(FornecedorRepository repository, ContatoFornecedorRepository contatoFornecedorRepository, ModelMapper modelMapper) {
+	public ProviderServiceImpl(FornecedorRepository repository, ContatoFornecedorRepository contatoFornecedorRepository, ProviderMapper modelMapper) {
 		this.repository = repository;
 		this.contatoFornecedorRepository = contatoFornecedorRepository;
 		this.modelMapper = modelMapper;
@@ -35,36 +35,36 @@ public class ProviderServiceImpl implements ProviderService {
 	public ProviderDto get(Long id) {
 		Fornecedor entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, ProviderDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<ProviderDto> list(String razaoSocial, String fantasia, String cnpj, String fone, Pageable pageable) {
-        Specification<Fornecedor> specification = (root, query, cb) -> null;
+        Specification<Fornecedor> specification = (_, _, _) -> null;
 
         if (razaoSocial != null && !razaoSocial.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
+        	specification = specification.and((root, _, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
         }
 
         if (fantasia != null && !fantasia.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("fantasia")), "%" + fantasia.toLowerCase() + "%"));
+        	specification = specification.and((root, _, cb) -> cb.like(cb.lower(root.get("fantasia")), "%" + fantasia.toLowerCase() + "%"));
         }
 
         if (cnpj != null && !cnpj.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("cnpj"), cnpj));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("cnpj"), cnpj));
         }
 
         if (fone != null && !fone.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("fone"), fone));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProviderDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public ProviderDto save(ProviderDto dto, Usuario usuario) {
 		Fornecedor entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -74,14 +74,14 @@ public class ProviderServiceImpl implements ProviderService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, ProviderDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package br.com.dinamica.estoque.dto;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +22,7 @@ public class ClientDto extends CommonClientDto {
 
     private String fone;
 
-    private Date dataAniversario;
+    private LocalDate dataAniversario;
 
     private String endereco;
 

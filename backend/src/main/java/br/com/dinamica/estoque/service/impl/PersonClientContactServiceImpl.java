@@ -1,9 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +11,7 @@ import br.com.dinamica.estoque.dto.PersonClientContactDto;
 import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.ContatoClientePessoa;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.PersonClientContactMapper;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClientePessoaRepository;
 import br.com.dinamica.estoque.service.PersonClientContactService;
@@ -25,50 +24,36 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 
 	private ClienteRepository clienteRepository;
 
-	private ModelMapper modelMapper;
+	private PersonClientContactMapper modelMapper;
 
-	public PersonClientContactServiceImpl(ContatoClientePessoaRepository repository, ClienteRepository clienteRepository, ModelMapper modelMapper) {
+	public PersonClientContactServiceImpl(ContatoClientePessoaRepository repository, ClienteRepository clienteRepository, PersonClientContactMapper modelMapper) {
 		this.repository = repository;
 		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<ContatoClientePessoa, PersonClientContactDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getCliente());
-            }
-        });
-
-		this.modelMapper.addMappings(new PropertyMap<PersonClientContactDto, ContatoClientePessoa>() {
-            @Override
-            protected void configure() {
-                skip(destination.getCliente());
-            }
-        });
 	}
 
 	@Override
 	public PersonClientContactDto get(Long id) {
 		ContatoClientePessoa entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, PersonClientContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<PersonClientContactDto> list(Long idPessoa, Pageable pageable) {
-        Specification<ContatoClientePessoa> specification = (root, query, cb) -> null;
+        Specification<ContatoClientePessoa> specification = (_, _, _) -> null;
 
         if (idPessoa != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idPessoa));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("cliente").get("id"), idPessoa));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, PersonClientContactDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public PersonClientContactDto save(PersonClientContactDto dto, Usuario usuario) {
 		ContatoClientePessoa entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -78,7 +63,7 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 
@@ -88,7 +73,7 @@ public class PersonClientContactServiceImpl implements PersonClientContactServic
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, PersonClientContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

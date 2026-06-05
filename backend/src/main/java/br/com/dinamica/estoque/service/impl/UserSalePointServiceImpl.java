@@ -1,8 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.UserSalePointDto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.UsuarioPontoVenda;
+import br.com.dinamica.estoque.mapper.UserSalePointMapper;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.UsuarioPontoVendaRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
@@ -26,9 +26,9 @@ public class UserSalePointServiceImpl implements UserSalePointService {
 
 	private UsuarioRepository usuarioRepository;
 
-	private ModelMapper modelMapper;
+	private UserSalePointMapper modelMapper;
 
-	public UserSalePointServiceImpl(UsuarioPontoVendaRepository repository, PontoVendaRepository pontoVendaRepository, UsuarioRepository usuarioRepository, ModelMapper modelMapper) {
+	public UserSalePointServiceImpl(UsuarioPontoVendaRepository repository, PontoVendaRepository pontoVendaRepository, UsuarioRepository usuarioRepository, UserSalePointMapper modelMapper) {
 		this.repository = repository;
 		this.pontoVendaRepository = pontoVendaRepository;
 		this.usuarioRepository = usuarioRepository;
@@ -39,28 +39,28 @@ public class UserSalePointServiceImpl implements UserSalePointService {
 	public UserSalePointDto get(Long id) {
 		UsuarioPontoVenda entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, UserSalePointDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<UserSalePointDto> list(Long idUsuario, Long idPontoVenda, Pageable pageable) {
-        Specification<UsuarioPontoVenda> specification = (root, query, cb) -> null;
+        Specification<UsuarioPontoVenda> specification = (_, _, _) -> null;
 
         if (idUsuario != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("usuario").get("id"), idUsuario));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("usuario").get("id"), idUsuario));
         }
 
         if (idPontoVenda != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("pontoVenda").get("id"), idPontoVenda));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("pontoVenda").get("id"), idPontoVenda));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, UserSalePointDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public UserSalePointDto save(UserSalePointDto dto, Usuario usuario) {
 		UsuarioPontoVenda entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -70,7 +70,7 @@ public class UserSalePointServiceImpl implements UserSalePointService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		entity.setUsuario(this.usuarioRepository.findById(dto.getUsuario().getId()).orElseThrow());
 		entity.setPontoVenda(this.pontoVendaRepository.findById(dto.getPontoVenda().getId()).orElseThrow());
@@ -78,7 +78,7 @@ public class UserSalePointServiceImpl implements UserSalePointService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, UserSalePointDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

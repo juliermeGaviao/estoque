@@ -1,12 +1,11 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.exception.ConstraintViolationException;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,6 +20,7 @@ import br.com.dinamica.estoque.dto.UserListDto;
 import br.com.dinamica.estoque.dto.UserRequestDTO;
 import br.com.dinamica.estoque.entity.Perfil;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.UserMapper;
 import br.com.dinamica.estoque.repository.PerfilRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
@@ -38,10 +38,9 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     private SHA256PasswordEncoder passwordEncoder;
     
-	private ModelMapper modelMapper;
+	private UserMapper modelMapper;
 
-    public UserServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository,
-    		SHA256PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+    public UserServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository, SHA256PasswordEncoder passwordEncoder, UserMapper modelMapper) {
         this.usuarioRepository = usuarioRepository;
         this.perfilRepository = perfilRepository;
         this.usuarioTabelaPrecoRepository = usuarioTabelaPrecoRepository;
@@ -58,23 +57,25 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	public UserDto getUser(Long id) {
 		Usuario usuario = this.usuarioRepository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(usuario, UserDto.class);
+		return this.modelMapper.toDto(usuario);
 	}
 
     @Override
     public Page<UserListDto> list(String email, Pageable pageable) {
-        Specification<Usuario> specification = (root, query, cb) -> null;
+        Specification<Usuario> specification = (_, _, _) -> null;
 
         if (email != null && !email.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            specification = specification.and((root, _, cb) -> cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
         }
 
-        specification = specification.and((root, query, cb) -> cb.notEqual(root.get("id"), 1L));
-        specification = specification.and((root, query, cb) -> cb.equal(root.get("ativo"), Boolean.TRUE));
+        specification = specification.and((root, _, cb) -> cb.notEqual(root.get("id"), 1L));
+        specification = specification.and((root, _, cb) -> cb.equal(root.get("ativo"), Boolean.TRUE));
 
         return this.usuarioRepository.findAll(specification, pageable).map(usuario -> {
-        	UserListDto result = this.modelMapper.map(usuario, UserListDto.class);
+        	UserListDto result = new UserListDto();
 
+        	result.setId(usuario.getId());
+        	result.setEmail(usuario.getEmail());
         	result.setPerfis(usuario.getPerfis().stream().map(Perfil::getNome).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
         	result.setTabelas(this.usuarioTabelaPrecoRepository.findByUsuario(usuario.getId()).stream().map(linha -> linha.getTabela().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
 
@@ -85,7 +86,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     @Override
     public UserDto save(UserRequestDTO dto, Usuario usuarioLogado) {
         Usuario usuario = new Usuario();
-        Date agora = DateUtil.now();
+        LocalDateTime agora = DateUtil.now();
 
         if (dto.getId() != null) {
         	usuario = this.usuarioRepository.findById(dto.getId()).orElseThrow();
@@ -115,7 +116,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
         usuario = this.usuarioRepository.saveAndFlush(usuario);
 
-        return this.modelMapper.map(usuario, UserDto.class);
+        return this.modelMapper.toDto(usuario);
     }
 
     @Override
@@ -125,7 +126,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
     	usuario.setSenha(this.passwordEncoder.encode(dto.getSenha()));
     	usuario.setDataAlteracao(DateUtil.now());
 
-        return this.modelMapper.map(usuario, UserDto.class);
+        return this.modelMapper.toDto(usuario);
     }
 
 	@Override

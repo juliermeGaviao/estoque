@@ -1,7 +1,7 @@
 package br.com.dinamica.estoque.dto;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +22,8 @@ public class PersonFilterDto {
 
 	private BigDecimal maxLimite;
 
-	private Date minAniversario;
+	private LocalDate minAniversario;
 
-	private Date maxAniversario;
+	private LocalDate maxAniversario;
 
 }

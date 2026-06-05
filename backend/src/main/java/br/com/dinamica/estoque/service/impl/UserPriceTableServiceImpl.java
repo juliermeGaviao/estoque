@@ -2,8 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +11,7 @@ import br.com.dinamica.estoque.dto.UserPriceTableDto;
 import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.UsuarioTabelaPreco;
+import br.com.dinamica.estoque.mapper.UserPriceTableMapper;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
@@ -27,49 +26,42 @@ public class UserPriceTableServiceImpl implements UserPriceTableService {
 
 	private UsuarioRepository usuarioRepository;
 
-	private ModelMapper modelMapper;
+	private UserPriceTableMapper modelMapper;
 
-	public UserPriceTableServiceImpl(UsuarioTabelaPrecoRepository repository, TabelaPrecoRepository tabelaPrecoRepository, UsuarioRepository usuarioRepository, ModelMapper modelMapper) {
+	public UserPriceTableServiceImpl(UsuarioTabelaPrecoRepository repository, TabelaPrecoRepository tabelaPrecoRepository, UsuarioRepository usuarioRepository, UserPriceTableMapper modelMapper) {
 		this.repository = repository;
 		this.tabelaPrecoRepository = tabelaPrecoRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<UsuarioTabelaPreco, UserPriceTableDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getUsuario().getPerfis());
-            }
-        });
 	}
 
 	@Override
 	public UserPriceTableDto get(Long id) {
 		UsuarioTabelaPreco entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, UserPriceTableDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<UserPriceTableDto> list(Long idTabelaPreco, Long idVendedor, Pageable pageable) {
-        Specification<UsuarioTabelaPreco> specification = (root, query, cb) -> null;
+        Specification<UsuarioTabelaPreco> specification = (_, _, _) -> null;
 
         if (idTabelaPreco != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("tabela").get("id"), idTabelaPreco));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("tabela").get("id"), idTabelaPreco));
         }
 
         if (idVendedor != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("usuario").get("id"), idVendedor));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("usuario").get("id"), idVendedor));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, UserPriceTableDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public UserPriceTableDto save(UserPriceTableDto dto) {
 		this.repository.deleteByUsuario(dto.getUsuario().getId());
 
-		return this.modelMapper.map(this.saveTable(dto), UserPriceTableDto.class);
+		return this.modelMapper.toDto(this.saveTable(dto));
 	}
 
 	@Override

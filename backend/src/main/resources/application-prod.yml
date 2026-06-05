@@ -14,9 +14,7 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
 
 cors:
   allowed-origins: https://chocolate-se.com.br
