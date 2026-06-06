@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 public class SafeDateDeserializer extends JsonDeserializer<LocalDate> {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    
+
     @Override
     public LocalDate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         String text = p.getText();
