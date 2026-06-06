@@ -10,6 +10,7 @@ import br.com.dinamica.estoque.entity.TransferenciaEstoque;
 @Mapper(componentModel = "spring") 
 public interface StockTransferMapper {
 
+	@Mapping(target = "estoque", ignore = true)
     StockTransferDto toDto(TransferenciaEstoque entity);
 
 	@Mapping(target = "usuario", ignore = true)

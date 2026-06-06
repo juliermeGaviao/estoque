@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
@@ -18,6 +19,8 @@ import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class StockTransferServiceImpl implements StockTransferService {
+
+	private static final String DATA_TRANSFERENCIA = "dataTransferencia";
 
 	private TransferenciaEstoqueRepository repository;
 
@@ -39,7 +42,7 @@ public class StockTransferServiceImpl implements StockTransferService {
 	}
 
 	@Override
-	public Page<StockTransferDto> list(Long idPontoVendaOrigem, Long idPontoVendaDestino, Pageable pageable) {
+	public Page<StockTransferDto> list(Long idPontoVendaOrigem, Long idPontoVendaDestino, LocalDate minDataTransferencia, LocalDate maxDataTransferencia, Pageable pageable) {
         Specification<TransferenciaEstoque> specification = (_, _, _) -> null;
 
         if (idPontoVendaOrigem != null) {
@@ -48,6 +51,14 @@ public class StockTransferServiceImpl implements StockTransferService {
 
         if (idPontoVendaDestino != null) {
             specification = specification.and((root, _, cb) -> cb.equal(root.get("pontoVendaDestino").get("id"), idPontoVendaDestino));
+        }
+
+        if (minDataTransferencia != null && maxDataTransferencia != null) {
+            specification = specification.and((root, _, cb) -> cb.between(root.get(DATA_TRANSFERENCIA), minDataTransferencia, maxDataTransferencia));
+        } else if (minDataTransferencia != null) {
+            specification = specification.and((root, _, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_TRANSFERENCIA), minDataTransferencia));
+        } else if (maxDataTransferencia != null) {
+            specification = specification.and((root, _, cb) -> cb.lessThanOrEqualTo(root.get(DATA_TRANSFERENCIA), maxDataTransferencia));
         }
 
 		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
@@ -70,6 +81,7 @@ public class StockTransferServiceImpl implements StockTransferService {
 
 		entity.setPontoVendaOrigem(this.pontoVendaRepository.findById(dto.getPontoVendaOrigem().getId()).orElseThrow());
 		entity.setPontoVendaDestino(this.pontoVendaRepository.findById(dto.getPontoVendaDestino().getId()).orElseThrow());
+		entity.setDataTransferencia(agora);
 		entity.setUsuario(usuario);
 
 		entity = this.repository.save(entity);

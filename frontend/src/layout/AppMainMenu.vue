@@ -15,7 +15,7 @@ const items = computed(() => [
     visible: eAdmin(),
     items: [
       { label: 'Pedido de Compra', icon: 'pi pi-file-edit', command: () => router.push('/stock/purchase-order') },
-      { label: 'Transferência', icon: 'pi pi-truck', command: () => router.push('/register/provider') }
+      { label: 'Transferência', icon: 'pi pi-truck', command: () => router.push('/stock/transfer') }
     ]
   },
   {

@@ -1,5 +1,7 @@
 package br.com.dinamica.estoque.service;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -10,7 +12,7 @@ public interface StockTransferService {
 
 	StockTransferDto get(Long id);
 
-	Page<StockTransferDto> list(Long idPontoVendaOrigem, Long idPontoVendaDestino, Pageable pageable);
+	Page<StockTransferDto> list(Long idPontoVendaOrigem, Long idPontoVendaDestino, LocalDate minDataTransferencia, LocalDate maxDataTransferencia, Pageable pageable);
 
 	StockTransferDto save(StockTransferDto dto, Usuario usuario);
 

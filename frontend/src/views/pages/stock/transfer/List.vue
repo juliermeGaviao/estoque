@@ -32,23 +32,23 @@ async function load(params) {
     }
   }
 
-  if (query.minDataPedido) {
-    query.minDataPedido = formatDate(query.minDataPedido)
+  if (query.minDataTransferencia) {
+    query.minDataTransferencia = formatDate(query.minDataTransferencia)
   }
 
-  if (query.maxDataPedido) {
-    query.maxDataPedido = formatDate(query.maxDataPedido)
+  if (query.maxDataTransferencia) {
+    query.maxDataTransferencia = formatDate(query.maxDataTransferencia)
   }
 
   loading.value = true
 
   try {
-    const response = await api.get('/purchase-order/list', { params: query })
+    const response = await api.get('/stock-transfer/list', { params: query })
 
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Pedidos de Compra', detail: 'Requisição de lista de pedidos de compra terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Transferências de Estoque', detail: 'Requisição de lista de transferências de estoque terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     loading.value = false
   }
@@ -56,7 +56,7 @@ async function load(params) {
 
 onMounted(async () => {
   load({})
-  loadProviders()
+  loadSalePoints()
 })
 
 function onPage(event) {
@@ -75,7 +75,7 @@ function onSort(event) {
 }
 
 const form = ref(null)
-const formValues = ref({ numeroPedido: null, idFornecedor: null, minDataPedido: null, maxDataPedido: null })
+const formValues = ref({ idPontoVendaOrigem: null, idPontoVendaDestino: null, minDataTransferencia: null, maxDataTransferencia: null })
 const filterValues = ref({ ... formValues.value })
 
 const filter = async ({ valid, values }) => {
@@ -96,17 +96,17 @@ function limpar() {
   })
 }
 
-let fornecedores = ref([])
+let pontos = ref([])
 
-async function loadProviders() {
+async function loadSalePoints() {
   loading.value = true
 
   try {
-    const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
+    const response = await api.get('/sale-point/list', { params: { page: 0, size: 10000, sort: 'id,asc' } })
 
-    fornecedores.value = response.data.content
+    pontos.value = response.data.content
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     await nextTick()
     setTimeout(() => loading.value = false, 50)
@@ -115,36 +115,36 @@ async function loadProviders() {
 
 const products = ref([])
 
-async function loadProviderProducts(providerId) {
+async function loadSalePointProducts(origem, destino) {
   loading.value = true
 
   try {
-    const response = await api.get('/purchase-order/list-products', { params: { idFornecedor: providerId } })
+    const response = await api.get('/stock-transfer/list-products', { params: { idPontoVendaOrigem: origem, idPontoVendaDestingo: destino } })
 
     products.value = response.data.map(item => ({
       ...item,
       quantidade: 0
     }))
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     await nextTick()
     setTimeout(() => loading.value = false, 50)
   }
 }
 
-async function loadPurchaseOrderProducts(purchaseOrderId) {
+async function loadStockTransferProducts(stockTransferId) {
   loading.value = true
 
   try {
-    const response = await api.get('/purchase-order/list-purchase-order-products', { params: { idPedidoCompra: purchaseOrderId } })
+    const response = await api.get('/stock-transfer/list-sale-point-products', { params: { idTransferenciaEstoque: stockTransferId } })
 
     products.value = response.data.map(item => ({
       ...item,
       quantidade: 0
     }))
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de transferência de estoque terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     await nextTick()
     setTimeout(() => loading.value = false, 50)
@@ -153,14 +153,14 @@ async function loadPurchaseOrderProducts(purchaseOrderId) {
 
 const visible = ref(false)
 const action = ref()
-const purchaseOrderForm = ref(null)
-const purchaseOrderFormValues = ref({ numeroPedido: null, idFornecedor: null, dataPedido: null })
+const stockTransferForm = ref(null)
+const stockTransferFormValues = ref({ idPontoVendaOrigem: null, idPontoVendaDestino: null, dataTransferencia: new Date() })
 
-const purchaseOrderFormValidator = zodResolver(
+const stockTransferFormValidator = zodResolver(
   z.object({
-    numeroPedido: z.string().min(1).nullish().refine(val => val && val.trim().length > 0, { message: 'Número do Pedido é obrigatório.' }),
-    idFornecedor: z.number({ required_error: 'Fornecedor é obrigatório.' }),
-    dataPedido: z.any()
+    idPontoVendaOrigem: z.number({ required_error: 'Ponto de Venda Origem é obrigatório.' }).nullable().refine((val) => val !== null && val !== undefined, { message: 'Ponto de Venda Origem é obrigatório.' }),
+    idPontoVendaDestino: z.number({ required_error: 'Ponto de Venda Destino é obrigatório.' }).nullable().refine((val) => val !== null && val !== undefined, { message: 'Ponto de Venda Destino é obrigatório.' }),
+    dataTransferencia: z.any()
       .refine(val => {
         if (val === '' || !val) return false
 
@@ -172,41 +172,61 @@ const purchaseOrderFormValidator = zodResolver(
         }
 
         return false
-        }, { message: 'Data do Pedido é obrigatória.' }
+        }, { message: 'Data da Transferência é obrigatória.' }
       )
   })
 )
 
-const providerChange = async (event) => {
-  loadProviderProducts(event.value)
+const salePointChange = async (event) => {
+  if (!stockTransferForm.value) return
+
+  const states = stockTransferForm.value.states
+
+  const origem = states.idPontoVendaOrigem.value
+  const destino = states.idPontoVendaDestino.value
+
+  if (origem && destino && origem !== destino) {
+    await loadSalePointProducts(origem, destino)
+  } else {
+    products.value = []
+  }
 }
 
-const savePurchaseOrder = async ({ valid, values }) => {
+const saveStockTransfer = async ({ valid, values }) => {
   if (!valid) return
+
+  const dataTransferencia = values.dataTransferencia.setHours(0, 0, 0, 0)
+  const today = new Date().setHours(0, 0, 0, 0)
+
+  if (today < dataTransferencia) {
+    toast.add({ severity: 'error', summary: 'Falha de Transferência de Estoque', detail: 'Algum produto deve ter valor diferente de zero para transferir.', life: 10000 })
+    return
+  }
 
   const filtered = products.value.filter(item => item.quantidade !== 0)
 
   if (!filtered.length) {
-    toast.add({ severity: 'error', summary: 'Falha de Pedido de Compra', detail: 'Algum produto deve ter valor diferente de zero.', life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Transferência de Estoque', detail: 'Algum produto deve ter valor diferente de zero para transferir.', life: 10000 })
     return
   }
 
   const params = {
     ...values,
-    fornecedor: { id: values.idFornecedor },
+    pontoVendaOrigem: { id: values.idPontoVendaOrigem },
+    pontoVendaDestino: { id: values.idPontoVendaDestino },
     estoque: filtered.map(item => ({ idProduto: item.id, quantidade: item.quantidade }) )
   }
 
   loading.value = true
 
   try {
-    const response = await api.post('/purchase-order', params)
+    const response = await api.post('/stock-transfer', params)
 
     if (response.status === 200) {
-      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Pedido de Compra criado com sucesso', life: 10000 })
+      toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Transferência de Estoque realizada com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação do Pedido de Compra', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação do Transferência de Estoque', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     await nextTick()
     setTimeout(() => {
@@ -220,25 +240,25 @@ const savePurchaseOrder = async ({ valid, values }) => {
 function toggle() {
   products.value = []
 
-  if (purchaseOrderForm.value) {
-    purchaseOrderForm.value.reset()
+  if (stockTransferForm.value) {
+    stockTransferForm.value.reset()
   }
 
   visible.value = !visible.value
 }
 
-function newPurchaseOrder() {
+function newStockTransfer() {
   action.value = 'criar'
   toggle()
 }
 
-const view = async (purchaseOrder) => {
+const view = async (stockTransfer) => {
   action.value = 'visualizar'
   visible.value = true
 
   await nextTick()
-  purchaseOrderForm.value.setValues({ numeroPedido: purchaseOrder.numeroPedido, idFornecedor: purchaseOrder.fornecedor.id, dataPedido: toDate(purchaseOrder.dataPedido) })
-  loadPurchaseOrderProducts(purchaseOrder.id)
+  stockTransferForm.value.setValues({ idPontoVendaOrigem: stockTransfer.pontoVendaOrigem.id, idPontoVendaDestino: stockTransfer.pontoVendaDestino.id, dataTransferencia: toDate(stockTransfer.dataTransferencia) })
+  loadStockTransferProducts(stockTransfer.id)
 }
 
 </script>
@@ -247,39 +267,39 @@ const view = async (purchaseOrder) => {
   <ConfirmDialog :closable="false"></ConfirmDialog>
   <BlockUI :blocked="loading" fullScreen>
     <Card>
-      <template #title><h3>Lista de Pedidos de Compra</h3></template>
+      <template #title><h3>Lista de Transferências de Estoque</h3></template>
       <template #content>
         <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
           <div class="grid grid-cols-12 gap-2">
             <div class="col-span-3">
-              <FormField name="numeroPedido">
+              <FormField name="idPontoVendaOrigem">
                 <FloatLabel variant="on">
-                  <InputText id="numeroPedido" maxlength="255" autocomplete="off" fluid/>
-                  <label for="numeroPedido">Número do Pedido</label>
+                  <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idPontoVendaOrigem">Ponto de Venda Origem</label>
                 </FloatLabel>
               </FormField>
             </div>
             <div class="col-span-3">
-              <FormField name="idFornecedor">
+              <FormField name="idPontoVendaDestino">
                 <FloatLabel variant="on">
-                  <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
-                  <label for="idFornecedor">Fornecedores</label>
+                  <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
+                  <label for="idPontoVendaDestino">Ponto de Venda Destino</label>
                 </FloatLabel>
               </FormField>
             </div>
             <div class="col-span-2">
-              <FormField name="minDataPedido">
+              <FormField name="minDataTransferencia">
                 <FloatLabel variant="on" class="flex-1">
                   <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataPedido">Data de Pedido Mínima</label>
+                  <label for="minDataTransferencia">Data de Transferência Mínima</label>
                 </FloatLabel>
               </FormField>
             </div>
             <div class="col-span-2">
-              <FormField name="maxDataPedido">
+              <FormField name="maxDataTransferencia">
                 <FloatLabel variant="on" class="flex-1">
                   <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataPedido">Data de Pedido Máxima</label>
+                  <label for="minDataTransferencia">Data de Transferência Máxima</label>
                 </FloatLabel>
               </FormField>
             </div>
@@ -297,17 +317,17 @@ const view = async (purchaseOrder) => {
           :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
           <Column field="id" header="Id" sortable/>
-          <Column field="numeroPedido" header="Número do Pedido" sortable/>
-          <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
-          <Column field="dataPedido" header="Data do Pedido" sortable>
+          <Column field="pontoVendaOrigem.nome" header="Ponto de Venda Origem" sortable/>
+          <Column field="pontoVendaDestino.nome" header="Ponto de Venda Destino" sortable/>
+          <Column field="dataTransferencia" header="Data do Transferência" sortable>
             <template #body="slotProps">
-              {{ formatDate(slotProps.data.dataPedido) }}
+              {{ formatDate(slotProps.data.dataTransferencia) }}
             </template>
           </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newPurchaseOrder" v-tooltip.bottom="'Novo Pedido de Compra'"/>
+              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newStockTransfer" v-tooltip.bottom="'Nova Transferência de Estoque'"/>
             </template>
 
             <template #body="slotProps">
@@ -318,39 +338,40 @@ const view = async (purchaseOrder) => {
       </template>
     </Card>
 
-    <Dialog v-model:visible="visible" modal closable header="Pedido de Compra" style="width: 95%">
+    <Dialog v-model:visible="visible" modal closable header="Transferência de Estoque" style="width: 95%">
 
-      <Form ref="purchaseOrderForm" :resolver="purchaseOrderFormValidator" :initialValues="purchaseOrderFormValues" @submit="savePurchaseOrder" class="grid flex flex-column gap-2">
+      <Form ref="stockTransferForm" :resolver="stockTransferFormValidator" :initialValues="stockTransferFormValues" @submit="saveStockTransfer" class="grid flex flex-column gap-2">
         <div class="grid grid-cols-12 gap-2">
           <div class="col-span-4 mt-2">
-            <FormField name="numeroPedido" v-slot="$field">
+            <FormField name="idPontoVendaOrigem" v-slot="$field">
               <FloatLabel variant="on">
-                <InputText maxlength="255" autocomplete="off" :disabled="action === 'visualizar'" fluid/>
-                <label for="numeroPedido">Número do Pedido</label>
+                <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+                <label for="idPontoVendaOrigem">Ponto de Venda Origem</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
           <div class="col-span-4 mt-2">
-            <FormField name="idFornecedor">
+            <FormField name="idPontoVendaDestino" v-slot="$field">
               <FloatLabel variant="on">
-                <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" @change="providerChange" :disabled="action === 'visualizar'" fluid/>
-                <label for="idFornecedor">Fornecedores</label>
+                <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+                <label for="idPontoVendaDestino">Ponto de Venda Destino</label>
               </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
           <div :class="action === 'criar' ? 'col-span-3 mt-2' : 'col-span-4 mt-2'">
-            <FormField name="dataPedido" v-slot="$field">
+            <FormField name="dataTransferencia" v-slot="$field">
               <FloatLabel variant="on" class="flex-1">
-                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" :disabled="action === 'visualizar'" fluid/>
-                <label for="dataPedido">Data de Pedido</label>
+                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" disabled fluid/>
+                <label for="dataTransferencia">Data de Transferência</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
           <div class="col-span-1 mt-2" v-show="action === 'criar'">
             <FormField class="flex justify-end gap-2">
-              <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+              <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
             </FormField>
           </div>
         </div>
@@ -360,23 +381,25 @@ const view = async (purchaseOrder) => {
           <Column field="nome" header="Nome"/>
           <Column field="referencia" header="Referência"/>
           <Column field="tipoProduto.nome" header="Tipo de Produto"/>
+          <Column field="fornecedor.fantasia" header="Fornecedor"/>
           <Column field="peso" header="Peso (em gramas)"/>
-          <Column field="estoque" :header="action === 'visualizar' ? 'Estocado' : 'Em Estoque'"/>
+          <Column field="estoque" :header="action === 'visualizar' ? 'Transferido' : 'Estoque Origem'"/>
+          <Column field="estoqueDestino" header="Estoque Destino" v-if="action === 'criar'"/>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center" v-if="action === 'criar'">
             <template #header>
-              <b>Adicionar</b>
+              <b>Transferir</b>
             </template>
 
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :min="-slotProps.data.estoque" :max="10000" showButtons buttonLayout="horizontal" :step="1" fluid/>
+              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.estoque" showButtons buttonLayout="horizontal" :step="1" fluid/>
             </template>
           </Column>
         </DataTable>
 
         <FormField class="flex justify-end gap-2" v-show="action === 'criar'">
           <Button label="Cancelar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
-          <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+          <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
         </FormField>
         <FormField class="flex justify-end gap-2" v-show="action === 'visualizar'">
           <Button label="Fechar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>

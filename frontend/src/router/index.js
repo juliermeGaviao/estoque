@@ -31,6 +31,10 @@ const router = createRouter({
                   component: () => import('@/views/pages/stock/purchase-order/List.vue')
                 },
                 {
+                  path: '/stock/transfer',
+                  component: () => import('@/views/pages/stock/transfer/List.vue')
+                },
+                {
                   path: '/register/provider',
                   component: () => import('@/views/pages/register/provider/List.vue')
                 },

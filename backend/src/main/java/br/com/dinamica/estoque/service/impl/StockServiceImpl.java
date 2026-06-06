@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 import br.com.dinamica.estoque.dto.StockDto;
 import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.TipoOperacao;
+import br.com.dinamica.estoque.entity.TransferenciaEstoque;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.mapper.StockMapper;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
 import br.com.dinamica.estoque.repository.PedidoCompraRepository;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
+import br.com.dinamica.estoque.repository.TransferenciaEstoqueRepository;
 import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
 
@@ -27,13 +29,16 @@ public class StockServiceImpl implements StockService {
 
 	private PedidoCompraRepository pedidoCompraRepository;
 
+	private TransferenciaEstoqueRepository transferenciaEstoqueRepository;
+
 	private StockMapper modelMapper;
 
-	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, PedidoCompraRepository pedidoCompraRepository, StockMapper modelMapper) {
+	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, PedidoCompraRepository pedidoCompraRepository, TransferenciaEstoqueRepository transferenciaEstoqueRepository, StockMapper modelMapper) {
 		this.repository = repository;
 		this.produtoRepository = produtoRepository;
 		this.pontoVendaRepository = pontoVendaRepository;
 		this.pedidoCompraRepository = pedidoCompraRepository;
+		this.transferenciaEstoqueRepository = transferenciaEstoqueRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -83,6 +88,29 @@ public class StockServiceImpl implements StockService {
 	@Override
 	public List<StockDto> getPurchaseOrderProducts(Long idPedidoCompra) {
 		return this.repository.getStockByPurchaseOrder(idPedidoCompra).stream().map(this.modelMapper::toDto).toList();
+	}
+
+	@Override
+	public List<StockDto> getStockBySalePoint(Long idPontoVenda) {
+		return this.repository.getStockBySalePoint(idPontoVenda).stream().map(this.modelMapper::toDto).toList();
+	}
+
+	@Override
+	public List<StockDto> getStockTransferProducts(Long idTransferenciaEstoque) {
+		return this.repository.getStockByStockTransfer(idTransferenciaEstoque).stream().map(this.modelMapper::toDto).toList();
+	}
+
+	@Override
+	public void transferStock(Long idProduto, Long idPontoVendaOrigem, Long idPontoVendaDestino, Long idTransferenciaEstoque, Integer amount, Usuario usuario) {
+		Estoque origem = this.getNewStock(idProduto, idPontoVendaOrigem, -amount, usuario);
+		Estoque destino = this.getNewStock(idProduto, idPontoVendaDestino, amount, usuario);
+		TransferenciaEstoque transferencia = this.transferenciaEstoqueRepository.findById(idTransferenciaEstoque).orElseThrow();
+
+		origem.setTransferenciaEstoque(transferencia);
+		destino.setTransferenciaEstoque(transferencia);
+
+		this.repository.save(origem);
+		this.repository.save(destino);
 	}
 
 	private Estoque getNewStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario) {

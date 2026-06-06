@@ -20,4 +20,10 @@ public interface StockService {
 
 	List<StockDto> getPurchaseOrderProducts(Long idPedidoCompra);
 
+	List<StockDto> getStockBySalePoint(Long idPontoVenda);
+
+	List<StockDto> getStockTransferProducts(Long idTransferenciaEstoque);
+
+	void transferStock(Long idProduto, Long idPontoVendaOrigem, Long idPontoVendaDestino, Long idTransferenciaEstoque, Integer amount, Usuario usuario);
+
 }

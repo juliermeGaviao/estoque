@@ -138,12 +138,12 @@ public class PurchaseOrderController {
 
 			Pageable pageable = PageRequest.of(0, 10000, Sort.by("nome").ascending());
 
-			Page<ProductDto> result = this.productService.list(productFilter, pageable);
+			Page<ProductDto> produtos = this.productService.list(productFilter, pageable);
 
-			return ResponseEntity.ok(result.stream().filter(dto -> idFornecedor.equals(dto.getFornecedor().getId())).map(dto -> {
-				dto.setEstoque(this.stockService.getStock(dto.getId()));
+			return ResponseEntity.ok(produtos.stream().filter(dto -> idFornecedor.equals(dto.getFornecedor().getId())).map(result -> {
+				result.setEstoque(this.stockService.getStock(result.getId()));
 
-				return dto;
+				return result;
 			}).toList());
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao listar produtos.";
@@ -155,14 +155,14 @@ public class PurchaseOrderController {
 	@GetMapping("/list-purchase-order-products")
 	public ResponseEntity<Object> listPurchaseOrderProducts(@RequestParam(required = true) Long idPedidoCompra) {
 		try {
-			List<StockDto> result = this.stockService.getPurchaseOrderProducts(idPedidoCompra);
+			List<StockDto> estoques = this.stockService.getPurchaseOrderProducts(idPedidoCompra);
 
-			return ResponseEntity.ok(result.stream().map(estoque -> {
-				ProductDto produto = estoque.getProduto();
+			return ResponseEntity.ok(estoques.stream().map(estoque -> {
+				ProductDto result = estoque.getProduto();
 
-				produto.setEstoque(estoque.getQuantidade());
+				result.setEstoque(estoque.getQuantidade());
 
-				return produto;
+				return result;
 			}).toList());
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao listar produtos.";
