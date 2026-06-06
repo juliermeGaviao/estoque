@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,14 +8,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.UserSalePointDto;
-import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.UsuarioPontoVenda;
 import br.com.dinamica.estoque.mapper.UserSalePointMapper;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.UsuarioPontoVendaRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.service.UserSalePointService;
-import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class UserSalePointServiceImpl implements UserSalePointService {
@@ -58,32 +56,32 @@ public class UserSalePointServiceImpl implements UserSalePointService {
 	}
 
 	@Override
-	public UserSalePointDto save(UserSalePointDto dto, Usuario usuario) {
-		UsuarioPontoVenda entity;
-		LocalDateTime agora = DateUtil.now();
+	public UserSalePointDto save(UserSalePointDto dto) {
+		this.repository.deleteByUsuario(dto.getUsuario().getId());
 
-		if (dto.getId() != null) {
-			entity = this.repository.findById(dto.getId()).orElseThrow();
-		} else {
-			entity = new UsuarioPontoVenda();
-
-			entity.setDataCriacao(agora);
-		}
-
-		this.modelMapper.updateEntityFromDto(dto, entity);
-
-		entity.setUsuario(this.usuarioRepository.findById(dto.getUsuario().getId()).orElseThrow());
-		entity.setPontoVenda(this.pontoVendaRepository.findById(dto.getPontoVenda().getId()).orElseThrow());
-		entity.setUsuarioCadastro(usuario);
-
-		entity = this.repository.save(entity);
-
-		return this.modelMapper.toDto(entity);
+		return this.modelMapper.toDto(this.saveSalePoint(dto));
 	}
 
 	@Override
 	public void delete(Long id) {
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public void saveSalePoints(List<UserSalePointDto> dtos) {
+		this.repository.deleteByUsuario(dtos.get(0).getUsuario().getId());
+
+		dtos.forEach(this::saveSalePoint);
+	}
+
+	private UsuarioPontoVenda saveSalePoint(UserSalePointDto dto) {
+		UsuarioPontoVenda entity = new UsuarioPontoVenda();
+
+		entity.setUsuario(this.usuarioRepository.findById(dto.getUsuario().getId()).orElseThrow());
+		entity.setPontoVenda(this.pontoVendaRepository.findById(dto.getPontoVenda().getId()).orElseThrow());
+
+		return this.repository.saveAndFlush(entity);
+
 	}
 
 }

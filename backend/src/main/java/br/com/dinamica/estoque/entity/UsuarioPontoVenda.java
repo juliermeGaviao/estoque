@@ -1,8 +1,5 @@
 package br.com.dinamica.estoque.entity;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
@@ -34,12 +31,5 @@ public class UsuarioPontoVenda {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ponto_venda", nullable = false, foreignKey = @ForeignKey(name = "fk_usuario_pv_ponto_venda"))
     private PontoVenda pontoVenda;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario_cadastro", nullable = false, foreignKey = @ForeignKey(name = "fk_usuario_pv_responsavel"))
-    private Usuario usuarioCadastro;
-
-    @Column(name = "data_criacao", nullable = false, updatable = false)
-    private LocalDateTime dataCriacao;
 
 }

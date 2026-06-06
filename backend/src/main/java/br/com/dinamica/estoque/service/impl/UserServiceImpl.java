@@ -22,6 +22,7 @@ import br.com.dinamica.estoque.entity.Perfil;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.mapper.UserMapper;
 import br.com.dinamica.estoque.repository.PerfilRepository;
+import br.com.dinamica.estoque.repository.UsuarioPontoVendaRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.UsuarioTabelaPrecoRepository;
 import br.com.dinamica.estoque.service.UserService;
@@ -36,14 +37,17 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     private UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository;
 
+    private UsuarioPontoVendaRepository usuarioPontoVendaRepository;
+
     private SHA256PasswordEncoder passwordEncoder;
     
 	private UserMapper modelMapper;
 
-    public UserServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository, SHA256PasswordEncoder passwordEncoder, UserMapper modelMapper) {
+    public UserServiceImpl(UsuarioRepository usuarioRepository, PerfilRepository perfilRepository, UsuarioTabelaPrecoRepository usuarioTabelaPrecoRepository, UsuarioPontoVendaRepository usuarioPontoVendaRepository, SHA256PasswordEncoder passwordEncoder, UserMapper modelMapper) {
         this.usuarioRepository = usuarioRepository;
         this.perfilRepository = perfilRepository;
         this.usuarioTabelaPrecoRepository = usuarioTabelaPrecoRepository;
+        this.usuarioPontoVendaRepository = usuarioPontoVendaRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
     }
@@ -78,6 +82,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         	result.setEmail(usuario.getEmail());
         	result.setPerfis(usuario.getPerfis().stream().map(Perfil::getNome).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
         	result.setTabelas(this.usuarioTabelaPrecoRepository.findByUsuario(usuario.getId()).stream().map(linha -> linha.getTabela().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
+        	result.setPontos(this.usuarioPontoVendaRepository.findByUsuario(usuario.getId()).stream().map(linha -> linha.getPontoVenda().getNome()).sorted(String.CASE_INSENSITIVE_ORDER).collect(Collectors.joining(", ")));
 
         	return result;
         });

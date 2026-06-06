@@ -125,6 +125,8 @@ onMounted(() => {
     loadProfiles()
     loadPriceTables()
     loadUserPriceTables()
+    loadSalePoints()
+    loadUserSalePoints()
   }
 
   loading.value = false
@@ -156,7 +158,37 @@ async function loadUserPriceTables() {
       tableForm.value.setValues({ tabelas: userPriceTables.value.map(record => record.tabela.id), tabela: 0 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços do Usuário', detail: 'Requisição de carga de tabelas de preços do usuário terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
+const salePoints = ref([])
+
+async function loadSalePoints() {
+  try {
+    const response = await api.get('/sale-point/list', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    salePoints.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
+const userSalePoints = ref([])
+
+async function loadUserSalePoints() {
+  try {
+    const response = await api.get('/user-sale-point/list', { params: { idUsuario: userId, page: 0, size: 10000, sort: 'pontoVenda.nome,asc' } })
+
+    userSalePoints.value = response.data.content
+
+    if (userProfiles.value === 1) {
+      salePointForm.value.setValues({ pontos: [], ponto: userSalePoints.value[0].pontoVenda.id })
+    } else if (userProfiles.value > 1) {
+      salePointForm.value.setValues({ pontos: userSalePoints.value.map(record => record.pontoVenda.id), ponto: 0 })
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda do Usuário', detail: 'Requisição de carga dos pontos de venda do usuário terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
@@ -167,6 +199,16 @@ const tableFormValidator = zodResolver(
   z.object({
     tabelas: z.array(z.number()).refine(data => userProfiles.value === 1 || data.length, { message: 'É necessário marcar ao menos uma tabela de preços.' }),
     tabela: z.number().refine(data => userProfiles.value === 2 || data > 0, { message: 'Uma Tabela de Preços deve ser escolhida.' })
+  })
+)
+
+const salePointForm = ref(null)
+const salePointFormValues = ref({ pontos: [], ponto: 0 })
+
+const salePointFormValidator = zodResolver(
+  z.object({
+    pontos: z.array(z.number()).refine(data => userProfiles.value === 1 || data.length, { message: 'É necessário marcar ao menos um ponto de vendas.' }),
+    ponto: z.number().refine(data => userProfiles.value === 2 || data > 0, { message: 'Um Ponto de Venda deve ser escolhida.' })
   })
 )
 
@@ -220,9 +262,59 @@ const savePriceTables = async ({ valid, values }) => {
   }
 }
 
-function clearTables() {
+function clear() {
   tableForm.value.setValues(tableFormValues.value)
+  salePointForm.value.setValues(salePointFormValues.value)
 }
+
+const saveSalePoints = async ({ valid, values }) => {
+  if (!valid) return
+
+  if (userProfiles.value < 2) {
+    const userSalePoint = userSalePoints.value.length ? userSalePoints.value[0] : { pontoVenda: { id: null }, usuario: { id: userId } }
+
+    userSalePoint.pontoVenda.id = values.ponto
+
+    loading.value = true
+
+    try {
+      const response = await api.post('/user-sale-point', userSalePoint)
+
+      if (response.status === 200) {
+        userSalePoints.value = [response.data]
+
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Pontos de Venda salva com sucesso', life: 10000 })
+      }
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
+    } finally {
+      loading.value = false
+    }
+  } else {
+    const points = []
+
+    for (let ponto of values.pontos) {
+      points.push({ pontoVenda: { id: ponto }, usuario: { id: userId } })
+    }
+
+    loading.value = true
+
+    try {
+      const response = await api.post('/user-sale-point/save-sale-points', points)
+
+      if (response.status === 200) {
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Pontos de Venda salva com sucesso', life: 10000 })
+        
+        loadUserSalePoints()
+      }
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -251,7 +343,7 @@ function clearTables() {
             <div classes="label">Perfis:</div>
             <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
               <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
-                @change="clearTables"
+                @change="clear"
                 :modelValue="$field.value"
                 @update:modelValue="val => {
                   $field.value = val
@@ -329,6 +421,44 @@ function clearTables() {
               <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
                 <RadioButton v-model="$field.value" :value="tabela.id" :inputId="'radiobutton_' + tabela.id"/>
                 <label :for="'radiobutton_' + tabela.id">{{ tabela.nome }}</label>
+              </div>
+            </div>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+
+          <div class="flex justify-end gap-2">
+            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+          </div>
+        </Form>
+      </template>
+    </Card>
+    <Card class="mb-6" v-show="eAdmin()">
+      <template #title>
+        <div class="grid grid-cols-2">
+          <h3>Pontos de Venda</h3>
+          <div class="flex justify-end items-center">
+            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          </div>
+        </div>
+      </template>
+      <template #content>
+        <Form ref="salePointForm" :resolver="salePointFormValidator" :initialValues="salePointFormValues" @submit="saveSalePoints" class="grid flex flex-column gap-2">
+          <FormField v-slot="$field" name="pontos" v-show="userProfiles === 2">
+            <div class="flex items-start gap-2">
+              <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
+                <Checkbox v-model="$field.value" :value="ponto.id" :inputId="'checkbox_' + ponto.id"/>
+                <label :for="'checkbox_' + ponto.id">{{ ponto.nome }}</label>
+              </div>
+            </div>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+
+          <FormField v-slot="$field" name="ponto" v-show="userProfiles < 2">
+            <div class="flex items-start gap-2">
+              <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
+                <RadioButton v-model="$field.value" :value="ponto.id" :inputId="'radiobutton_' + ponto.id"/>
+                <label :for="'radiobutton_' + ponto.id">{{ ponto.nome }}</label>
               </div>
             </div>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>

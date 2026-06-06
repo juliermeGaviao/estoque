@@ -141,6 +141,7 @@ const confirmDelete = entity => {
           <Column field="email" header="Email" sortable/>
           <Column field="perfis" header="Perfis"/>
           <Column field="tabelas" header="Tabelas de Preços"/>
+          <Column field="pontos" header="Pontos de Venda"/>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>

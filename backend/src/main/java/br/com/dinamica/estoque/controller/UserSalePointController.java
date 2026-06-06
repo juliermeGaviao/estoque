@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -8,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.dinamica.estoque.dto.PageResponse;
 import br.com.dinamica.estoque.dto.UserSalePointDto;
-import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.UserSalePointService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,9 +72,9 @@ public class UserSalePointController {
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> save(@RequestBody UserSalePointDto dto, @AuthenticationPrincipal Usuario usuario) {
+	public ResponseEntity<Object> save(@RequestBody UserSalePointDto dto) {
 		try {
-			return ResponseEntity.ok(this.service.save(dto, usuario));
+			return ResponseEntity.ok(this.service.save(dto));
 		} catch (NoSuchElementException e) {
 			String mensagem = NOT_FOUND + dto.getId();
 			log.error(mensagem, e);
@@ -99,6 +98,23 @@ public class UserSalePointController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		} catch (RuntimeException e) {
 			String mensagem = "Erro ao remover " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("/save-sale-points")
+	public ResponseEntity<Object> save(@RequestBody List<UserSalePointDto> dtos) {
+		try {
+			this.service.saveSalePoints(dtos);
+
+			return ResponseEntity.ok("Pontos de Venda registrados");
+		} catch (NoSuchElementException e) {
+			String mensagem = "Algum ponto de venda ou usuário não encontrado na base";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
 		}

@@ -12,9 +12,13 @@ public interface UserSalePointMapper {
 
     UserSalePointDto toDto(UsuarioPontoVenda entity);
 
-	@Mapping(target = "usuario", ignore = true)
-	@Mapping(target = "usuarioCadastro", ignore = true)
-	@Mapping(target = "dataCriacao", ignore = true)
+	@Mapping(target = "usuario.senha", ignore = true)
+	@Mapping(target = "usuario.cadastrante", ignore = true)
+	@Mapping(target = "usuario.dataCriacao", ignore = true)
+	@Mapping(target = "usuario.dataAlteracao", ignore = true)
+	@Mapping(target = "usuario.ativo", ignore = true)
+	@Mapping(target = "usuario.authorities", ignore = true)
+	@Mapping(target = "usuario.perfis", ignore = true)
 	@Mapping(target = "pontoVenda.usuario", ignore = true)
     @Mapping(target = "pontoVenda.dataCriacao", ignore = true)
     @Mapping(target = "pontoVenda.dataAlteracao", ignore = true)

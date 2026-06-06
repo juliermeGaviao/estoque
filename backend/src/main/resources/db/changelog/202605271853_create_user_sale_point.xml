@@ -22,15 +22,12 @@
                 <constraints nullable="false" foreignKeyName="fk_usuario_pv_ponto_venda" references="ponto_venda(id)"/>
             </column>
 
-            <column name="id_usuario_cadastro" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_usuario_pv_responsavel" references="usuario(id)"/>
-            </column>
-
-            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-
 		</createTable>
+
+        <insert tableName="usuario_ponto_venda">
+            <column name="id_usuario">1</column>
+            <column name="id_ponto_venda">1</column>
+        </insert>
 
 	    <rollback>
 	        <dropTable tableName="usuario_ponto_venda"/>
