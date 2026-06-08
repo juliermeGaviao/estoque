@@ -41,7 +41,7 @@ async function load(idVenda) {
 
     if (form.value) {
       form.value.setValues({
-        idCliente: response.data.cliente.id,
+        idCliente: response.data.cliente?.id,
         idVendedor: response.data.vendedor.id,
         idTabela: response.data.tabela.id,
         idPontoVenda: response.data.pontoVenda.id,
@@ -68,7 +68,7 @@ const save = async ({ valid, values }) => {
     return
   }
 
-  const estoques = itens.value.filter(item => item.quantidade && item.quantidade > item.tabelaPrecoProduto.produto.estoque)
+  const estoques = itens.value.filter(item => item.quantidade && (item.quantidade - item.quantidadeOriginal > item.tabelaPrecoProduto.produto.estoque))
 
   if (estoques.length > 0) {
     toast.add({ severity: 'error', summary: 'Itens de Venda fora de estoque', detail: 'Há itens com quantidade maior que o estoque de seu produto.', life: 10000 })
@@ -77,7 +77,6 @@ const save = async ({ valid, values }) => {
 
   const params = {
     id: Number.parseInt(id.value),
-    cliente: { id: values.idCliente },
     vendedor: { id: values.idVendedor },
     tabela: { id: values.idTabela },
     pontoVenda: { id: values.idPontoVenda },
@@ -85,6 +84,10 @@ const save = async ({ valid, values }) => {
     desconto: values.desconto,
     total: values.total,
     observacoes: values.observacoes
+  }
+
+  if (values.idCliente) {
+    params['cliente'] =  { id: values.idCliente }
   }
 
   loading.value = true
@@ -137,7 +140,9 @@ onMounted(async () => {
     
     loadTables(fields.idVendedor.value)
     loadSalePoints(fields.idVendedor.value)
-    loadClient(fields.idCliente.value)
+    if (fields.idCliente.value) {
+      loadClient(fields.idCliente.value)
+    }
     loadItens('list-by-sale', { idVenda: id.value })
   } else {
     await loadTables(getUserId())
@@ -168,7 +173,10 @@ async function loadItens(path, parameters) {
   try {
     const response = await api.get(`/sale-item/${path}`, { params: parameters })
 
-    itens.value = response.data
+    itens.value = response.data.map(item => ({
+      ...item,
+      quantidadeOriginal: item.quantidade ? item.quantidade : 0
+    }))
 
     evaluateTotal()
   } catch (error) {
@@ -406,10 +414,10 @@ function clear() {
           <Column field="id" header="Id" v-if="id"/>
           <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
           <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
-          <Column field="tabelaPrecoProduto.produto.estoque" header="Em Estoque"/>
+          <Column field="tabelaPrecoProduto.produto.estoque" header="Estoque"/>
           <Column field="quantidade" header="Quantidade">
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.tabelaPrecoProduto.produto.estoque" :step="1" showButtons buttonLayout="horizontal" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="setAmount($event, slotProps.data)" size="small"/>
+              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.tabelaPrecoProduto.produto.estoque + slotProps.data.quantidadeOriginal" :step="1" showButtons buttonLayout="horizontal" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="setAmount($event, slotProps.data)" size="small"/>
             </template>
           </Column>
           <Column field="precoUnitario" header="Preço Unitário (R$)">

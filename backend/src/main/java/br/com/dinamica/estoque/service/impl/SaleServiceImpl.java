@@ -9,12 +9,14 @@ import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.SaleDto;
 import br.com.dinamica.estoque.entity.Cliente;
+import br.com.dinamica.estoque.entity.PontoVenda;
 import br.com.dinamica.estoque.entity.TabelaPreco;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.mapper.SaleMapper;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
+import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
@@ -34,14 +36,17 @@ public class SaleServiceImpl implements SaleService {
 
 	private ClienteRepository clienteRepository;
 
+	private PontoVendaRepository pontoVendaRepository;
+
 	private SaleMapper modelMapper;
 
-	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ClienteRepository clienteRepository, SaleMapper modelMapper) {
+	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ClienteRepository clienteRepository, PontoVendaRepository pontoVendaRepository, SaleMapper modelMapper) {
 		this.repository = repository;
 		this.itemVendaRepository = itemVendaRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.precoTabelaRepository = precoTabelaRepository;
 		this.clienteRepository = clienteRepository;
+		this.pontoVendaRepository = pontoVendaRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -111,10 +116,12 @@ public class SaleServiceImpl implements SaleService {
 		}
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
 		TabelaPreco tabela = this.precoTabelaRepository.findById(dto.getTabela().getId()).orElseThrow();
+		PontoVenda ponto = this.pontoVendaRepository.findById(dto.getPontoVenda().getId()).orElseThrow();
 
 		entity.setCliente(cliente);
 		entity.setVendedor(vendedor);
 		entity.setTabela(tabela);
+		entity.setPontoVenda(ponto);
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 

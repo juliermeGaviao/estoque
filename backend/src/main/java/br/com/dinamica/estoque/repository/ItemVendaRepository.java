@@ -33,7 +33,7 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
             COALESCE(
                  (SELECT e.saldo
                  FROM Estoque e
-                 WHERE e.produto.id = tpp.produto.id AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id)), 
+                 WHERE e.produto.id = tpp.produto.id AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = v.pontoVenda.id)), 
                  0)
             FROM TabelaPrecoProduto tpp
             JOIN Venda v ON v.tabela.id = tpp.tabela.id

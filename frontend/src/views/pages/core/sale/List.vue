@@ -234,6 +234,7 @@ function limpar() {
           <Column field="id" header="Id" sortable/>
           <Column field="cliente.nome" header="Cliente" sortable/>
           <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
+          <Column field="pontoVenda.nome" header="Ponto de Venda" sortable v-if="eAdmin()"/>
           <Column field="subTotal" header="Subtotal (R$)" sortable>
             <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal) }}</template>
           </Column>
