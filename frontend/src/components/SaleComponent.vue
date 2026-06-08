@@ -260,28 +260,27 @@ function changeDiscount(event) {
   form.value.setFieldValue('total', Number.parseFloat(total.toFixed(2)))
 }
 
-async function changeSalesman(idVendedor) {
-  await loadTables(idVendedor)
-  await loadSalePoints(idVendedor)
+async function changeSalesman(event) {
+  await loadTables(event.value)
+  await loadSalePoints(event.value)
 
   if (tables.value.length === 1) {
-    const idTabela = tables.value[0].tabela.id
-    form.value.setFieldValue('idTabela', idTabela)
-    await loadItens('list-by-price-table', { idTabelaPreco: idTabela })
+    form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
+    form.value.setFieldValue('idPontoVenda', salePoints.value.length === 1 ? salePoints.value[0].pontoVenda.id : null)
+    loadItens('list-by-price-table', { idTabelaPreco: form.value?.states?.idTabela?.value, idPontoVenda: form.value?.states?.idPontoVenda?.value })
   } else {
     form.value.setFieldValue('idTabela', null)
+    form.value.setFieldValue('idPontoVenda', null)
     itens.value = []
     evaluateTotal()
   }
-
-  form.value.setFieldValue('idPontoVenda', salePoints.value.length === 1 ? salePoints.value[0].tabela.id : null)
 }
 
-function changePriceTable(idTabela) {
+function changePriceTable(event) {
   if (id.value) {
     loadItens('list-by-sale', { idVenda: id.value })
-  } else {
-    loadItens('list-by-price-table', { idTabelaPreco: idTabela })
+  } else if (form.value?.states?.idTabela?.value && form.value?.states?.idPontoVenda?.value) {
+    loadItens('list-by-price-table', { idTabelaPreco: form.value?.states?.idTabela?.value, idPontoVenda: form.value?.states?.idPontoVenda?.value })
   }
 }
 
@@ -290,6 +289,12 @@ function clear() {
   pj.value = false
   itens.value = []
   loadTableProducts()
+}
+
+function changeSalePoint(event) {
+  if (form.value?.states?.idTabela?.value && form.value?.states?.idPontoVenda?.value) {
+    loadItens('list-by-price-table', { idTabelaPreco: form.value?.states?.idTabela?.value, idPontoVenda: form.value?.states?.idPontoVenda?.value })
+  }
 }
 </script>
 
@@ -311,7 +316,7 @@ function clear() {
             <div :class="pj ? 'col-span-5' : 'col-span-12'">
               <FormField v-slot="$field" name="idCliente">
                 <FloatLabel variant="on">
-                  <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @update:modelValue="loadClient($event)"/>
+                  <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @change="loadClient($event)"/>
                   <label for="idCliente">Cliente</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -330,7 +335,7 @@ function clear() {
             <div class="col-span-4">
               <FormField v-slot="$field" name="idVendedor">
                 <FloatLabel variant="on">
-                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @update:modelValue="changeSalesman($event)"/>
+                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @change="changeSalesman($event)"/>
                   <label for="idVendedor">Vendedor</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -339,7 +344,7 @@ function clear() {
             <div class="col-span-4">
               <FormField v-slot="$field" name="idTabela">
                 <FloatLabel variant="on">
-                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @update:modelValue="changePriceTable($event)"/>
+                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @change="changePriceTable($event)"/>
                   <label for="idTabela">Tabela de Preços</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
@@ -348,7 +353,7 @@ function clear() {
             <div class="col-span-4">
               <FormField v-slot="$field" name="idPontoVenda">
                 <FloatLabel variant="on">
-                  <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid/>
+                  <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid @change="changeSalePoint($event)"/>
                   <label for="idPontoVenda">Ponto de Venda</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
