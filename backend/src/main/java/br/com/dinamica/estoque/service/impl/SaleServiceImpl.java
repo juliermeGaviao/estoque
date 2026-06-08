@@ -105,7 +105,10 @@ public class SaleServiceImpl implements SaleService {
 
 		this.modelMapper.updateEntityFromDto(dto, entity);
 
-		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
+		Cliente cliente = null;
+		if (dto.getCliente() != null && dto.getCliente().getId() != null) {
+			cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
+		}
 		Usuario vendedor = this.usuarioRepository.findById(dto.getVendedor().getId()).orElseThrow();
 		TabelaPreco tabela = this.precoTabelaRepository.findById(dto.getTabela().getId()).orElseThrow();
 

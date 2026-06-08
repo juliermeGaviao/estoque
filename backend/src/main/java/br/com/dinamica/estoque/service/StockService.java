@@ -26,4 +26,6 @@ public interface StockService {
 
 	void transferStock(Long idProduto, Long idPontoVendaOrigem, Long idPontoVendaDestino, Long idTransferenciaEstoque, Integer amount, Usuario usuario);
 
+	List<StockDto> getStockByProductAndSalePoint(Long idProduto);
+
 }

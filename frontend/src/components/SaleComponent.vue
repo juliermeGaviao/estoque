@@ -18,13 +18,13 @@ const toast = useToast()
 const loading = ref(false)
 
 const form = ref(null)
-const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
+const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, idPontoVenda: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
 
 const formValidator = zodResolver(
   z.object({
-    idCliente: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Preenchimento do Cliente é obrigatório." }),
     idVendedor: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Preenchimento do Vendedor é obrigatório." }),
     idTabela: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Tabela de preços é de preenchimento obrigatório." }),
+    idPontoVenda: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Ponto de Venda é de preenchimento obrigatório." }),
     razaoSocial: z.string().nullable().optional(),
     subTotal: z.number().nullable().optional(),
     desconto: z.number().nullable().optional(),
@@ -44,6 +44,7 @@ async function load(idVenda) {
         idCliente: response.data.cliente.id,
         idVendedor: response.data.vendedor.id,
         idTabela: response.data.tabela.id,
+        idPontoVenda: response.data.pontoVenda.id,
         subTotal: response.data.subTotal,
         desconto: response.data.desconto,
         total: response.data.total,
@@ -79,6 +80,7 @@ const save = async ({ valid, values }) => {
     cliente: { id: values.idCliente },
     vendedor: { id: values.idVendedor },
     tabela: { id: values.idTabela },
+    pontoVenda: { id: values.idPontoVenda },
     subTotal: values.subTotal,
     desconto: values.desconto,
     total: values.total,
@@ -95,7 +97,7 @@ const save = async ({ valid, values }) => {
 
       itens.value.forEach(item => {
         if (item.quantidade && item.quantidade > 0) {
-          item.venda = { id: response.data.id }
+          item.venda = { id: response.data.id, pontoVenda: { id: values.idPontoVenda } }
         }
       })
 
@@ -122,7 +124,8 @@ async function loadTableProducts() {
   if (!eAdmin()) {
     form.value.setFieldValue('idVendedor', getUserId())
     form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-    loadItens('list-by-price-table', { idTabelaPreco: tables.value[0].tabela.id })
+    form.value.setFieldValue('idPontoVenda', salePoints.value[0].pontoVenda.id)
+    loadItens('list-by-price-table', { idTabelaPreco: tables.value[0].tabela.id, idPontoVenda: salePoints.value[0].pontoVenda.id })
   }
 }
 
@@ -133,10 +136,12 @@ onMounted(async () => {
     const fields = form.value?.states
     
     loadTables(fields.idVendedor.value)
+    loadSalePoints(fields.idVendedor.value)
     loadClient(fields.idCliente.value)
     loadItens('list-by-sale', { idVenda: id.value })
   } else {
     await loadTables(getUserId())
+    await loadSalePoints(getUserId())
     loadTableProducts()
   }
 
@@ -180,6 +185,18 @@ async function loadTables(idVendedor) {
     tables.value = response.data.content
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Tabelas de Preço do Vendedor", detail: "Requisição de lista de Tabelas de Preço do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
+  }
+}
+
+const salePoints = ref([])
+
+async function loadSalePoints(idVendedor) {
+  try {
+    const response = await api.get("/user-sale-point/list", { params: { idUsuario: idVendedor, page: 0, size: 10000, sort: 'pontoVenda.nome,asc' } })
+
+    salePoints.value = response.data.content
+  } catch (error) {
+    toast.add({ severity: "error", summary: "Falha de Carga de Pontos de Venda do Vendedor", detail: "Requisição de lista de Pontos de Venda do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
   }
 }
 
@@ -237,6 +254,7 @@ function changeDiscount(event) {
 
 async function changeSalesman(idVendedor) {
   await loadTables(idVendedor)
+  await loadSalePoints(idVendedor)
 
   if (tables.value.length === 1) {
     const idTabela = tables.value[0].tabela.id
@@ -247,6 +265,8 @@ async function changeSalesman(idVendedor) {
     itens.value = []
     evaluateTotal()
   }
+
+  form.value.setFieldValue('idPontoVenda', salePoints.value.length === 1 ? salePoints.value[0].tabela.id : null)
 }
 
 function changePriceTable(idTabela) {
@@ -299,7 +319,7 @@ function clear() {
             </div>
           </div>
           <div class="grid grid-cols-12 gap-2" v-show="eAdmin()">
-            <div class="col-span-6">
+            <div class="col-span-4">
               <FormField v-slot="$field" name="idVendedor">
                 <FloatLabel variant="on">
                   <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @update:modelValue="changeSalesman($event)"/>
@@ -308,11 +328,20 @@ function clear() {
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>
             </div>
-            <div class="col-span-6">
+            <div class="col-span-4">
               <FormField v-slot="$field" name="idTabela">
                 <FloatLabel variant="on">
                   <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @update:modelValue="changePriceTable($event)"/>
                   <label for="idTabela">Tabela de Preços</label>
+                </FloatLabel>
+                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+              </FormField>
+            </div>
+            <div class="col-span-4">
+              <FormField v-slot="$field" name="idPontoVenda">
+                <FloatLabel variant="on">
+                  <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid/>
+                  <label for="idPontoVenda">Ponto de Venda</label>
                 </FloatLabel>
                 <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
               </FormField>

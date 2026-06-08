@@ -113,6 +113,11 @@ public class StockServiceImpl implements StockService {
 		this.repository.save(destino);
 	}
 
+	@Override
+	public List<StockDto> getStockByProductAndSalePoint(Long idProduto) {
+		return this.repository.getStockByProductAndSalePoint(idProduto).stream().map(this.modelMapper::toDto).toList();
+	}
+
 	private Estoque getNewStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario) {
 		Integer current = this.repository.getStockByProductAndSalePoint(idProduto, idPontoVenda);
 		Estoque result = new Estoque();

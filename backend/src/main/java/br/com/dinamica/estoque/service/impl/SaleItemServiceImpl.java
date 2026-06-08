@@ -161,8 +161,8 @@ public class SaleItemServiceImpl implements SaleItemService {
 	}
 
 	@Override
-	public List<SaleItemDto> getItensByPriceTable(Long idTabelaPreco) {
-		List<Object[]> result = this.repository.getItensByPriceTable(idTabelaPreco);
+	public List<SaleItemDto> getItensByPriceTableAndSalePoint(Long idTabelaPreco,  Long idPontoVenda) {
+		List<Object[]> result = this.repository.getItensByPriceTable(idTabelaPreco, idPontoVenda);
 
 		return result.stream().map(linha -> {
 			SaleItemDto dto = new SaleItemDto();

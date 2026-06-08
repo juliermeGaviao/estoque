@@ -318,6 +318,23 @@ async function clickAndSaveAll() {
   }
 }
 
+const pop = ref()
+const salePoints = ref()
+
+const togglePopover = async (event, product) => {
+  pop.value.toggle(event)
+
+  try {
+    const response = await api.get('/product/stock-product-sale-point', { params: { idProduto: product.id } })
+
+    if (response.status === 200) {
+      salePoints.value = response.data
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Estoque', detail: `Requisição de obtenção do estoque detalhado do produto terminou com o erro: ` + error.response.data, life: 10000 })
+  }
+}
+
 </script>
 
 <template>
@@ -432,7 +449,12 @@ async function clickAndSaveAll() {
               </div>
             </template>
           </Column>
-          <Column field="estoque" header="Em Estoque"/>
+          <Column field="estoque" header="Estoque">
+            <template #body="slotProps">
+              {{ slotProps.data.estoque }}&nbsp;
+              <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover($event, slotProps.data)" style="cursor: pointer; color: black;"/>
+            </template>
+          </Column>
 
           <Column headerClass="flex justify-center" bodyClass="flex justify-center">
             <template #header>
@@ -447,6 +469,23 @@ async function clickAndSaveAll() {
             </template>
           </Column>
         </DataTable>
+
+        <Popover ref="pop">
+          <div v-if="salePoints && salePoints.length">
+            <div v-for="item in salePoints" :key="item.id">
+              <b>{{ item.pontoVenda?.nome }}</b>: {{ item.saldo }}
+            </div>
+          </div>
+
+          <div v-else-if="salePoints && salePoints.length === 0">
+            <span>Produto sem estoque.</span>
+          </div>
+
+          <div v-else class="p-3 text-center text-gray-400 flex flex-column items-center justify-center gap-2">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
+            <span class="text-xs font-medium">Buscando estoques...</span>
+          </div>
+        </Popover>
 
         <div class="flex justify-end mt-4">
           <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>

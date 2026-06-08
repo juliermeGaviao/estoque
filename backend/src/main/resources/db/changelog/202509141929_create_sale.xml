@@ -15,7 +15,7 @@
 			</column>
 
             <column name="id_cliente" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_venda_cliente" references="cliente(id)"/>
+                <constraints foreignKeyName="fk_venda_cliente" references="cliente(id)"/>
             </column>
 
             <column name="id_vendedor" type="bigint">

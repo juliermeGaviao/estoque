@@ -20,13 +20,13 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
             COALESCE(
                  (SELECT e.saldo
                  FROM Estoque e
-                 WHERE e.produto.id = tpp.produto.id AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id)), 
+                 WHERE e.produto.id = tpp.produto.id AND e.pontoVenda.id = :idPontoVenda AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = :idPontoVenda)), 
                  0)
             FROM TabelaPrecoProduto tpp
             WHERE tpp.tabela.id = :idTabelaPreco
             ORDER BY tpp.produto.nome
         """)
-	List<Object[]> getItensByPriceTable(@Param("idTabelaPreco") Long idTabelaPreco);
+	List<Object[]> getItensByPriceTable(@Param("idTabelaPreco") Long idTabelaPreco, @Param("idPontoVenda") Long idPontoVenda);
 
 	@Query(value = """
             SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, iv.quantidade, tpp.preco, iv.total,

@@ -20,7 +20,7 @@ public interface SaleItemService {
 
 	void delete(Long id);
 
-	List<SaleItemDto> getItensByPriceTable(Long idTabelaPreco);
+	List<SaleItemDto> getItensByPriceTableAndSalePoint(Long idTabelaPreco,  Long idPontoVenda);
 
 	List<SaleItemDto> getItensBySale(Long idVenda);
 

@@ -29,4 +29,7 @@ public interface EstoqueRepository extends JpaRepository<Estoque, Long>, JpaSpec
 	@Query("FROM Estoque e WHERE e.transferenciaEstoque.id = :idTransferenciaEstoque AND e.tipoOperacao = 'C' ORDER BY e.produto.nome")
 	List<Estoque> getStockByStockTransfer(@Param("idTransferenciaEstoque") Long idTransferenciaEstoque);
 
+	@Query("FROM Estoque e WHERE e.id IN (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = :idProduto GROUP BY s.pontoVenda.id) ORDER BY e.pontoVenda.nome")
+	List<Estoque> getStockByProductAndSalePoint(@Param("idProduto") Long idProduto);
+
 }
