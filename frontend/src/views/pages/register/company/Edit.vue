@@ -62,8 +62,6 @@ let idContact
 const visible = ref(false)
 
 async function load() {
-  loading.value = true
-
   try {
     const res = await api.get('/client', { params: { id: id.value } })
 
@@ -82,8 +80,6 @@ async function load() {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Empresa Cliente', detail: 'Requisição de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 
   loadContacts()
@@ -263,7 +259,9 @@ onMounted(() => {
   StateService.getStates().then(data => states.value = data)
 
   if (id.value) {
+    loading.value = true
     load()
+    loading.value = false
   }
 })
 

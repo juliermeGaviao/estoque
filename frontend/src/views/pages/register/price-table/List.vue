@@ -21,8 +21,6 @@ const sortOrder = ref(null)
 const nome = ref('')
 
 async function load() {
-  loading.value = true
-  
   let params = {
     page: page.value,
     size: size.value
@@ -53,12 +51,14 @@ async function load() {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços', detail: 'Requisição de lista de tabelas de preços terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  loading.value = true
+  load()
+  loading.value = false
+})
 
 async function onPage(event) {
   const result = await saveAll(false)
@@ -237,8 +237,7 @@ async function saveAll(emitirMensagem) {
 
     return false
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = false
   }
 
   return true

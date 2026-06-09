@@ -4,7 +4,6 @@ import { useToast } from 'primevue/usetoast'
 import { defineEmits, defineProps, nextTick, onMounted, ref, watch } from 'vue'
 
 const toast = useToast()
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -18,20 +17,12 @@ const props = defineProps({
 })
 
 watch(() => props.id, async () => {
-  loading.value = true
   load()
-  await nextTick()
-  setTimeout(() => loading.value = false, 50)
 }, { immediate: true })
 
 onMounted(async () => {
-  loading.value = true
-
   loadProductTypes()
   loadProviders()
-
-  await nextTick()
-  setTimeout(() => loading.value = false, 50)
 })
 
 const data = ref([])
@@ -125,8 +116,6 @@ async function saveAll(emitirAviso) {
       preco: item.preco
   }))
 
-  loading.value = true
-
   try {
     const response = await api.post('/price-table-product/save-prices', payload)
 
@@ -135,9 +124,6 @@ async function saveAll(emitirAviso) {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Preços', detail: 'Requisição de alteração de preços terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
   }
 
   return true
@@ -189,36 +175,34 @@ function closeDialog() {
 </script>
 
 <template>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title>
-        <div class="flex justify-between items-center w-full">
-          <h3>Lista de Tabelas de Preços{{ (nomeTabelaPreco.length ? ' - ' : '' ) + nomeTabelaPreco }}</h3>
-          <Button icon="pi pi-times" severity="secondary" rounded text @click="closeDialog"/>
-        </div>
-      </template>
-      <template #content>
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+  <Card>
+    <template #title>
+      <div class="flex justify-between items-center w-full">
+        <h3>Lista de Tabelas de Preços{{ (nomeTabelaPreco.length ? ' - ' : '' ) + nomeTabelaPreco }}</h3>
+        <Button icon="pi pi-times" severity="secondary" rounded text @click="closeDialog"/>
+      </div>
+    </template>
+    <template #content>
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
-          <Column field="produto.id" header="Id" sortable/>
-          <Column field="produto.nome" header="Nome" sortable/>
-          <Column field="produto.referencia" header="Referência" sortable/>
-          <Column field="produto.tipoProduto.nome" header="Tipo de Produto" sortable/>
-          <Column field="produto.fornecedor.fantasia" header="Fornecedor" sortable/>
-          <Column field="produto.peso" header="Peso (em gramas)" sortable/>
-          <Column field="preco" header="Preço (R$)" headerClass="flex justify-center" bodyClass="flex justify-center" sortable>
-            <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small" :inputStyle="{'text-align': 'right'}"/>
-            </template>
-          </Column>
-        </DataTable>
-        <div class="flex justify-end gap-2 mt-4">
-          <Button label="Limpar" icon="pi pi-times" @click="cleanPrices" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" @click="clickAndSaveAll" raised/>
-        </div>
-      </template>
-    </Card>
-  </BlockUI>
+        <Column field="produto.id" header="Id" sortable/>
+        <Column field="produto.nome" header="Nome" sortable/>
+        <Column field="produto.referencia" header="Referência" sortable/>
+        <Column field="produto.tipoProduto.nome" header="Tipo de Produto" sortable/>
+        <Column field="produto.fornecedor.fantasia" header="Fornecedor" sortable/>
+        <Column field="produto.peso" header="Peso (em gramas)" sortable/>
+        <Column field="preco" header="Preço (R$)" headerClass="flex justify-center" bodyClass="flex justify-center" sortable>
+          <template #body="slotProps">
+            <InputNumber v-model="slotProps.data.preco" :minFractionDigits="2" :maxFractionDigits="2" :max="10000" size="small" :inputStyle="{'text-align': 'right'}"/>
+          </template>
+        </Column>
+      </DataTable>
+      <div class="flex justify-end gap-2 mt-4">
+        <Button label="Limpar" icon="pi pi-times" @click="cleanPrices" severity="secondary" raised/>
+        <Button label="Salvar" icon="pi pi-save" @click="clickAndSaveAll" raised/>
+      </div>
+    </template>
+  </Card>
 </template>

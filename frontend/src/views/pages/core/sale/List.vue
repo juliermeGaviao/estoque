@@ -42,8 +42,6 @@ async function load(params) {
     query.sort = "id,desc"
   }
 
-  loading.value = true
-
   try {
     const response = await api.get("/sale/list", { params: query })
 
@@ -51,15 +49,17 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Vendas", detail: "Requisição de lista de vendas terminou com o erro: " + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  loading.value = true
+
   load({})
   loadUsers()
   loadClients()
+
+  loading.value = false
 })
 
 function onPage(event) {
@@ -117,32 +117,24 @@ const confirmDelete = entity => {
 let users = ref([])
 
 async function loadUsers() {
-  loading.value = true
-
   try {
     const response = await api.get('/user/list', { params: { page: 0, size: 10000, sort: 'email,asc' } })
 
     users.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Vendedores', detail: 'Requisição de lista de Vendedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 const clients = ref([])
 
 async function loadClients() {
-  loading.value = true
-
   try {
     const response = await api.get('/client/find-all')
 
     clients.value = response.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de Clientes terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 

@@ -108,8 +108,7 @@ async function loadSalePoints() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -128,8 +127,7 @@ async function loadSalePointProducts(origem, destino) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -146,8 +144,7 @@ async function loadStockTransferProducts(stockTransferId) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de transferência de estoque terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -228,12 +225,9 @@ const saveStockTransfer = async ({ valid, values }) => {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação do Transferência de Estoque', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => {
-      loading.value = false
-      toggle()
-      load( { ...filterValues.value } )
-    }, 50)
+    loading.value = true
+    toggle()
+    load( { ...filterValues.value } )
   }
 }
 

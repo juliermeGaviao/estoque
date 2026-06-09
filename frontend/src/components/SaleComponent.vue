@@ -15,7 +15,6 @@ const props = defineProps({
 
 const router = useRouter()
 const toast = useToast()
-const loading = ref(false)
 
 const form = ref(null)
 const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, idPontoVenda: null, razaoSocial: null, subTotal: null, desconto: null, total: null, observacoes: null })
@@ -90,8 +89,6 @@ const save = async ({ valid, values }) => {
     params['cliente'] =  { id: values.idCliente }
   }
 
-  loading.value = true
-
   try {
     const response = await api.post('/sale', params)
 
@@ -118,8 +115,6 @@ const save = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação da Venda', detail: 'Requisição de alteração da venda terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -264,16 +259,11 @@ async function changeSalesman(event) {
   await loadTables(event.value)
   await loadSalePoints(event.value)
 
-  if (tables.value.length === 1) {
-    form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-    form.value.setFieldValue('idPontoVenda', salePoints.value.length === 1 ? salePoints.value[0].pontoVenda.id : null)
-    loadItens('list-by-price-table', { idTabelaPreco: form.value?.states?.idTabela?.value, idPontoVenda: form.value?.states?.idPontoVenda?.value })
-  } else {
-    form.value.setFieldValue('idTabela', null)
-    form.value.setFieldValue('idPontoVenda', null)
-    itens.value = []
-    evaluateTotal()
-  }
+  const idTable = tables.value[0].tabela.id
+  const idSalePoint = salePoints.value[0].pontoVenda.id
+
+  form.value.setValues({ idTabela: idTable, idPontoVenda: idSalePoint })
+  loadItens('list-by-price-table', { idTabelaPreco: idTable, idPontoVenda: idSalePoint })
 }
 
 function changePriceTable(event) {
@@ -299,144 +289,142 @@ function changeSalePoint(event) {
 </script>
 
 <template>
-  <BlockUI :blocked="loading">
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Venda</h3>
-          <div class="flex justify-end items-center" v-show="props.backEndpoint">
-            <Button icon="pi pi-replay" @click="router.push(props.backEndpoint)" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Venda</h3>
+        <div class="flex justify-end items-center" v-show="props.backEndpoint">
+          <Button icon="pi pi-replay" @click="router.push(props.backEndpoint)" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+
+    <template #content>
+      <Form ref="form" :resolver="formValidator" :validateOn="{ choice: 'submit' }" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
+        <div class="grid grid-cols-12 gap-2">
+          <div :class="pj ? 'col-span-5' : 'col-span-12'">
+            <FormField v-slot="$field" name="idCliente">
+              <FloatLabel variant="on">
+                <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @change="loadClient($event)"/>
+                <label for="idCliente">Cliente</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+          <div class="col-span-7" v-show="pj">
+            <FormField name="razaoSocial">
+              <FloatLabel variant="on">
+                <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid readonly/>
+                <label for="razaoSocial">Razão Social</label>
+              </FloatLabel>
+            </FormField>
           </div>
         </div>
-      </template>
-
-      <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
-          <div class="grid grid-cols-12 gap-2">
-            <div :class="pj ? 'col-span-5' : 'col-span-12'">
-              <FormField v-slot="$field" name="idCliente">
-                <FloatLabel variant="on">
-                  <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @change="loadClient($event)"/>
-                  <label for="idCliente">Cliente</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-            <div class="col-span-7" v-show="pj">
-              <FormField name="razaoSocial">
-                <FloatLabel variant="on">
-                  <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid readonly/>
-                  <label for="razaoSocial">Razão Social</label>
-                </FloatLabel>
-              </FormField>
-            </div>
+        <div class="grid grid-cols-12 gap-2" v-show="eAdmin()">
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="idVendedor">
+              <FloatLabel variant="on">
+                <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @change="changeSalesman($event)"/>
+                <label for="idVendedor">Vendedor</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
           </div>
-          <div class="grid grid-cols-12 gap-2" v-show="eAdmin()">
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="idVendedor">
-                <FloatLabel variant="on">
-                  <Select id="idVendedor" :options="users" optionLabel="email" optionValue="id" fluid @change="changeSalesman($event)"/>
-                  <label for="idVendedor">Vendedor</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="idTabela">
-                <FloatLabel variant="on">
-                  <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @change="changePriceTable($event)"/>
-                  <label for="idTabela">Tabela de Preços</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="idPontoVenda">
-                <FloatLabel variant="on">
-                  <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid @change="changeSalePoint($event)"/>
-                  <label for="idPontoVenda">Ponto de Venda</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="idTabela">
+              <FloatLabel variant="on">
+                <Select id="idTabela" :options="tables" optionLabel="tabela.nome" optionValue="tabela.id" fluid @change="changePriceTable($event)"/>
+                <label for="idTabela">Tabela de Preços</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
           </div>
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="subTotal">
-                <FloatLabel variant="on">
-                  <InputNumber id="subTotal" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
-                  <label for="subTotal">Subtotal (R$)</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="desconto">
-                <FloatLabel variant="on">
-                  <InputNumber id="desconto" :max="99.99" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="changeDiscount"/>
-                  <label for="desconto">Desconto (%)</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField v-slot="$field" name="total">
-                <FloatLabel variant="on">
-                  <InputNumber id="total" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
-                  <label for="total">Total (R$)</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-          </div>
-          <FormField v-slot="$field" name="observacoes">
-            <FloatLabel variant="on" class="flex-1">
-              <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
-              <label for="observacoes">Observações</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-          <div class="flex justify-end gap-2 mt-2">
-            <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised size="small"/>
-            <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'" size="small"/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised size="small"/>
-          </div>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Itens da Venda</h3>
-          <div class="flex justify-end items-center" v-show="props.backEndpoint">
-            <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="idPontoVenda">
+              <FloatLabel variant="on">
+                <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid @change="changeSalePoint($event)"/>
+                <label for="idPontoVenda">Ponto de Venda</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
           </div>
         </div>
-      </template>
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="subTotal">
+              <FloatLabel variant="on">
+                <InputNumber id="subTotal" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
+                <label for="subTotal">Subtotal (R$)</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="desconto">
+              <FloatLabel variant="on">
+                <InputNumber id="desconto" :max="99.99" :minFractionDigits="2" :maxFractionDigits="2" fluid @input="changeDiscount"/>
+                <label for="desconto">Desconto (%)</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+          <div class="col-span-4">
+            <FormField v-slot="$field" name="total">
+              <FloatLabel variant="on">
+                <InputNumber id="total" :minFractionDigits="2" :maxFractionDigits="2" fluid readonly/>
+                <label for="total">Total (R$)</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+        </div>
+        <FormField v-slot="$field" name="observacoes">
+          <FloatLabel variant="on" class="flex-1">
+            <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
+            <label for="observacoes">Observações</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+        <div class="flex justify-end gap-2 mt-2">
+          <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised size="small"/>
+          <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'" size="small"/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised size="small"/>
+        </div>
+      </Form>
+    </template>
+  </Card>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Itens da Venda</h3>
+        <div class="flex justify-end items-center" v-show="props.backEndpoint">
+          <Button icon="pi pi-replay" @click="router.push('/core/sale')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
 
-      <template #content>
-        <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
-          <Column field="id" header="Id" v-if="id"/>
-          <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
-          <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
-          <Column field="tabelaPrecoProduto.produto.estoque" header="Estoque"/>
-          <Column field="quantidade" header="Quantidade">
-            <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.tabelaPrecoProduto.produto.estoque + slotProps.data.quantidadeOriginal" :step="1" showButtons buttonLayout="horizontal" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="setAmount($event, slotProps.data)" size="small"/>
-            </template>
-          </Column>
-          <Column field="precoUnitario" header="Preço Unitário (R$)">
-            <template #body="slotProps">
-              {{ formatNumber(slotProps.data.precoUnitario) }}
-            </template>
-          </Column>
-          <Column field="total" header="Total (R$)">
-            <template #body="slotProps">
-              {{ formatNumber(slotProps.data.total) }}
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-  </BlockUI>
+    <template #content>
+      <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
+        <Column field="id" header="Id" v-if="id"/>
+        <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
+        <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
+        <Column field="tabelaPrecoProduto.produto.estoque" header="Estoque"/>
+        <Column field="quantidade" header="Quantidade">
+          <template #body="slotProps">
+            <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.tabelaPrecoProduto.produto.estoque + slotProps.data.quantidadeOriginal" :step="1" showButtons buttonLayout="horizontal" :maxFractionDigits="0" @input="setAmount($event, slotProps.data)" @blur="setAmount($event, slotProps.data)" size="small"/>
+          </template>
+        </Column>
+        <Column field="precoUnitario" header="Preço Unitário (R$)">
+          <template #body="slotProps">
+            {{ formatNumber(slotProps.data.precoUnitario) }}
+          </template>
+        </Column>
+        <Column field="total" header="Total (R$)">
+          <template #body="slotProps">
+            {{ formatNumber(slotProps.data.total) }}
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
 </template>

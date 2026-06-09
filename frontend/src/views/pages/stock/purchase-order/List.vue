@@ -108,8 +108,7 @@ async function loadProviders() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -128,8 +127,7 @@ async function loadProviderProducts(providerId) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -146,8 +144,7 @@ async function loadPurchaseOrderProducts(purchaseOrderId) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -208,12 +205,9 @@ const savePurchaseOrder = async ({ valid, values }) => {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação do Pedido de Compra', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => {
-      loading.value = false
-      toggle()
-      load( { ...filterValues.value } )
-    }, 50)
+    loading.value = true
+    toggle()
+    load( { ...filterValues.value } )
   }
 }
 

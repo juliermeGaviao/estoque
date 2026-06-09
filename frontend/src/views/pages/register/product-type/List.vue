@@ -232,8 +232,7 @@ async function saveAll(emitirMensagem) {
 
     return false
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 
   return true

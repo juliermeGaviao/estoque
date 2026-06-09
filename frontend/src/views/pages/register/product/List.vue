@@ -47,8 +47,7 @@ async function load(params) {
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -160,8 +159,7 @@ async function loadProductTypes() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produto', detail: 'Requisição de lista de Tipos de Produto terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -177,8 +175,7 @@ async function loadProviders() {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -248,8 +245,7 @@ async function commit(item) {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 }
 
@@ -303,8 +299,7 @@ async function saveAll(emitirMensagem) {
 
     return false
   } finally {
-    await nextTick()
-    setTimeout(() => loading.value = false, 50)
+    loading.value = true
   }
 
   return true
