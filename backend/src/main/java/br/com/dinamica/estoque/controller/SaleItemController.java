@@ -106,9 +106,9 @@ public class SaleItemController {
 	}
 
 	@DeleteMapping
-	public ResponseEntity<Object> delete(@RequestParam Long id) {
+	public ResponseEntity<Object> delete(@RequestParam Long id, @AuthenticationPrincipal Usuario usuario) {
 		try {
-			this.service.delete(id);
+			this.service.delete(id, usuario);
 
 			return ResponseEntity.ok().build();
 		} catch (NoSuchElementException e) {

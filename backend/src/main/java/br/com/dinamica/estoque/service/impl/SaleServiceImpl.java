@@ -21,7 +21,9 @@ import br.com.dinamica.estoque.repository.TabelaPrecoRepository;
 import br.com.dinamica.estoque.repository.UsuarioRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
 import br.com.dinamica.estoque.service.SaleService;
+import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
+import jakarta.transaction.Transactional;
 
 @Service
 public class SaleServiceImpl implements SaleService {
@@ -38,15 +40,18 @@ public class SaleServiceImpl implements SaleService {
 
 	private PontoVendaRepository pontoVendaRepository;
 
+	private StockService stockService;
+
 	private SaleMapper modelMapper;
 
-	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ClienteRepository clienteRepository, PontoVendaRepository pontoVendaRepository, SaleMapper modelMapper) {
+	public SaleServiceImpl(VendaRepository repository, ItemVendaRepository itemVendaRepository, UsuarioRepository usuarioRepository, TabelaPrecoRepository precoTabelaRepository, ClienteRepository clienteRepository, PontoVendaRepository pontoVendaRepository, StockService stockService, SaleMapper modelMapper) {
 		this.repository = repository;
 		this.itemVendaRepository = itemVendaRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.precoTabelaRepository = precoTabelaRepository;
 		this.clienteRepository = clienteRepository;
 		this.pontoVendaRepository = pontoVendaRepository;
+		this.stockService = stockService;
 		this.modelMapper = modelMapper;
 	}
 
@@ -131,7 +136,9 @@ public class SaleServiceImpl implements SaleService {
 	}
 
 	@Override
+	@Transactional
 	public void delete(Long id) {
+		this.stockService.deleteBySale(id);
 		this.itemVendaRepository.deleteByVenda_Id(id);
 		this.repository.deleteById(id);
 	}

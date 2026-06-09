@@ -9,14 +9,17 @@ import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.TipoOperacao;
 import br.com.dinamica.estoque.entity.TransferenciaEstoque;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.mapper.StockMapper;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
 import br.com.dinamica.estoque.repository.PedidoCompraRepository;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.repository.ProdutoRepository;
 import br.com.dinamica.estoque.repository.TransferenciaEstoqueRepository;
+import br.com.dinamica.estoque.repository.VendaRepository;
 import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
+import jakarta.transaction.Transactional;
 
 @Service
 public class StockServiceImpl implements StockService {
@@ -27,28 +30,35 @@ public class StockServiceImpl implements StockService {
 
 	private PontoVendaRepository pontoVendaRepository;
 
+	private VendaRepository vendaRepository;
+
 	private PedidoCompraRepository pedidoCompraRepository;
 
 	private TransferenciaEstoqueRepository transferenciaEstoqueRepository;
 
 	private StockMapper modelMapper;
 
-	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, PedidoCompraRepository pedidoCompraRepository, TransferenciaEstoqueRepository transferenciaEstoqueRepository, StockMapper modelMapper) {
+	public StockServiceImpl(EstoqueRepository repository, ProdutoRepository produtoRepository, PontoVendaRepository pontoVendaRepository, VendaRepository vendaRepository, PedidoCompraRepository pedidoCompraRepository, TransferenciaEstoqueRepository transferenciaEstoqueRepository, StockMapper modelMapper) {
 		this.repository = repository;
 		this.produtoRepository = produtoRepository;
 		this.pontoVendaRepository = pontoVendaRepository;
+		this.vendaRepository = vendaRepository;
 		this.pedidoCompraRepository = pedidoCompraRepository;
 		this.transferenciaEstoqueRepository = transferenciaEstoqueRepository;
 		this.modelMapper = modelMapper;
 	}
 
 	@Override
-	public Estoque addStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario) {
+	public Estoque saleStock(Long idProduto, Long idPontoVenda, Long idVenda, Integer amount, Usuario usuario) {
 		if (amount == null || amount.compareTo(0) == 0) {
 			return null;
 		}
 
-		return this.repository.save(this.getNewStock(idProduto, idPontoVenda, amount, usuario));
+		Estoque result = this.getNewStock(idProduto, idPontoVenda, amount, usuario);
+
+		result.setVenda(this.vendaRepository.findById(idVenda).orElseThrow());
+
+		return this.repository.save(result);
 	}
 
 	@Override
@@ -131,6 +141,16 @@ public class StockServiceImpl implements StockService {
 		result.setDataCriacao(DateUtil.now());
 
 		return result;
+	}
+
+	@Override
+	@Transactional
+	public void deleteBySale(Long idVenda) {
+		this.repository.deleteByVenda(idVenda);
+
+		Venda venda = this.vendaRepository.findById(idVenda).orElseThrow();
+
+		this.repository.updateSalePointStock(venda.getPontoVenda().getId());
 	}
 
 }

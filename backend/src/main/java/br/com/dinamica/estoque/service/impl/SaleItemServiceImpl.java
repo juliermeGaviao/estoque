@@ -36,16 +36,15 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 	private TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository;
 
-	private StockService inventoryService;
+	private StockService stockService;
 
 	private SaleItemMapper modelMapper;
 
-	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository,
-			StockService inventoryService, SaleItemMapper modelMapper) {
+	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository, StockService stockService, SaleItemMapper modelMapper) {
 		this.repository = repository;
 		this.vendaRepository = vendaRepository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
-		this.inventoryService = inventoryService;
+		this.stockService = stockService;
 		this.modelMapper = modelMapper;
 	}
 
@@ -133,9 +132,9 @@ public class SaleItemServiceImpl implements SaleItemService {
 			if (dto.getId() != null) {
 				ItemVenda itemVenda = this.repository.findById(dto.getId()).orElseThrow();
 
-				this.inventoryService.addStock(idProduto, itemVenda.getVenda().getPontoVenda().getId(), itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
+				this.stockService.saleStock(idProduto, itemVenda.getVenda().getPontoVenda().getId(), itemVenda.getVenda().getId(), itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
 			} else {
-				this.inventoryService.addStock(idProduto, dto.getVenda().getPontoVenda().getId(), -dto.getQuantidade(), usuario);
+				this.stockService.saleStock(idProduto, dto.getVenda().getPontoVenda().getId(), dto.getVenda().getId(), -dto.getQuantidade(), usuario);
 			}
 
 			SaleItemDto entity = this.save(dto, usuario);
@@ -148,7 +147,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 		List<ItemVenda> toBeDeleted = this.repository.getItensByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
 
 		toBeDeleted.stream().forEach(item -> {
-			this.inventoryService.addStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getQuantidade(), usuario);
+			this.stockService.saleStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getVenda().getId(), item.getQuantidade(), usuario);
 			this.repository.delete(item);
 		});
 
@@ -156,7 +155,11 @@ public class SaleItemServiceImpl implements SaleItemService {
 	}
 
 	@Override
-	public void delete(Long id) {
+	public void delete(Long id, Usuario usuario) {
+		ItemVenda item = this.repository.findById(id).orElseThrow();
+
+		this.stockService.saleStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getVenda().getId(), item.getQuantidade(), usuario);
+
 		this.repository.deleteById(id);
 	}
 

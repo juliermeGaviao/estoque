@@ -21,6 +21,7 @@ const formValues = ref({ idCliente: null, idVendedor: null, idTabela: null, idPo
 
 const formValidator = zodResolver(
   z.object({
+    idCliente: z.coerce.number().nullable().optional(),
     idVendedor: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Preenchimento do Vendedor é obrigatório." }),
     idTabela: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Tabela de preços é de preenchimento obrigatório." }),
     idPontoVenda: z.coerce.number().nullable().refine(val => val !== null && val >= 1, { message: "Ponto de Venda é de preenchimento obrigatório." }),
@@ -86,9 +87,9 @@ const save = async ({ valid, values }) => {
   }
 
   if (values.idCliente) {
-    params['cliente'] =  { id: values.idCliente }
+    params['cliente'] = { id: values.idCliente }
   }
-
+console.log(values)
   try {
     const response = await api.post('/sale', params)
 
@@ -305,7 +306,7 @@ function changeSalePoint(event) {
           <div :class="pj ? 'col-span-5' : 'col-span-12'">
             <FormField v-slot="$field" name="idCliente">
               <FloatLabel variant="on">
-                <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @change="loadClient($event)"/>
+                <Select id="idCliente" :options="clients" optionLabel="nome" optionValue="id" filter fluid @change="loadClient($event.value)"/>
                 <label for="idCliente">Cliente</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>

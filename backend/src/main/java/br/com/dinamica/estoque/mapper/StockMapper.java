@@ -13,6 +13,7 @@ public interface StockMapper {
     @Mapping(target = "venda.cliente", ignore = true)
     @Mapping(target = "pedidoCompra.estoque", ignore = true)
     @Mapping(target = "produto.estoque", ignore = true)
+    @Mapping(target = "transferenciaEstoque.estoque", ignore = true)
     StockDto toDto(Estoque entity);
 
 	@Mapping(target = "usuario", ignore = true)

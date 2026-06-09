@@ -46,4 +46,7 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
 	@Query("FROM ItemVenda iv WHERE iv.venda.id = :idVenda AND iv.id NOT IN :ids")
 	List<ItemVenda> getItensByVendaIdAndNotInIds(@Param("idVenda") Long idVenda, @Param("ids") List<Long> ids);
 
+	@Query("FROM ItemVenda iv WHERE iv.venda.id = :idVenda")
+	List<ItemVenda> getItensByVendaId(@Param("idVenda") Long idVenda);
+
 }

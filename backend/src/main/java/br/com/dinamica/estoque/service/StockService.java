@@ -8,7 +8,7 @@ import br.com.dinamica.estoque.entity.Usuario;
 
 public interface StockService {
 
-	Estoque addStock(Long idProduto, Long idPontoVenda, Integer amount, Usuario usuario);
+	Estoque saleStock(Long idProduto, Long idPontoVenda, Long idVenda, Integer amount, Usuario usuario);
 
 	Estoque addStock(Long idProduto, Long idPontoVenda, Long idPedidoCompra, Integer amount, Usuario usuario);
 
@@ -27,5 +27,7 @@ public interface StockService {
 	void transferStock(Long idProduto, Long idPontoVendaOrigem, Long idPontoVendaDestino, Long idTransferenciaEstoque, Integer amount, Usuario usuario);
 
 	List<StockDto> getStockByProductAndSalePoint(Long idProduto);
+
+	void deleteBySale(Long idVenda);
 
 }

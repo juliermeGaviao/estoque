@@ -425,7 +425,7 @@ const togglePopover = async (event, product) => {
         <Column field="estoque" header="Estoque">
           <template #body="slotProps">
             {{ slotProps.data.estoque }}&nbsp;
-            <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover($event, slotProps.data)" style="cursor: pointer; color: black;"/>
+            <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover($event, slotProps.data)" v-if="slotProps.data.estoque > 0" style="cursor: pointer; color: black;"/>
           </template>
         </Column>
 

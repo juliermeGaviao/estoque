@@ -18,7 +18,7 @@ public interface SaleItemService {
 
 	List<SaleItemDto> save(List<SaleItemDto> list, Usuario usuario);
 
-	void delete(Long id);
+	void delete(Long id, Usuario usuario);
 
 	List<SaleItemDto> getItensByPriceTableAndSalePoint(Long idTabelaPreco,  Long idPontoVenda);
 
