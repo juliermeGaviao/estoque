@@ -443,7 +443,7 @@ const togglePopover = async (event, product) => {
         </Column>
       </DataTable>
 
-      <Popover ref="pop">
+      <Popover ref="pop" style="transform: translateX(-12px)">
         <div v-if="salePoints && salePoints.length">
           <div v-for="item in salePoints" :key="item.id">
             <b>{{ item.pontoVenda?.nome }}</b>: {{ item.saldo }}

@@ -449,7 +449,7 @@ function togglePopover(event) {
         <h3>
           Carregar Colaboradores
           <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover" style="cursor: pointer; color: black;"/>
-          <Popover ref="pop" style="max-width: 600px;">
+          <Popover ref="pop" style="max-width: 600px; transform: translateX(-12px)">
               <h4>Arquivo de Colaboradores</h4>
               <p>O arquivo de colaboradores da empresa é um arquivo texto onde cada linha contém dados do colaborador.
                 Este arquivo não deve ultrapassar o tamanho de 10MB.
