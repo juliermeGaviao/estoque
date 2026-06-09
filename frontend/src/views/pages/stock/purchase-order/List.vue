@@ -10,7 +10,6 @@ const toast = useToast()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -40,8 +39,6 @@ async function load(params) {
     query.maxDataPedido = formatDate(query.maxDataPedido)
   }
 
-  loading.value = true
-
   try {
     const response = await api.get('/purchase-order/list', { params: query })
 
@@ -49,8 +46,6 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Pedidos de Compra', detail: 'Requisição de lista de pedidos de compra terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -99,24 +94,18 @@ function limpar() {
 let fornecedores = ref([])
 
 async function loadProviders() {
-  loading.value = true
-
   try {
     const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
 
     fornecedores.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
 const products = ref([])
 
 async function loadProviderProducts(providerId) {
-  loading.value = true
-
   try {
     const response = await api.get('/purchase-order/list-products', { params: { idFornecedor: providerId } })
 
@@ -126,14 +115,10 @@ async function loadProviderProducts(providerId) {
     }))
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
 async function loadPurchaseOrderProducts(purchaseOrderId) {
-  loading.value = true
-
   try {
     const response = await api.get('/purchase-order/list-purchase-order-products', { params: { idPedidoCompra: purchaseOrderId } })
 
@@ -143,8 +128,6 @@ async function loadPurchaseOrderProducts(purchaseOrderId) {
     }))
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
@@ -188,13 +171,22 @@ const savePurchaseOrder = async ({ valid, values }) => {
     return
   }
 
+  try {
+    const response = await api.get('/purchase-order/find-by-order-number', { params: { numeroPedido: values.numeroPedido } })
+
+    if (response.status === 200 && response.data.length) {
+      toast.add({ severity: 'error', summary: 'Falha de Pedido de Compra', detail: 'Já existe outro pedido com o mesmo número.', life: 10000 })
+      return
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Verificação de Pedido', detail: 'Requisição de verificação de duplicidade de número de pedido terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+
   const params = {
     ...values,
     fornecedor: { id: values.idFornecedor },
     estoque: filtered.map(item => ({ idProduto: item.id, quantidade: item.quantidade }) )
   }
-
-  loading.value = true
 
   try {
     const response = await api.post('/purchase-order', params)
@@ -205,7 +197,6 @@ const savePurchaseOrder = async ({ valid, values }) => {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação do Pedido de Compra', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = true
     toggle()
     load( { ...filterValues.value } )
   }
@@ -231,7 +222,7 @@ const view = async (purchaseOrder) => {
   visible.value = true
 
   await nextTick()
-  purchaseOrderForm.value.setValues({ numeroPedido: purchaseOrder.numeroPedido, idFornecedor: purchaseOrder.fornecedor.id, dataPedido: toDate(purchaseOrder.dataPedido) })
+  purchaseOrderForm.value.setValues({ numeroPedido: purchaseOrder.numeroPedido, idFornecedor: purchaseOrder.fornecedor.id, dataPedido: formatDate(toDate(purchaseOrder.dataPedido)) })
   loadPurchaseOrderProducts(purchaseOrder.id)
 }
 
@@ -239,143 +230,141 @@ const view = async (purchaseOrder) => {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Pedidos de Compra</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-3">
-              <FormField name="numeroPedido">
-                <FloatLabel variant="on">
-                  <InputText id="numeroPedido" maxlength="255" autocomplete="off" fluid/>
-                  <label for="numeroPedido">Número do Pedido</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3">
-              <FormField name="idFornecedor">
-                <FloatLabel variant="on">
-                  <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
-                  <label for="idFornecedor">Fornecedores</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="minDataPedido">
-                <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataPedido">Data de Pedido Mínima</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="maxDataPedido">
-                <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataPedido">Data de Pedido Máxima</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
-          </div>
-        </Form>
-
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
-
-          <Column field="id" header="Id" sortable/>
-          <Column field="numeroPedido" header="Número do Pedido" sortable/>
-          <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
-          <Column field="dataPedido" header="Data do Pedido" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.dataPedido) }}
-            </template>
-          </Column>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newPurchaseOrder" v-tooltip.bottom="'Novo Pedido de Compra'"/>
-            </template>
-
-            <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-sm p-button-text p-mr-2" @click="view(slotProps.data)" v-tooltip.bottom="'Visualizar'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <Dialog v-model:visible="visible" modal closable header="Pedido de Compra" style="width: 95%">
-
-      <Form ref="purchaseOrderForm" :resolver="purchaseOrderFormValidator" :initialValues="purchaseOrderFormValues" @submit="savePurchaseOrder" class="grid flex flex-column gap-2">
+  <Card>
+    <template #title><h3>Lista de Pedidos de Compra</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
         <div class="grid grid-cols-12 gap-2">
-          <div class="col-span-4 mt-2">
-            <FormField name="numeroPedido" v-slot="$field">
+          <div class="col-span-3">
+            <FormField name="numeroPedido">
               <FloatLabel variant="on">
-                <InputText maxlength="255" autocomplete="off" :disabled="action === 'visualizar'" fluid/>
+                <InputText id="numeroPedido" maxlength="255" autocomplete="off" fluid/>
                 <label for="numeroPedido">Número do Pedido</label>
               </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
-          <div class="col-span-4 mt-2">
+          <div class="col-span-3">
             <FormField name="idFornecedor">
               <FloatLabel variant="on">
-                <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" @change="providerChange" :disabled="action === 'visualizar'" fluid/>
+                <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
                 <label for="idFornecedor">Fornecedores</label>
               </FloatLabel>
             </FormField>
           </div>
-          <div :class="action === 'criar' ? 'col-span-3 mt-2' : 'col-span-4 mt-2'">
-            <FormField name="dataPedido" v-slot="$field">
+          <div class="col-span-2">
+            <FormField name="minDataPedido">
               <FloatLabel variant="on" class="flex-1">
-                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" :disabled="action === 'visualizar'" fluid/>
-                <label for="dataPedido">Data de Pedido</label>
+                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
+                <label for="minDataPedido">Data de Pedido Mínima</label>
               </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
-          <div class="col-span-1 mt-2" v-show="action === 'criar'">
+          <div class="col-span-2">
+            <FormField name="maxDataPedido">
+              <FloatLabel variant="on" class="flex-1">
+                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
+                <label for="minDataPedido">Data de Pedido Máxima</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
             <FormField class="flex justify-end gap-2">
-              <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
             </FormField>
           </div>
         </div>
-
-        <DataTable :value="products" :lazy="true" responsiveLayout="scroll" stripedRows size="small" class="mt-4 mb-4">
-          <Column field="id" header="Id"><template #body="slotProps">{{slotProps.data.id}}</template></Column>
-          <Column field="nome" header="Nome"/>
-          <Column field="referencia" header="Referência"/>
-          <Column field="tipoProduto.nome" header="Tipo de Produto"/>
-          <Column field="peso" header="Peso (em gramas)"/>
-          <Column field="estoque" :header="action === 'visualizar' ? 'Estocado' : 'Em Estoque'"/>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center" v-if="action === 'criar'">
-            <template #header>
-              <b>Adicionar</b>
-            </template>
-
-            <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :min="-slotProps.data.estoque" :max="10000" showButtons buttonLayout="horizontal" :step="1" fluid/>
-            </template>
-          </Column>
-        </DataTable>
-
-        <FormField class="flex justify-end gap-2" v-show="action === 'criar'">
-          <Button label="Cancelar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
-          <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
-        </FormField>
-        <FormField class="flex justify-end gap-2" v-show="action === 'visualizar'">
-          <Button label="Fechar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
-        </FormField>
       </Form>
-    </Dialog>
-  </BlockUI>
+
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+
+        <Column field="id" header="Id" sortable/>
+        <Column field="numeroPedido" header="Número do Pedido" sortable/>
+        <Column field="fornecedor.fantasia" header="Fornecedor" sortable/>
+        <Column field="dataPedido" header="Data do Pedido" sortable>
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.dataPedido) }}
+          </template>
+        </Column>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newPurchaseOrder" v-tooltip.bottom="'Novo Pedido de Compra'"/>
+          </template>
+
+          <template #body="slotProps">
+            <Button icon="pi pi-eye" class="p-button-sm p-button-text p-mr-2" @click="view(slotProps.data)" v-tooltip.bottom="'Visualizar'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
+
+  <Dialog v-model:visible="visible" modal closable header="Pedido de Compra" style="width: 95%">
+
+    <Form ref="purchaseOrderForm" :resolver="purchaseOrderFormValidator" :initialValues="purchaseOrderFormValues" @submit="savePurchaseOrder" class="grid flex flex-column gap-2">
+      <div class="grid grid-cols-12 gap-2">
+        <div class="col-span-4 mt-2">
+          <FormField name="numeroPedido" v-slot="$field">
+            <FloatLabel variant="on">
+              <InputText maxlength="255" autocomplete="off" :disabled="action === 'visualizar'" fluid/>
+              <label for="numeroPedido">Número do Pedido</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+        <div class="col-span-4 mt-2">
+          <FormField name="idFornecedor">
+            <FloatLabel variant="on">
+              <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" @change="providerChange" :disabled="action === 'visualizar'" fluid/>
+              <label for="idFornecedor">Fornecedores</label>
+            </FloatLabel>
+          </FormField>
+        </div>
+        <div :class="action === 'criar' ? 'col-span-3 mt-2' : 'col-span-4 mt-2'">
+          <FormField name="dataPedido" v-slot="$field">
+            <FloatLabel variant="on" class="flex-1">
+              <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" :disabled="action === 'visualizar'" fluid/>
+              <label for="dataPedido">Data de Pedido</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+        <div class="col-span-1 mt-2" v-show="action === 'criar'">
+          <FormField class="flex justify-end gap-2">
+            <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+          </FormField>
+        </div>
+      </div>
+
+      <DataTable :value="products" :lazy="true" responsiveLayout="scroll" stripedRows size="small" class="mt-4 mb-4">
+        <Column field="id" header="Id"><template #body="slotProps">{{slotProps.data.id}}</template></Column>
+        <Column field="nome" header="Nome"/>
+        <Column field="referencia" header="Referência"/>
+        <Column field="tipoProduto.nome" header="Tipo de Produto"/>
+        <Column field="peso" header="Peso (em gramas)"/>
+        <Column field="estoque" :header="action === 'visualizar' ? 'Estocado' : 'Em Estoque'"/>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center" v-if="action === 'criar'">
+          <template #header>
+            <b>Adicionar</b>
+          </template>
+
+          <template #body="slotProps">
+            <InputNumber v-model="slotProps.data.quantidade" :min="-slotProps.data.estoque" :max="10000" showButtons buttonLayout="horizontal" :step="1" fluid/>
+          </template>
+        </Column>
+      </DataTable>
+
+      <FormField class="flex justify-end gap-2" v-show="action === 'criar'">
+        <Button label="Cancelar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
+        <Button label="Pedir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+      </FormField>
+      <FormField class="flex justify-end gap-2" v-show="action === 'visualizar'">
+        <Button label="Fechar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
+      </FormField>
+    </Form>
+  </Dialog>
 </template>

@@ -13,7 +13,6 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const states = ref([])
-const loading = ref(false)
 const confirm = useConfirm()
 
 const companyForm = ref(null)
@@ -86,8 +85,6 @@ async function load() {
 }
 
 async function loadContacts() {
-  loading.value = true
-
   try {
     let params = {
       idEmpresa: id.value,
@@ -109,15 +106,11 @@ async function loadContacts() {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Empresa Cliente', detail: 'Requisição de lista de contatos da empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 const save = async ({ valid, values }) => {
   if (!valid) return
-
-  loading.value = true
 
   let params = { ... values }
 
@@ -143,8 +136,6 @@ const save = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -188,8 +179,6 @@ function edit(contact) {
 const saveContact = async ({ valid, values }) => {
   if (!valid) return
 
-  loading.value = true
-
   let params = { ... values }
 
   params['cliente'] = { "id": id.value }
@@ -218,7 +207,6 @@ const saveContact = async ({ valid, values }) => {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     visible.value = false
-    loading.value = false
     loadContacts()
   }
 }
@@ -239,8 +227,6 @@ const confirmDelete = entity => {
       raised: true
     },
     accept: async () => {
-      loading.value = true
-
       try {
         await api.delete(`/company-client-contact?id=${entity.id}`)
 
@@ -248,7 +234,6 @@ const confirmDelete = entity => {
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Empresa Cliente', detail: 'Requisição de remoção de contato de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
       } finally {
-        loading.value = false
         loadContacts()
       }
     }
@@ -259,9 +244,7 @@ onMounted(() => {
   StateService.getStates().then(data => states.value = data)
 
   if (id.value) {
-    loading.value = true
     load()
-    loading.value = false
   }
 })
 
@@ -319,271 +302,269 @@ function togglePopover(event) {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>{{ id ? 'Editar' : 'Inserir' }} Empresa Cliente</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>{{ id ? 'Editar' : 'Inserir' }} Empresa Cliente</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
         </div>
-      </template>
+      </div>
+    </template>
 
-      <template #content>
-        <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="razaoSocial">
-            <FloatLabel variant="on">
-              <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
-              <label for="razaoSocial">Razão Social</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <FormField v-slot="$field" name="nome">
-            <FloatLabel variant="on">
-              <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
-              <label for="nome">Nome de Fantasia</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <div class="grid grid-cols-2 gap-2">
-            <FormField v-slot="$field" name="cnpj">
-              <FloatLabel variant="on">
-                <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
-                <label for="cnpj">CNPJ</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
-
-            <FormField v-slot="$field" name="fone">
-              <FloatLabel variant="on">
-                <InputMask id="fone" mask="(99) 9999-9999?9" autocomplete="off" fluid/>
-                <label for="fone">Fone</label>
-              </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-            </FormField>
-          </div>
-
-          <FormField v-slot="$field" name="endereco">
-            <FloatLabel variant="on">
-              <InputText id="endereco" maxlength="255" autocomplete="off" fluid/>
-              <label for="endereco">Endereço</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-10">
-              <FormField v-slot="$field" name="bairro">
-                <FloatLabel variant="on">
-                  <InputText id="bairro" maxlength="100" autocomplete="off" fluid/>
-                  <label for="bairro">Bairro</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-
-            <div class="col-span-2">
-              <FormField v-slot="$field" name="cep">
-                <FloatLabel variant="on">
-                  <InputMask id="cep" mask="99999-999" autocomplete="off" fluid/>
-                  <label for="cep">CEP</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-10">
-              <FormField v-slot="$field" name="cidade">
-                <FloatLabel variant="on">
-                  <InputText id="cidade" maxlength="100" autocomplete="off" fluid/>
-                  <label for="cidade">Cidade</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-
-            <div class="col-span-2">
-              <FormField v-slot="$field" name="uf">
-                <FloatLabel variant="on">
-                  <Select id="uf" :options="states" optionLabel="name" optionValue="code" fluid/>
-                  <label for="uf">Estado</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-          </div>
-
-          <FormField class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </FormField>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Lista de Contatos da Empresa Cliente</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
-        </div>
-      </template>
-      <template #content>
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
-
-          <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
-          <Column field="cargo" header="Cargo" sortable/>
-          <Column field="celular" header="Celular">
-            <template #body="slotProps">
-              {{ formatPhone(slotProps.data.celular) }}
-            </template>
-          </Column>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
-            </template>
-
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-    <Card v-show="id">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>
-            Carregar Colaboradores
-            <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover" style="cursor: pointer; color: black;"/>
-            <Popover ref="pop" style="max-width: 600px;">
-                <h4>Arquivo de Colaboradores</h4>
-                <p>O arquivo de colaboradores da empresa é um arquivo texto onde cada linha contém dados do colaborador.
-                  Este arquivo não deve ultrapassar o tamanho de 10MB.
-                  Ele é do formato CSV, ou seja, as linhas representam campos separados por "," (vírgula).
-                </p>
-                <p>A primeira linha do arquivo é a linha de cabeçalho identificando os campos de dados do colaboradores e deve conter, obrigatoriamente, o seguinte conteúdo:</p>
-                <ul style="list-style-type: disc; margin-left: 1.5rem;">
-                  <li>nome: contém o nome completo do colaborador;</li>
-                  <li>numero-cracha: valor alfanumérico que identifica o colaborador na empresa;</li>
-                  <li>data-aniversario: é a data de nascimento do colaborador no formato dd/mm/aaaa;</li>
-                  <li>limite-gasto: valor em R$ limite para desconto na folha de pagamento. Não é necessário informar os centavos;</li>
-                </ul>
-                <p>Assim, as demais linhas devem conter os dados dos colaboradores separados por vírgula e seguindo as regras enunciadas nos tópicos acima.</p>
-                <p>Exemplo:</p>
-                <p>nome, numero-cracha, data-aniversario, limite-gasto<br/>
-                  Fulano, DKJF-DC, 01/01/1970, 400<br/>
-                  Ciclano, 398943, 23/08/1983, 450<br/>
-                  Beltrano, DFKJFD, 09/03/2003, 600
-                </p>
-            </Popover>
-          </h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
-        </div>
-      </template>
-      <template #content>
-        <div class="flex justify-between">
-          <FileUpload ref="fileupload" mode="basic" accept=".csv, text/csv" :maxFileSize="10*1024*1024"/>
-          <div class="flex justify-end gap-2">
-            <Button label="Limpar" @click="clearUpload" icon="pi pi-times" severity="secondary" raised/>
-            <Button label="Carregar" @click="upload" severity="primary" raised :disabled="!fileupload.files.length"/>
-          </div>
-        </div>
-      </template>
-    </Card>
-    <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
-      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
-        <FormField v-slot="$field" name="nome" class="mt-1">
+    <template #content>
+      <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="razaoSocial">
           <FloatLabel variant="on">
-            <InputText id="nomeDialog" maxlength="255" autocomplete="off" fluid/>
-            <label for="nomeDialog">Nome</label>
+            <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
+            <label for="razaoSocial">Razão Social</label>
           </FloatLabel>
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <FormField v-slot="$field" name="cargo">
+        <FormField v-slot="$field" name="nome">
           <FloatLabel variant="on">
-            <InputText id="cargo" maxlength="255" autocomplete="off" fluid/>
-            <label for="cargo">Cargo</label>
+            <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+            <label for="nome">Nome de Fantasia</label>
           </FloatLabel>
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-2 gap-2">
+          <FormField v-slot="$field" name="cnpj">
+            <FloatLabel variant="on">
+              <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
+              <label for="cnpj">CNPJ</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+
           <FormField v-slot="$field" name="fone">
             <FloatLabel variant="on">
-              <InputMask id="foneDialog" mask="(99) 9999-99999" autocomplete="off" fluid/>
-              <label for="foneDialog">Fone</label>
+              <InputMask id="fone" mask="(99) 9999-9999?9" autocomplete="off" fluid/>
+              <label for="fone">Fone</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
+        </div>
 
-          <FormField v-slot="$field" name="ramal">
-            <FloatLabel variant="on">
-              <InputText id="ramal" maxlength="20" autocomplete="off" fluid/>
-              <label for="ramal">Ramal</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+        <FormField v-slot="$field" name="endereco">
+          <FloatLabel variant="on">
+            <InputText id="endereco" maxlength="255" autocomplete="off" fluid/>
+            <label for="endereco">Endereço</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
 
-          <FormField v-slot="$field" name="celular">
-            <FloatLabel variant="on">
-              <InputMask id="celular" mask="(99) 99999-9999" autocomplete="off" fluid/>
-              <label for="celular">Celular</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-10">
+            <FormField v-slot="$field" name="bairro">
+              <FloatLabel variant="on">
+                <InputText id="bairro" maxlength="100" autocomplete="off" fluid/>
+                <label for="bairro">Bairro</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+
+          <div class="col-span-2">
+            <FormField v-slot="$field" name="cep">
+              <FloatLabel variant="on">
+                <InputMask id="cep" mask="99999-999" autocomplete="off" fluid/>
+                <label for="cep">CEP</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
         </div>
 
         <div class="grid grid-cols-12 gap-2">
-          <div class="col-span-8">
-            <FormField v-slot="$field" name="email" initialValue="">
-              <FloatLabel variant="on" class="flex-1">
-                <InputText id="email" maxlength="100" autocomplete="off" fluid/>
-                <label for="email">E-mail</label>
+          <div class="col-span-10">
+            <FormField v-slot="$field" name="cidade">
+              <FloatLabel variant="on">
+                <InputText id="cidade" maxlength="100" autocomplete="off" fluid/>
+                <label for="cidade">Cidade</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
 
-          <div class="col-span-4">
-            <FormField v-slot="$field" name="dataAniversario" initialValue="">
-              <FloatLabel variant="on" class="flex-1">
-                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                <label for="dataAniversario">Data de Aniversário</label>
+          <div class="col-span-2">
+            <FormField v-slot="$field" name="uf">
+              <FloatLabel variant="on">
+                <Select id="uf" :options="states" optionLabel="name" optionValue="code" fluid/>
+                <label for="uf">Estado</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
         </div>
 
-        <FormField v-slot="$field" name="observacoes" initialValue="">
-          <FloatLabel variant="on" class="flex-1">
-            <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
-            <label for="email">Observações</label>
+        <FormField class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+        </FormField>
+      </Form>
+    </template>
+  </Card>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Lista de Contatos da Empresa Cliente</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+    <template #content>
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+
+        <Column field="id" header="Id" sortable/>
+        <Column field="nome" header="Nome" sortable/>
+        <Column field="cargo" header="Cargo" sortable/>
+        <Column field="celular" header="Celular">
+          <template #body="slotProps">
+            {{ formatPhone(slotProps.data.celular) }}
+          </template>
+        </Column>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
+          </template>
+
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
+  <Card v-show="id">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>
+          Carregar Colaboradores
+          <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover" style="cursor: pointer; color: black;"/>
+          <Popover ref="pop" style="max-width: 600px;">
+              <h4>Arquivo de Colaboradores</h4>
+              <p>O arquivo de colaboradores da empresa é um arquivo texto onde cada linha contém dados do colaborador.
+                Este arquivo não deve ultrapassar o tamanho de 10MB.
+                Ele é do formato CSV, ou seja, as linhas representam campos separados por "," (vírgula).
+              </p>
+              <p>A primeira linha do arquivo é a linha de cabeçalho identificando os campos de dados do colaboradores e deve conter, obrigatoriamente, o seguinte conteúdo:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem;">
+                <li>nome: contém o nome completo do colaborador;</li>
+                <li>numero-cracha: valor alfanumérico que identifica o colaborador na empresa;</li>
+                <li>data-aniversario: é a data de nascimento do colaborador no formato dd/mm/aaaa;</li>
+                <li>limite-gasto: valor em R$ limite para desconto na folha de pagamento. Não é necessário informar os centavos;</li>
+              </ul>
+              <p>Assim, as demais linhas devem conter os dados dos colaboradores separados por vírgula e seguindo as regras enunciadas nos tópicos acima.</p>
+              <p>Exemplo:</p>
+              <p>nome, numero-cracha, data-aniversario, limite-gasto<br/>
+                Fulano, DKJF-DC, 01/01/1970, 400<br/>
+                Ciclano, 398943, 23/08/1983, 450<br/>
+                Beltrano, DFKJFD, 09/03/2003, 600
+              </p>
+          </Popover>
+        </h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.push('/register/company')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+    <template #content>
+      <div class="flex justify-between">
+        <FileUpload ref="fileupload" mode="basic" accept=".csv, text/csv" :maxFileSize="10*1024*1024"/>
+        <div class="flex justify-end gap-2">
+          <Button label="Limpar" @click="clearUpload" icon="pi pi-times" severity="secondary" raised/>
+          <Button label="Carregar" @click="upload" severity="primary" raised :disabled="!fileupload.files.length"/>
+        </div>
+      </div>
+    </template>
+  </Card>
+  <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
+    <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
+      <FormField v-slot="$field" name="nome" class="mt-1">
+        <FloatLabel variant="on">
+          <InputText id="nomeDialog" maxlength="255" autocomplete="off" fluid/>
+          <label for="nomeDialog">Nome</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <FormField v-slot="$field" name="cargo">
+        <FloatLabel variant="on">
+          <InputText id="cargo" maxlength="255" autocomplete="off" fluid/>
+          <label for="cargo">Cargo</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <div class="grid grid-cols-3 gap-2">
+        <FormField v-slot="$field" name="fone">
+          <FloatLabel variant="on">
+            <InputMask id="foneDialog" mask="(99) 9999-99999" autocomplete="off" fluid/>
+            <label for="foneDialog">Fone</label>
           </FloatLabel>
           <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
 
-        <FormField class="flex justify-end gap-2">
-          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-          <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
-          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+        <FormField v-slot="$field" name="ramal">
+          <FloatLabel variant="on">
+            <InputText id="ramal" maxlength="20" autocomplete="off" fluid/>
+            <label for="ramal">Ramal</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
         </FormField>
-      </Form>
-    </Dialog>
-  </BlockUI>
+
+        <FormField v-slot="$field" name="celular">
+          <FloatLabel variant="on">
+            <InputMask id="celular" mask="(99) 99999-9999" autocomplete="off" fluid/>
+            <label for="celular">Celular</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+      </div>
+
+      <div class="grid grid-cols-12 gap-2">
+        <div class="col-span-8">
+          <FormField v-slot="$field" name="email" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <InputText id="email" maxlength="100" autocomplete="off" fluid/>
+              <label for="email">E-mail</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+
+        <div class="col-span-4">
+          <FormField v-slot="$field" name="dataAniversario" initialValue="">
+            <FloatLabel variant="on" class="flex-1">
+              <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
+              <label for="dataAniversario">Data de Aniversário</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+      </div>
+
+      <FormField v-slot="$field" name="observacoes" initialValue="">
+        <FloatLabel variant="on" class="flex-1">
+          <Textarea id="observacoes" rows="3" size="1024" style="resize: none" fluid/>
+          <label for="email">Observações</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <FormField class="flex justify-end gap-2">
+        <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+        <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
+        <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+      </FormField>
+    </Form>
+  </Dialog>
 </template>

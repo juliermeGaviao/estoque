@@ -10,7 +10,6 @@ const toast = useToast()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -40,8 +39,6 @@ async function load(params) {
     query.maxDataTransferencia = formatDate(query.maxDataTransferencia)
   }
 
-  loading.value = true
-
   try {
     const response = await api.get('/stock-transfer/list', { params: query })
 
@@ -49,8 +46,6 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Transferências de Estoque', detail: 'Requisição de lista de transferências de estoque terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -99,24 +94,18 @@ function limpar() {
 let pontos = ref([])
 
 async function loadSalePoints() {
-  loading.value = true
-
   try {
     const response = await api.get('/sale-point/list', { params: { page: 0, size: 10000, sort: 'id,asc' } })
 
     pontos.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
 const products = ref([])
 
 async function loadSalePointProducts(origem, destino) {
-  loading.value = true
-
   try {
     const response = await api.get('/stock-transfer/list-products', { params: { idPontoVendaOrigem: origem, idPontoVendaDestingo: destino } })
 
@@ -126,14 +115,10 @@ async function loadSalePointProducts(origem, destino) {
     }))
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
 async function loadStockTransferProducts(stockTransferId) {
-  loading.value = true
-
   try {
     const response = await api.get('/stock-transfer/list-sale-point-products', { params: { idTransferenciaEstoque: stockTransferId } })
 
@@ -143,8 +128,6 @@ async function loadStockTransferProducts(stockTransferId) {
     }))
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Produtos', detail: 'Requisição de lista de produtos de transferência de estoque terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
@@ -192,14 +175,6 @@ const salePointChange = async (event) => {
 const saveStockTransfer = async ({ valid, values }) => {
   if (!valid) return
 
-  const dataTransferencia = values.dataTransferencia.setHours(0, 0, 0, 0)
-  const today = new Date().setHours(0, 0, 0, 0)
-
-  if (today < dataTransferencia) {
-    toast.add({ severity: 'error', summary: 'Falha de Transferência de Estoque', detail: 'Algum produto deve ter valor diferente de zero para transferir.', life: 10000 })
-    return
-  }
-
   const filtered = products.value.filter(item => item.quantidade !== 0)
 
   if (!filtered.length) {
@@ -214,7 +189,8 @@ const saveStockTransfer = async ({ valid, values }) => {
     estoque: filtered.map(item => ({ idProduto: item.id, quantidade: item.quantidade }) )
   }
 
-  loading.value = true
+  const [dia, mes, ano] = params.dataTransferencia.split('/')
+  params.dataTransferencia = `${ano}-${mes}-${dia}`
 
   try {
     const response = await api.post('/stock-transfer', params)
@@ -225,7 +201,6 @@ const saveStockTransfer = async ({ valid, values }) => {
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação do Transferência de Estoque', detail: 'Requisição de pedido de compra terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
-    loading.value = true
     toggle()
     load( { ...filterValues.value } )
   }
@@ -241,9 +216,11 @@ function toggle() {
   visible.value = !visible.value
 }
 
-function newStockTransfer() {
+async function newStockTransfer() {
   action.value = 'criar'
   toggle()
+  await nextTick()
+  stockTransferForm.value.setFieldValue('dataTransferencia', formatDate(new Date()))
 }
 
 const view = async (stockTransfer) => {
@@ -251,7 +228,7 @@ const view = async (stockTransfer) => {
   visible.value = true
 
   await nextTick()
-  stockTransferForm.value.setValues({ idPontoVendaOrigem: stockTransfer.pontoVendaOrigem.id, idPontoVendaDestino: stockTransfer.pontoVendaDestino.id, dataTransferencia: toDate(stockTransfer.dataTransferencia) })
+  stockTransferForm.value.setValues({ idPontoVendaOrigem: stockTransfer.pontoVendaOrigem.id, idPontoVendaDestino: stockTransfer.pontoVendaDestino.id, dataTransferencia: formatDate(toDate(stockTransfer.dataTransferencia)) })
   loadStockTransferProducts(stockTransfer.id)
 }
 
@@ -259,146 +236,144 @@ const view = async (stockTransfer) => {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Transferências de Estoque</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-3">
-              <FormField name="idPontoVendaOrigem">
-                <FloatLabel variant="on">
-                  <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
-                  <label for="idPontoVendaOrigem">Ponto de Venda Origem</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3">
-              <FormField name="idPontoVendaDestino">
-                <FloatLabel variant="on">
-                  <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
-                  <label for="idPontoVendaDestino">Ponto de Venda Destino</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="minDataTransferencia">
-                <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataTransferencia">Data de Transferência Mínima</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="maxDataTransferencia">
-                <FloatLabel variant="on" class="flex-1">
-                  <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
-                  <label for="minDataTransferencia">Data de Transferência Máxima</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
-          </div>
-        </Form>
-
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
-
-          <Column field="id" header="Id" sortable/>
-          <Column field="pontoVendaOrigem.nome" header="Ponto de Venda Origem" sortable/>
-          <Column field="pontoVendaDestino.nome" header="Ponto de Venda Destino" sortable/>
-          <Column field="dataTransferencia" header="Data do Transferência" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.dataTransferencia) }}
-            </template>
-          </Column>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newStockTransfer" v-tooltip.bottom="'Nova Transferência de Estoque'"/>
-            </template>
-
-            <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-sm p-button-text p-mr-2" @click="view(slotProps.data)" v-tooltip.bottom="'Visualizar'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-
-    <Dialog v-model:visible="visible" modal closable header="Transferência de Estoque" style="width: 95%">
-
-      <Form ref="stockTransferForm" :resolver="stockTransferFormValidator" :initialValues="stockTransferFormValues" @submit="saveStockTransfer" class="grid flex flex-column gap-2">
+  <Card>
+    <template #title><h3>Lista de Transferências de Estoque</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
         <div class="grid grid-cols-12 gap-2">
-          <div class="col-span-4 mt-2">
-            <FormField name="idPontoVendaOrigem" v-slot="$field">
+          <div class="col-span-3">
+            <FormField name="idPontoVendaOrigem">
               <FloatLabel variant="on">
-                <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+                <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
                 <label for="idPontoVendaOrigem">Ponto de Venda Origem</label>
               </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
-          <div class="col-span-4 mt-2">
-            <FormField name="idPontoVendaDestino" v-slot="$field">
+          <div class="col-span-3">
+            <FormField name="idPontoVendaDestino">
               <FloatLabel variant="on">
-                <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+                <Select :options="pontos" optionLabel="nome" optionValue="id" fluid/>
                 <label for="idPontoVendaDestino">Ponto de Venda Destino</label>
               </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
-          <div :class="action === 'criar' ? 'col-span-3 mt-2' : 'col-span-4 mt-2'">
-            <FormField name="dataTransferencia" v-slot="$field">
+          <div class="col-span-2">
+            <FormField name="minDataTransferencia">
               <FloatLabel variant="on" class="flex-1">
-                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" disabled fluid/>
-                <label for="dataTransferencia">Data de Transferência</label>
+                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
+                <label for="minDataTransferencia">Data de Transferência Mínima</label>
               </FloatLabel>
-              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
-          <div class="col-span-1 mt-2" v-show="action === 'criar'">
+          <div class="col-span-2">
+            <FormField name="maxDataTransferencia">
+              <FloatLabel variant="on" class="flex-1">
+                <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
+                <label for="minDataTransferencia">Data de Transferência Máxima</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
             <FormField class="flex justify-end gap-2">
-              <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
             </FormField>
           </div>
         </div>
-
-        <DataTable :value="products" :lazy="true" responsiveLayout="scroll" stripedRows size="small" class="mt-4 mb-4">
-          <Column field="id" header="Id"><template #body="slotProps">{{slotProps.data.id}}</template></Column>
-          <Column field="nome" header="Nome"/>
-          <Column field="referencia" header="Referência"/>
-          <Column field="tipoProduto.nome" header="Tipo de Produto"/>
-          <Column field="fornecedor.fantasia" header="Fornecedor"/>
-          <Column field="peso" header="Peso (em gramas)"/>
-          <Column field="estoque" :header="action === 'visualizar' ? 'Transferido' : 'Estoque Origem'"/>
-          <Column field="estoqueDestino" header="Estoque Destino" v-if="action === 'criar'"/>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center" v-if="action === 'criar'">
-            <template #header>
-              <b>Transferir</b>
-            </template>
-
-            <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.estoque" showButtons buttonLayout="horizontal" :step="1" fluid/>
-            </template>
-          </Column>
-        </DataTable>
-
-        <FormField class="flex justify-end gap-2" v-show="action === 'criar'">
-          <Button label="Cancelar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
-          <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
-        </FormField>
-        <FormField class="flex justify-end gap-2" v-show="action === 'visualizar'">
-          <Button label="Fechar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
-        </FormField>
       </Form>
-    </Dialog>
-  </BlockUI>
+
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+
+        <Column field="id" header="Id" sortable/>
+        <Column field="pontoVendaOrigem.nome" header="Ponto de Venda Origem" sortable/>
+        <Column field="pontoVendaDestino.nome" header="Ponto de Venda Destino" sortable/>
+        <Column field="dataTransferencia" header="Data do Transferência" sortable>
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.dataTransferencia) }}
+          </template>
+        </Column>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="newStockTransfer" v-tooltip.bottom="'Nova Transferência de Estoque'"/>
+          </template>
+
+          <template #body="slotProps">
+            <Button icon="pi pi-eye" class="p-button-sm p-button-text p-mr-2" @click="view(slotProps.data)" v-tooltip.bottom="'Visualizar'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
+
+  <Dialog v-model:visible="visible" modal closable header="Transferência de Estoque" style="width: 95%">
+
+    <Form ref="stockTransferForm" :resolver="stockTransferFormValidator" :initialValues="stockTransferFormValues" @submit="saveStockTransfer" class="grid flex flex-column gap-2">
+      <div class="grid grid-cols-12 gap-2">
+        <div class="col-span-4 mt-2">
+          <FormField name="idPontoVendaOrigem" v-slot="$field">
+            <FloatLabel variant="on">
+              <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+              <label for="idPontoVendaOrigem">Ponto de Venda Origem</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+        <div class="col-span-4 mt-2">
+          <FormField name="idPontoVendaDestino" v-slot="$field">
+            <FloatLabel variant="on">
+              <Select :options="pontos" optionLabel="nome" optionValue="id" @change="salePointChange" :disabled="action === 'visualizar'" fluid/>
+              <label for="idPontoVendaDestino">Ponto de Venda Destino</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+        <div :class="action === 'criar' ? 'col-span-3 mt-2' : 'col-span-4 mt-2'">
+          <FormField name="dataTransferencia" v-slot="$field">
+            <FloatLabel variant="on" class="flex-1">
+              <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" disabled fluid/>
+              <label for="dataTransferencia">Data de Transferência</label>
+            </FloatLabel>
+            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+          </FormField>
+        </div>
+        <div class="col-span-1 mt-2" v-show="action === 'criar'">
+          <FormField class="flex justify-end gap-2">
+            <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+          </FormField>
+        </div>
+      </div>
+
+      <DataTable :value="products" :lazy="true" responsiveLayout="scroll" stripedRows size="small" class="mt-4 mb-4">
+        <Column field="id" header="Id"><template #body="slotProps">{{slotProps.data.id}}</template></Column>
+        <Column field="nome" header="Nome"/>
+        <Column field="referencia" header="Referência"/>
+        <Column field="tipoProduto.nome" header="Tipo de Produto"/>
+        <Column field="fornecedor.fantasia" header="Fornecedor"/>
+        <Column field="peso" header="Peso (em gramas)"/>
+        <Column field="estoque" :header="action === 'visualizar' ? 'Transferido' : 'Estoque Origem'"/>
+        <Column field="estoqueDestino" header="Estoque Destino" v-if="action === 'criar'"/>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center" v-if="action === 'criar'">
+          <template #header>
+            <b>Transferir</b>
+          </template>
+
+          <template #body="slotProps">
+            <InputNumber v-model="slotProps.data.quantidade" :min="0" :max="slotProps.data.estoque" showButtons buttonLayout="horizontal" :step="1" fluid/>
+          </template>
+        </Column>
+      </DataTable>
+
+      <FormField class="flex justify-end gap-2" v-show="action === 'criar'">
+        <Button label="Cancelar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
+        <Button label="Transferir" icon="pi pi-save" :disabled="!products.length" type="submit" raised/>
+      </FormField>
+      <FormField class="flex justify-end gap-2" v-show="action === 'visualizar'">
+        <Button label="Fechar" icon="pi pi-times" @click="toggle" severity="secondary" raised/>
+      </FormField>
+    </Form>
+  </Dialog>
 </template>

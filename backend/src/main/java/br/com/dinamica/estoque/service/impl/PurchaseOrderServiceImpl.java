@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,6 +92,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 	@Override
 	public void delete(Long id) {
 		this.repository.deleteById(id);
+	}
+
+	@Override
+	public List<PurchaseOrderDto> findByOrderNumber(String numeroPedido) {
+		return this.repository.findByOrderNumber(numeroPedido).stream().map(this.modelMapper::toDto).toList();
 	}
 
 }

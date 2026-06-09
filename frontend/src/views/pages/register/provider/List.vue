@@ -13,7 +13,6 @@ const confirm = useConfirm()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -39,8 +38,6 @@ async function load(params) {
     query[field] = query[field] ? onlyDigits(query[field]) : null
   }
 
-  loading.value = true
-
   try {
     const response = await api.get('/provider/list', { params: query })
 
@@ -48,8 +45,6 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -135,83 +130,81 @@ function limpar() {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Fornecedores</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-3">
-              <FormField name="razaoSocial">
-                <FloatLabel variant="on">
-                  <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
-                  <label for="razaoSocial">Razão Social</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3">
-              <FormField name="fantasia">
-                <FloatLabel variant="on">
-                  <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
-                  <label for="fantasia">Nome de Fantasia</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="cnpj">
-                <FloatLabel variant="on">
-                  <InputMask id="cnpj" mask="99.999.999/9999-99" autocomplete="off" fluid/>
-                  <label for="cnpj">CNPJ</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="fone">
-                <FloatLabel variant="on">
-                  <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
-                  <label for="fone">Fone</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
+  <Card>
+    <template #title><h3>Lista de Fornecedores</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-3">
+            <FormField name="razaoSocial">
+              <FloatLabel variant="on">
+                <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
+                <label for="razaoSocial">Razão Social</label>
+              </FloatLabel>
+            </FormField>
           </div>
-        </Form>
+          <div class="col-span-3">
+            <FormField name="fantasia">
+              <FloatLabel variant="on">
+                <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
+                <label for="fantasia">Nome de Fantasia</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField name="cnpj">
+              <FloatLabel variant="on">
+                <InputMask id="cnpj" mask="99.999.999/9999-99" autocomplete="off" fluid/>
+                <label for="cnpj">CNPJ</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField name="fone">
+              <FloatLabel variant="on">
+                <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+                <label for="fone">Fone</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField class="flex justify-end gap-2">
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+            </FormField>
+          </div>
+        </div>
+      </Form>
 
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
-          <Column field="id" header="Id" sortable/>
-          <Column field="razaoSocial" header="Razão Social" sortable/>
-          <Column field="fantasia" header="Nome de Fantasia" sortable/>
-          <Column field="cnpj" header="CNPJ" sortable>
-            <template #body="slotProps">
-              {{ formatCpfCnpj(slotProps.data.cnpj) }}
-            </template>
-          </Column>
-          <Column field="fone" header="Fone">
-            <template #body="slotProps">
-              {{ formatPhone(slotProps.data.fone) }}
-            </template>
-          </Column>
+        <Column field="id" header="Id" sortable/>
+        <Column field="razaoSocial" header="Razão Social" sortable/>
+        <Column field="fantasia" header="Nome de Fantasia" sortable/>
+        <Column field="cnpj" header="CNPJ" sortable>
+          <template #body="slotProps">
+            {{ formatCpfCnpj(slotProps.data.cnpj) }}
+          </template>
+        </Column>
+        <Column field="fone" header="Fone">
+          <template #body="slotProps">
+            {{ formatPhone(slotProps.data.fone) }}
+          </template>
+        </Column>
 
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Fornecedor'"/>
-            </template>
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Novo Fornecedor'"/>
+          </template>
 
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-  </BlockUI>
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
 </template>

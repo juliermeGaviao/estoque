@@ -171,4 +171,15 @@ public class PurchaseOrderController {
 		}
 	}
 
+	@GetMapping("/find-by-order-number")
+	public ResponseEntity<Object> findByOrderNumber(@RequestParam String numeroPedido) {
+		try {
+			return ResponseEntity.ok(this.service.findByOrderNumber(numeroPedido));
+		} catch (NoSuchElementException e) {
+			String mensagem = NOT_FOUND + numeroPedido;
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+		}
+	}
+
 }

@@ -6,7 +6,6 @@ import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 
 const toast = useToast()
-const loading = ref(false)
 
 const backgroundColorArray = [
   getComputedStyle(document.body).getPropertyValue('--p-orange-500'),
@@ -92,39 +91,34 @@ async function loadSalesReport() {
 }
 
 onMounted(() => {
-  loading.value = true
-
   loadSalesReport()
-
-  loading.value = false
 })
+
 </script>
 
 <template>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card class="mb-2">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Relatório de Vendas</h3>
-          <div class="flex justify-end items-center">
-            <FloatLabel variant="on">
-              <Select id="idSalesFrequency" v-model="salesFrequency" :options="frequencyOptions" @update:modelValue="loadSalesReport" optionLabel="label" optionValue="id" class="w-[150px] mr-10"/>
-              <label for="idSalesFrequency">Periodicidade</label>
-            </FloatLabel>
-          </div>
+  <Card class="mb-2">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Relatório de Vendas</h3>
+        <div class="flex justify-end items-center">
+          <FloatLabel variant="on">
+            <Select id="idSalesFrequency" v-model="salesFrequency" :options="frequencyOptions" @update:modelValue="loadSalesReport" optionLabel="label" optionValue="id" class="w-[150px] mr-10"/>
+            <label for="idSalesFrequency">Periodicidade</label>
+          </FloatLabel>
         </div>
-      </template>
-      <template #content>
-        <div class="flex justify-around">
-          <Chart type="pie" :data="salesQuantityReport" :options="salesQuantityReportOptions" class="w-[450px] h-[450px]"/>
-          <Chart type="pie" :data="salesAverageReport" :options="salesAverageReportOptions" class="w-[450px] h-[450px]"/>
-          <Chart type="pie" :data="salesTotalReport" :options="salesTotalReportOptions" class="w-[450px] h-[450px]"/>
-        </div>
-      </template>
-    </Card>
-    <BarReportComponent title="Relatório de Vendedores" endpoint="salesman-report"/>
-    <BarReportComponent title="Relatório por Tipo de Produto" endpoint="product-type-report"/>
-    <BarReportComponent title="Relatório de Empresas" endpoint="company-report"/>
-    <BarReportComponent title="Relatório de Fornecedores" endpoint="provider-report"/>
-  </BlockUI>
+      </div>
+    </template>
+    <template #content>
+      <div class="flex justify-around">
+        <Chart type="pie" :data="salesQuantityReport" :options="salesQuantityReportOptions" class="w-[450px] h-[450px]"/>
+        <Chart type="pie" :data="salesAverageReport" :options="salesAverageReportOptions" class="w-[450px] h-[450px]"/>
+        <Chart type="pie" :data="salesTotalReport" :options="salesTotalReportOptions" class="w-[450px] h-[450px]"/>
+      </div>
+    </template>
+  </Card>
+  <BarReportComponent title="Relatório de Vendedores" endpoint="salesman-report"/>
+  <BarReportComponent title="Relatório por Tipo de Produto" endpoint="product-type-report"/>
+  <BarReportComponent title="Relatório de Empresas" endpoint="company-report"/>
+  <BarReportComponent title="Relatório de Fornecedores" endpoint="provider-report"/>
 </template>

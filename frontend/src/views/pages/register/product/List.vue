@@ -9,7 +9,6 @@ const confirm = useConfirm()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -32,8 +31,6 @@ async function load(params) {
     }
   }
 
-  loading.value = true
-
   try {
     const response = await api.get("/product/list", { params: query })
 
@@ -46,8 +43,6 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Produtos", detail: "Requisição de lista de Produtos terminou com o erro: " + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
@@ -150,32 +145,24 @@ const confirmDelete = entity => {
 let tipos = ref([])
 
 async function loadProductTypes() {
-  loading.value = true
-
   try {
     const response = await api.get('/product-type/list', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
 
     tipos.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produto', detail: 'Requisição de lista de Tipos de Produto terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
 let fornecedores = ref([])
 
 async function loadProviders() {
-  loading.value = true
-
   try {
     const response = await api.get('/provider/list', { params: { page: 0, size: 10000, sort: 'fantasia,asc' } })
 
     fornecedores.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedores', detail: 'Requisição de lista de Fornecedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
@@ -232,8 +219,6 @@ async function commit(item) {
   atributos.peso = edicao.peso
   atributos.estoque = edicao.estoque
 
-  loading.value = true
-
   try {
     const response = await api.post('/product', atributos)
 
@@ -244,8 +229,6 @@ async function commit(item) {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de produto terminou com o erro: ` + error.response.data, life: 10000 })
-  } finally {
-    loading.value = true
   }
 }
 
@@ -284,8 +267,6 @@ async function saveAll(emitirMensagem) {
     item.estoque = item.edicao.estoque - item.estoque
   })
 
-  loading.value = true
-
   try {
     const response = await api.post('/product/save-all', data.value)
 
@@ -298,8 +279,6 @@ async function saveAll(emitirMensagem) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de salvamento de produtos terminou com o erro: ` + error.response.data, life: 10000 })
 
     return false
-  } finally {
-    loading.value = true
   }
 
   return true
@@ -334,158 +313,156 @@ const togglePopover = async (event, product) => {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Produtos</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-4">
-              <FormField name="nome">
-                <FloatLabel variant="on">
-                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
-                  <label for="nome">Nome</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField name="idTipoProduto">
-                <FloatLabel variant="on">
-                  <Select :options="tipos" optionLabel="nome" optionValue="id" fluid/>
-                  <label for="idTipoProduto">Tipo do Produto</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-4">
-              <FormField name="idFornecedor">
-                <FloatLabel variant="on">
-                  <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
-                  <label for="idFornecedor">Fornecedores</label>
-                </FloatLabel>
-              </FormField>
-            </div>
+  <Card>
+    <template #title><h3>Lista de Produtos</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-4">
+            <FormField name="nome">
+              <FloatLabel variant="on">
+                <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                <label for="nome">Nome</label>
+              </FloatLabel>
+            </FormField>
           </div>
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-4">
-              <FormField name="referencia">
-                <FloatLabel variant="on">
-                  <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
-                  <label for="referencia">Referência</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3">
-              <FormField name="minPeso">
-                <FloatLabel variant="on">
-                  <InputNumber id="minPeso" :max="10000" fluid/>
-                  <label for="minPeso">Peso Mínimo (g)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-3">
-              <FormField name="maxPeso">
-                <FloatLabel variant="on">
-                  <InputNumber id="maxPeso" :max="10000" fluid/>
-                  <label for="maxPeso">Peso Máximo (g)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
+          <div class="col-span-4">
+            <FormField name="idTipoProduto">
+              <FloatLabel variant="on">
+                <Select :options="tipos" optionLabel="nome" optionValue="id" fluid/>
+                <label for="idTipoProduto">Tipo do Produto</label>
+              </FloatLabel>
+            </FormField>
           </div>
-        </Form>
-
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small" class="mt-6">
-
-          <Column field="id" header="Id" sortable><template #body="slotProps">{{slotProps.data.id}}</template></Column>
-          <Column field="nome" header="Nome" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
-              <div v-if="slotProps.data.editando">
-                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
-              </div>
-            </template>
-          </Column>
-          <Column field="referencia" header="Referência" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.referencia}}</div>
-              <div v-if="slotProps.data.editando">
-                <InputText v-model="slotProps.data.edicao.referencia" maxlength="100" autocomplete="off" fluid/>
-              </div>
-            </template>
-          </Column>
-          <Column field="tipoProduto.nome" header="Tipo de Produto" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.tipoProduto.nome}}</div>
-              <div v-if="slotProps.data.editando">
-                <Select v-model="slotProps.data.edicao.idTipoProduto" :options="tipos" optionLabel="nome" optionValue="id" fluid/>
-              </div>
-            </template>
-          </Column>
-          <Column field="fornecedor.fantasia" header="Fornecedor" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.fornecedor.fantasia}}</div>
-              <div v-if="slotProps.data.editando">
-                <Select v-model="slotProps.data.edicao.idFornecedor" :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
-              </div>
-            </template>
-          </Column>
-          <Column field="peso" header="Peso (em gramas)" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.peso}}</div>
-              <div v-if="slotProps.data.editando">
-                <InputNumber v-model="slotProps.data.edicao.peso" :min="1" :max="10000" fluid/>
-              </div>
-            </template>
-          </Column>
-          <Column field="estoque" header="Estoque">
-            <template #body="slotProps">
-              {{ slotProps.data.estoque }}&nbsp;
-              <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover($event, slotProps.data)" style="cursor: pointer; color: black;"/>
-            </template>
-          </Column>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Produto'"/>
-            </template>
-
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
-              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
-              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
-            </template>
-          </Column>
-        </DataTable>
-
-        <Popover ref="pop">
-          <div v-if="salePoints && salePoints.length">
-            <div v-for="item in salePoints" :key="item.id">
-              <b>{{ item.pontoVenda?.nome }}</b>: {{ item.saldo }}
-            </div>
+          <div class="col-span-4">
+            <FormField name="idFornecedor">
+              <FloatLabel variant="on">
+                <Select :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+                <label for="idFornecedor">Fornecedores</label>
+              </FloatLabel>
+            </FormField>
           </div>
-
-          <div v-else-if="salePoints && salePoints.length === 0">
-            <span>Produto sem estoque.</span>
-          </div>
-
-          <div v-else class="p-3 text-center text-gray-400 flex flex-column items-center justify-center gap-2">
-            <i class="pi pi-spin pi-spinner text-2xl"></i>
-            <span class="text-xs font-medium">Buscando estoques...</span>
-          </div>
-        </Popover>
-
-        <div class="flex justify-end mt-4">
-          <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
         </div>
-      </template>
-    </Card>
-  </BlockUI>
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-4">
+            <FormField name="referencia">
+              <FloatLabel variant="on">
+                <InputText id="referencia" maxlength="100" autocomplete="off" fluid/>
+                <label for="referencia">Referência</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-3">
+            <FormField name="minPeso">
+              <FloatLabel variant="on">
+                <InputNumber id="minPeso" :max="10000" fluid/>
+                <label for="minPeso">Peso Mínimo (g)</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-3">
+            <FormField name="maxPeso">
+              <FloatLabel variant="on">
+                <InputNumber id="maxPeso" :max="10000" fluid/>
+                <label for="maxPeso">Peso Máximo (g)</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField class="flex justify-end gap-2">
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+            </FormField>
+          </div>
+        </div>
+      </Form>
+
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small" class="mt-6">
+
+        <Column field="id" header="Id" sortable><template #body="slotProps">{{slotProps.data.id}}</template></Column>
+        <Column field="nome" header="Nome" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+            <div v-if="slotProps.data.editando">
+              <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="referencia" header="Referência" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.referencia}}</div>
+            <div v-if="slotProps.data.editando">
+              <InputText v-model="slotProps.data.edicao.referencia" maxlength="100" autocomplete="off" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="tipoProduto.nome" header="Tipo de Produto" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.tipoProduto.nome}}</div>
+            <div v-if="slotProps.data.editando">
+              <Select v-model="slotProps.data.edicao.idTipoProduto" :options="tipos" optionLabel="nome" optionValue="id" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="fornecedor.fantasia" header="Fornecedor" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.fornecedor.fantasia}}</div>
+            <div v-if="slotProps.data.editando">
+              <Select v-model="slotProps.data.edicao.idFornecedor" :options="fornecedores" optionLabel="fantasia" optionValue="id" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="peso" header="Peso (em gramas)" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.peso}}</div>
+            <div v-if="slotProps.data.editando">
+              <InputNumber v-model="slotProps.data.edicao.peso" :min="1" :max="10000" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="estoque" header="Estoque">
+          <template #body="slotProps">
+            {{ slotProps.data.estoque }}&nbsp;
+            <i ref="infoIcon" class="pi pi-info-circle" @click="togglePopover($event, slotProps.data)" style="cursor: pointer; color: black;"/>
+          </template>
+        </Column>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Produto'"/>
+          </template>
+
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
+            <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
+            <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
+          </template>
+        </Column>
+      </DataTable>
+
+      <Popover ref="pop">
+        <div v-if="salePoints && salePoints.length">
+          <div v-for="item in salePoints" :key="item.id">
+            <b>{{ item.pontoVenda?.nome }}</b>: {{ item.saldo }}
+          </div>
+        </div>
+
+        <div v-else-if="salePoints && salePoints.length === 0">
+          <span>Produto sem estoque.</span>
+        </div>
+
+        <div v-else class="p-3 text-center text-gray-400 flex flex-column items-center justify-center gap-2">
+          <i class="pi pi-spin pi-spinner text-2xl"></i>
+          <span class="text-xs font-medium">Buscando estoques...</span>
+        </div>
+      </Popover>
+
+      <div class="flex justify-end mt-4">
+        <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
+      </div>
+    </template>
+  </Card>
 </template>

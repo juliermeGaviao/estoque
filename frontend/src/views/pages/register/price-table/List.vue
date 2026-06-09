@@ -10,7 +10,6 @@ const confirm = useConfirm()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
 const size = ref(15)
@@ -55,9 +54,7 @@ async function load() {
 }
 
 onMounted(async () => {
-  loading.value = true
   load()
-  loading.value = false
 })
 
 async function onPage(event) {
@@ -181,8 +178,6 @@ async function commit(item) {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de ${item.id ? 'alteração' : 'criação'} de tabela de preços terminou com o erro: ` + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -222,8 +217,6 @@ async function saveAll(emitirMensagem) {
     }
   })
 
-  loading.value = true
-
   try {
     const response = await api.post('/price-table/save-all', data.value)
 
@@ -236,8 +229,6 @@ async function saveAll(emitirMensagem) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de salvamento de tabelas de preços terminou com o erro: ` + error.response.data, life: 10000 })
 
     return false
-  } finally {
-    loading.value = false
   }
 
   return true
@@ -255,55 +246,53 @@ async function clickAndSaveAll() {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Tabelas de Preços</h3></template>
-      <template #content>
-        <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
-          <FloatLabel variant="on">
-            <label for="nome">Nome</label>
-            <InputText id="nome" v-model="nome" autocomplete="off" fluid/>
-          </FloatLabel>
+  <Card>
+    <template #title><h3>Lista de Tabelas de Preços</h3></template>
+    <template #content>
+      <Form class="flex gap-2 mb-4" @submit="onFilter" @reset="onClear">
+        <FloatLabel variant="on">
+          <label for="nome">Nome</label>
+          <InputText id="nome" v-model="nome" autocomplete="off" fluid/>
+        </FloatLabel>
 
-          <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
-          <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
-        </Form>
+        <Button label="Limpar" icon="pi pi-times" severity="secondary" type="reset" raised/>
+        <Button label="Buscar" type="submit" icon="pi pi-search" raised/>
+      </Form>
 
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
 
-          <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable>
-            <template #body="slotProps">
-              <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
-              <div v-if="slotProps.data.editando">
-                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
-              </div>
-            </template>
-          </Column>
+        <Column field="id" header="Id" sortable/>
+        <Column field="nome" header="Nome" sortable>
+          <template #body="slotProps">
+            <div v-if="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+            <div v-if="slotProps.data.editando">
+              <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+            </div>
+          </template>
+        </Column>
 
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Nova Tabela de Preços'"/>
-            </template>
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Nova Tabela de Preços'"/>
+          </template>
 
-            <template #body="slotProps">
-              <Button icon="pi pi-dollar" class="p-button-sm p-button-text p-mr-2" @click="openTable(slotProps.data)" v-tooltip.bottom="'Preencher Preços'" v-if="slotProps.data.id"/>
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
-              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
-              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
-            </template>
-          </Column>
-        </DataTable>
+          <template #body="slotProps">
+            <Button icon="pi pi-dollar" class="p-button-sm p-button-text p-mr-2" @click="openTable(slotProps.data)" v-tooltip.bottom="'Preencher Preços'" v-if="slotProps.data.id"/>
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-if="!slotProps.data.editando"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-if="!slotProps.data.editando"/>
+            <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-if="slotProps.data.editando"/>
+            <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-if="slotProps.data.editando"/>
+          </template>
+        </Column>
+      </DataTable>
 
-        <div class="flex justify-end mt-4">
-          <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
-        </div>
-      </template>
-    </Card>
-  </BlockUI>
+      <div class="flex justify-end mt-4">
+        <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
+      </div>
+    </template>
+  </Card>
   <Dialog v-model:visible="visible" modal :closable="false" style="width: 90%">
     <ProductPriceListComponent v-if="visible" :id="idTabelaPreco" :nomeTabelaPreco="nomeSelecionado" @close="visible = false"/>
   </Dialog>

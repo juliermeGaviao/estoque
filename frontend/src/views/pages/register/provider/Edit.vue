@@ -13,7 +13,6 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const states = ref([])
-const loading = ref(false)
 const confirm = useConfirm()
 
 const providerForm = ref(null)
@@ -57,8 +56,6 @@ let idContact
 const visible = ref(false)
 
 async function load() {
-  loading.value = true
-
   try {
     const res = await api.get('/provider', { params: { id: id.value } })
 
@@ -77,16 +74,12 @@ async function load() {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedor', detail: 'Requisição de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 
   loadContacts()
 }
 
 async function loadContacts() {
-  loading.value = true
-
   try {
     let params = {
       idFornecedor: id.value,
@@ -108,15 +101,11 @@ async function loadContacts() {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos do Fornecedor', detail: 'Requisição de lista de contatos do fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 const save = async ({ valid, values }) => {
   if (!valid) return
-
-  loading.value = true
 
   let params = { ... values }
 
@@ -142,8 +131,6 @@ const save = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Fornecedor', detail: 'Requisição de alteração de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -177,8 +164,6 @@ function edit(contact) {
 const saveContact = async ({ valid, values }) => {
   if (!valid) return
 
-  loading.value = true
-
   let params = { ... values }
 
   params['fornecedor'] = { "id": id.value }
@@ -207,7 +192,6 @@ const saveContact = async ({ valid, values }) => {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Fornecedor', detail: 'Requisição de alteração de contato de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
   } finally {
     visible.value = false
-    loading.value = false
     loadContacts()
   }
 }
@@ -228,8 +212,6 @@ const confirmDelete = entity => {
       raised: true
     },
     accept: async () => {
-      loading.value = true
-
       try {
         await api.delete(`/provider-contact?id=${entity.id}`)
 
@@ -237,7 +219,6 @@ const confirmDelete = entity => {
       } catch (error) {
         toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Fornecedor', detail: 'Requisição de remoção de contato de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
       } finally {
-        loading.value = false
         loadContacts()
       }
     }
@@ -255,179 +236,177 @@ onMounted(() => {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>{{ id ? 'Editar' : 'Inserir' }} Fornecedor</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/provider')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>{{ id ? 'Editar' : 'Inserir' }} Fornecedor</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.push('/register/provider')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
         </div>
-      </template>
+      </div>
+    </template>
 
-      <template #content>
-        <Form ref="providerForm" :resolver="providerFormValidator" :initialValues="providerFormValues" @submit="save" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="razaoSocial">
+    <template #content>
+      <Form ref="providerForm" :resolver="providerFormValidator" :initialValues="providerFormValues" @submit="save" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="razaoSocial">
+          <FloatLabel variant="on">
+            <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
+            <label for="razaoSocial">Razão Social</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <FormField v-slot="$field" name="fantasia">
+          <FloatLabel variant="on">
+            <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
+            <label for="fantasia">Nome de Fantasia</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <div class="grid grid-cols-2 gap-2">
+          <FormField v-slot="$field" name="cnpj">
             <FloatLabel variant="on">
-              <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>
-              <label for="razaoSocial">Razão Social</label>
+              <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
+              <label for="cnpj">CNPJ</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
 
-          <FormField v-slot="$field" name="fantasia">
+          <FormField v-slot="$field" name="fone">
             <FloatLabel variant="on">
-              <InputText id="fantasia" maxlength="255" autocomplete="off" fluid/>
-              <label for="fantasia">Nome de Fantasia</label>
+              <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
+              <label for="fone">Fone</label>
             </FloatLabel>
             <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
           </FormField>
+        </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <FormField v-slot="$field" name="cnpj">
+        <FormField v-slot="$field" name="endereco">
+          <FloatLabel variant="on">
+            <InputText id="endereco" maxlength="255" autocomplete="off" fluid/>
+            <label for="endereco">Endereço</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-10">
+            <FormField v-slot="$field" name="bairro">
               <FloatLabel variant="on">
-                <InputMask id="cnpj" v-model="$field.value" mask="99.999.999/9999-99" autocomplete="off" fluid/>
-                <label for="cnpj">CNPJ</label>
+                <InputText id="bairro" maxlength="100" autocomplete="off" fluid/>
+                <label for="bairro">Bairro</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
+          </div>
 
-            <FormField v-slot="$field" name="fone">
+          <div class="col-span-2">
+            <FormField v-slot="$field" name="cep">
               <FloatLabel variant="on">
-                <InputMask id="fone" mask="(99) 99999-9999" autocomplete="off" fluid/>
-                <label for="fone">Fone</label>
+                <InputMask id="cep" mask="99999-999" autocomplete="off" fluid/>
+                <label for="cep">CEP</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-10">
+            <FormField v-slot="$field" name="cidade">
+              <FloatLabel variant="on">
+                <InputText id="cidade" maxlength="100" autocomplete="off" fluid/>
+                <label for="cidade">Cidade</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
             </FormField>
           </div>
 
-          <FormField v-slot="$field" name="endereco">
-            <FloatLabel variant="on">
-              <InputText id="endereco" maxlength="255" autocomplete="off" fluid/>
-              <label for="endereco">Endereço</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-10">
-              <FormField v-slot="$field" name="bairro">
-                <FloatLabel variant="on">
-                  <InputText id="bairro" maxlength="100" autocomplete="off" fluid/>
-                  <label for="bairro">Bairro</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-
-            <div class="col-span-2">
-              <FormField v-slot="$field" name="cep">
-                <FloatLabel variant="on">
-                  <InputMask id="cep" mask="99999-999" autocomplete="off" fluid/>
-                  <label for="cep">CEP</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-10">
-              <FormField v-slot="$field" name="cidade">
-                <FloatLabel variant="on">
-                  <InputText id="cidade" maxlength="100" autocomplete="off" fluid/>
-                  <label for="cidade">Cidade</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-
-            <div class="col-span-2">
-              <FormField v-slot="$field" name="uf">
-                <FloatLabel variant="on">
-                  <Select id="uf" :options="states" optionLabel="name" optionValue="code" fluid/>
-                  <label for="uf">Estado</label>
-                </FloatLabel>
-                <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-              </FormField>
-            </div>
-          </div>
-
-          <FormField class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </FormField>
-        </Form>
-      </template>
-    </Card>
-    <Card>
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Lista de Contatos do Fornecedor</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.push('/register/provider')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+          <div class="col-span-2">
+            <FormField v-slot="$field" name="uf">
+              <FloatLabel variant="on">
+                <Select id="uf" :options="states" optionLabel="name" optionValue="code" fluid/>
+                <label for="uf">Estado</label>
+              </FloatLabel>
+              <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+            </FormField>
           </div>
         </div>
-      </template>
-      <template #content>
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
-
-          <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable/>
-          <Column field="cargo" header="Cargo" sortable/>
-          <Column field="celular" header="Celular">
-            <template #body="slotProps">
-              {{ formatPhone(slotProps.data.celular) }}
-            </template>
-          </Column>
-
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
-            </template>
-
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-    <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
-      <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
-        <FormField v-slot="$field" name="nome" class="mt-1">
-          <FloatLabel variant="on">
-            <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
-            <label for="nome">Nome</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
-
-        <FormField v-slot="$field" name="cargo">
-          <FloatLabel variant="on">
-            <InputText id="cargo" maxlength="255" autocomplete="off" fluid/>
-            <label for="cargo">Cargo</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
-
-        <FormField v-slot="$field" name="celular">
-          <FloatLabel variant="on">
-            <InputMask id="celular" mask="(99) 99999-9999" autocomplete="off" fluid/>
-            <label for="celular">Celular</label>
-          </FloatLabel>
-          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-        </FormField>
 
         <FormField class="flex justify-end gap-2">
-          <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
           <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
         </FormField>
       </Form>
-    </Dialog>
-  </BlockUI>
+    </template>
+  </Card>
+  <Card>
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Lista de Contatos do Fornecedor</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.push('/register/provider')" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+    <template #content>
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+
+        <Column field="id" header="Id" sortable/>
+        <Column field="nome" header="Nome" sortable/>
+        <Column field="cargo" header="Cargo" sortable/>
+        <Column field="celular" header="Celular">
+          <template #body="slotProps">
+            {{ formatPhone(slotProps.data.celular) }}
+          </template>
+        </Column>
+
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
+          </template>
+
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
+  <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
+    <Form ref="contactForm" :resolver="contactFormValidator" :initialValues="contactFormValues" @submit="saveContact" class="grid flex flex-column gap-2">
+      <FormField v-slot="$field" name="nome" class="mt-1">
+        <FloatLabel variant="on">
+          <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+          <label for="nome">Nome</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <FormField v-slot="$field" name="cargo">
+        <FloatLabel variant="on">
+          <InputText id="cargo" maxlength="255" autocomplete="off" fluid/>
+          <label for="cargo">Cargo</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <FormField v-slot="$field" name="celular">
+        <FloatLabel variant="on">
+          <InputMask id="celular" mask="(99) 99999-9999" autocomplete="off" fluid/>
+          <label for="celular">Celular</label>
+        </FloatLabel>
+        <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+      </FormField>
+
+      <FormField class="flex justify-end gap-2">
+        <Button label="Cancelar" icon="pi pi-ban" @click="visible = false" severity="secondary" raised/>
+        <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+      </FormField>
+    </Form>
+  </Dialog>
 </template>

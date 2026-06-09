@@ -10,7 +10,6 @@ import { z } from 'zod'
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const loading = ref(false)
 const userId = Number.parseInt(route.query.id)
 
 const form = ref(null)
@@ -65,8 +64,6 @@ async function loadProfiles() {
 const save = async ({ valid, values }) => {
   if (!valid) return
 
-  loading.value = true
-
   let params = { ... values }
 
   for (let param in params) {
@@ -85,15 +82,11 @@ const save = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de alteração de usuário terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 const changePassword = async ({ valid, values }) => {
   if (!valid) return
-
-  loading.value = true
 
   let params = { ... values }
 
@@ -111,14 +104,10 @@ const changePassword = async ({ valid, values }) => {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Usuário', detail: 'Requisição de troca de senha terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 onMounted(() => {
-  loading.value = true
-
   load()
 
   if (eAdmin()) {
@@ -128,8 +117,6 @@ onMounted(() => {
     loadSalePoints()
     loadUserSalePoints()
   }
-
-  loading.value = false
 })
 
 const priceTables = ref([])
@@ -222,8 +209,6 @@ const savePriceTables = async ({ valid, values }) => {
 
     userPriceTable.tabela.id = values.tabela
 
-    loading.value = true
-
     try {
       const response = await api.post('/user-price-table', userPriceTable)
 
@@ -234,8 +219,6 @@ const savePriceTables = async ({ valid, values }) => {
       }
     } catch (error) {
       toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
-    } finally {
-      loading.value = false
     }
   } else {
     const tables = []
@@ -243,8 +226,6 @@ const savePriceTables = async ({ valid, values }) => {
     for (let tabela of values.tabelas) {
       tables.push({ tabela: { id: tabela }, usuario: { id: userId } })
     }
-
-    loading.value = true
 
     try {
       const response = await api.post('/user-price-table/save-tables', tables)
@@ -256,8 +237,6 @@ const savePriceTables = async ({ valid, values }) => {
       }
     } catch (error) {
       toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
-    } finally {
-      loading.value = false
     }
   }
 }
@@ -275,8 +254,6 @@ const saveSalePoints = async ({ valid, values }) => {
 
     userSalePoint.pontoVenda.id = values.ponto
 
-    loading.value = true
-
     try {
       const response = await api.post('/user-sale-point', userSalePoint)
 
@@ -287,8 +264,6 @@ const saveSalePoints = async ({ valid, values }) => {
       }
     } catch (error) {
       toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
-    } finally {
-      loading.value = false
     }
   } else {
     const points = []
@@ -296,8 +271,6 @@ const saveSalePoints = async ({ valid, values }) => {
     for (let ponto of values.pontos) {
       points.push({ pontoVenda: { id: ponto }, usuario: { id: userId } })
     }
-
-    loading.value = true
 
     try {
       const response = await api.post('/user-sale-point/save-sale-points', points)
@@ -309,8 +282,6 @@ const saveSalePoints = async ({ valid, values }) => {
       }
     } catch (error) {
       toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
-    } finally {
-      loading.value = false
     }
   }
 }
@@ -318,158 +289,156 @@ const saveSalePoints = async ({ valid, values }) => {
 </script>
 
 <template>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card class="mb-4">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Editar Usuário</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+  <Card class="mb-4">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Editar Usuário</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
         </div>
-      </template>
+      </div>
+    </template>
 
-      <template #content>
-        <Form ref="form" :resolver="formValidator" :initialValues="initialFormValues" @submit="save" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="email">
-            <FloatLabel variant="on" class="flex-1">
-              <InputText id="email" maxlength="255" autocomplete="off" fluid/>
-              <label for="email">E-mail</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+    <template #content>
+      <Form ref="form" :resolver="formValidator" :initialValues="initialFormValues" @submit="save" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="email">
+          <FloatLabel variant="on" class="flex-1">
+            <InputText id="email" maxlength="255" autocomplete="off" fluid/>
+            <label for="email">E-mail</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
 
-          <FormField v-slot="$field" name="perfis" class="flex items-start gap-2" v-show="eAdmin()">
-            <div classes="label">Perfis:</div>
-            <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
-              <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
-                @change="clear"
-                :modelValue="$field.value"
-                @update:modelValue="val => {
-                  $field.value = val
-                  userProfiles = val.length
-                }"
-              />
-              <label :for="'perfil_' + perfil.id">{{ perfil.nome }}</label>
-            </div>
-          </FormField>
-
-          <div class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+        <FormField v-slot="$field" name="perfis" class="flex items-start gap-2" v-show="eAdmin()">
+          <div classes="label">Perfis:</div>
+          <div v-for="perfil in profiles" :key="perfil.id" class="flex items-center gap-2">
+            <Checkbox :value="perfil.id" :inputId="'perfil_' + perfil.id" :disabled="perfil.id === 2"
+              @change="clear"
+              :modelValue="$field.value"
+              @update:modelValue="val => {
+                $field.value = val
+                userProfiles = val.length
+              }"
+            />
+            <label :for="'perfil_' + perfil.id">{{ perfil.nome }}</label>
           </div>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-6">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Senha de acesso</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+        </FormField>
+
+        <div class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
         </div>
-      </template>
-      <template #content>
-        <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="senha" initialValue="">
-            <FloatLabel variant="on" class="flex-1">
-              <Password inputId="senha" toggleMask fluid :feedback="false"/>
-              <label for="senha">Senha</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <FormField v-slot="$field" name="confirmarSenha" initialValue="">
-            <FloatLabel variant="on" class="flex-1">
-              <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
-              <label for="confirmarSenha">Confirmação da senha</label>
-            </FloatLabel>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <div class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </div>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-6" v-show="eAdmin()">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Tabelas de Preços</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+      </Form>
+    </template>
+  </Card>
+  <Card class="mb-6">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Senha de acesso</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
         </div>
-      </template>
-      <template #content>
-        <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="tabelas" v-show="userProfiles === 2">
-            <div class="flex items-start gap-2">
-              <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
-                <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'checkbox_' + tabela.id"/>
-                <label :for="'checkbox_' + tabela.id">{{ tabela.nome }}</label>
-              </div>
-            </div>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+      </div>
+    </template>
+    <template #content>
+      <Form :resolver="resolverPassword" @submit="changePassword" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="senha" initialValue="">
+          <FloatLabel variant="on" class="flex-1">
+            <Password inputId="senha" toggleMask fluid :feedback="false"/>
+            <label for="senha">Senha</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
 
-          <FormField v-slot="$field" name="tabela" v-show="userProfiles < 2">
-            <div class="flex items-start gap-2">
-              <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
-                <RadioButton v-model="$field.value" :value="tabela.id" :inputId="'radiobutton_' + tabela.id"/>
-                <label :for="'radiobutton_' + tabela.id">{{ tabela.nome }}</label>
-              </div>
-            </div>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
+        <FormField v-slot="$field" name="confirmarSenha" initialValue="">
+          <FloatLabel variant="on" class="flex-1">
+            <Password inputId="confirmarSenha" toggleMask fluid :feedback="false"/>
+            <label for="confirmarSenha">Confirmação da senha</label>
+          </FloatLabel>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
 
-          <div class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
-          </div>
-        </Form>
-      </template>
-    </Card>
-    <Card class="mb-6" v-show="eAdmin()">
-      <template #title>
-        <div class="grid grid-cols-2">
-          <h3>Pontos de Venda</h3>
-          <div class="flex justify-end items-center">
-            <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
-          </div>
+        <div class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
         </div>
-      </template>
-      <template #content>
-        <Form ref="salePointForm" :resolver="salePointFormValidator" :initialValues="salePointFormValues" @submit="saveSalePoints" class="grid flex flex-column gap-2">
-          <FormField v-slot="$field" name="pontos" v-show="userProfiles === 2">
-            <div class="flex items-start gap-2">
-              <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
-                <Checkbox v-model="$field.value" :value="ponto.id" :inputId="'checkbox_' + ponto.id"/>
-                <label :for="'checkbox_' + ponto.id">{{ ponto.nome }}</label>
-              </div>
+      </Form>
+    </template>
+  </Card>
+  <Card class="mb-6" v-show="eAdmin()">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Tabelas de Preços</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+    <template #content>
+      <Form ref="tableForm" :resolver="tableFormValidator" :initialValues="tableFormValues" @submit="savePriceTables" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="tabelas" v-show="userProfiles === 2">
+          <div class="flex items-start gap-2">
+            <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
+              <Checkbox v-model="$field.value" :value="tabela.id" :inputId="'checkbox_' + tabela.id"/>
+              <label :for="'checkbox_' + tabela.id">{{ tabela.nome }}</label>
             </div>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <FormField v-slot="$field" name="ponto" v-show="userProfiles < 2">
-            <div class="flex items-start gap-2">
-              <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
-                <RadioButton v-model="$field.value" :value="ponto.id" :inputId="'radiobutton_' + ponto.id"/>
-                <label :for="'radiobutton_' + ponto.id">{{ ponto.nome }}</label>
-              </div>
-            </div>
-            <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
-          </FormField>
-
-          <div class="flex justify-end gap-2">
-            <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-            <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
           </div>
-        </Form>
-      </template>
-    </Card>
-  </BlockUI>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <FormField v-slot="$field" name="tabela" v-show="userProfiles < 2">
+          <div class="flex items-start gap-2">
+            <div v-for="tabela in priceTables" :key="tabela.id" class="flex items-center gap-2 mb-2">
+              <RadioButton v-model="$field.value" :value="tabela.id" :inputId="'radiobutton_' + tabela.id"/>
+              <label :for="'radiobutton_' + tabela.id">{{ tabela.nome }}</label>
+            </div>
+          </div>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <div class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+        </div>
+      </Form>
+    </template>
+  </Card>
+  <Card class="mb-6" v-show="eAdmin()">
+    <template #title>
+      <div class="grid grid-cols-2">
+        <h3>Pontos de Venda</h3>
+        <div class="flex justify-end items-center">
+          <Button icon="pi pi-replay" @click="router.back()" class="p-button-text" v-tooltip.bottom="'Voltar'"/>
+        </div>
+      </div>
+    </template>
+    <template #content>
+      <Form ref="salePointForm" :resolver="salePointFormValidator" :initialValues="salePointFormValues" @submit="saveSalePoints" class="grid flex flex-column gap-2">
+        <FormField v-slot="$field" name="pontos" v-show="userProfiles === 2">
+          <div class="flex items-start gap-2">
+            <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
+              <Checkbox v-model="$field.value" :value="ponto.id" :inputId="'checkbox_' + ponto.id"/>
+              <label :for="'checkbox_' + ponto.id">{{ ponto.nome }}</label>
+            </div>
+          </div>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <FormField v-slot="$field" name="ponto" v-show="userProfiles < 2">
+          <div class="flex items-start gap-2">
+            <div v-for="ponto in salePoints" :key="ponto.id" class="flex items-center gap-2 mb-2">
+              <RadioButton v-model="$field.value" :value="ponto.id" :inputId="'radiobutton_' + ponto.id"/>
+              <label :for="'radiobutton_' + ponto.id">{{ ponto.nome }}</label>
+            </div>
+          </div>
+          <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
+        </FormField>
+
+        <div class="flex justify-end gap-2">
+          <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised/>
+        </div>
+      </Form>
+    </template>
+  </Card>
 </template>
