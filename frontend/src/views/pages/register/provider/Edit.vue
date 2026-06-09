@@ -20,14 +20,14 @@ const providerFormValues = ref({ razaoSocial: '', fantasia: '', cnpj: '', fone: 
 
 const providerFormValidator = zodResolver(
   z.object({
-    razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
-    fantasia: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
+    razaoSocial: z.string().trim().min(1, { message: 'Razão Social é obrigatório.' }),
+    fantasia: z.string().trim().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
     cnpj: z.string().length(18, { message: 'CNPJ é obrigatório.' }),
     fone: z.string().length(15, { message: 'Fone é obrigatório.' }),
-    endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
-    bairro: z.string().min(1, { message: 'Bairro é obrigatório.' }),
-    cep: z.string().length(9, { message: 'CEP é obrigatório.' }),
-    cidade: z.string().min(1, { message: 'Cidade é obrigatório.' }),
+    endereco: z.string().trim().min(1, { message: 'Endereço é obrigatório.' }),
+    bairro: z.string().trim().min(1, { message: 'Bairro é obrigatório.' }),
+    cep: z.string().trim().length(9, { message: 'CEP é obrigatório.' }),
+    cidade: z.string().trim().min(1, { message: 'Cidade é obrigatório.' }),
     uf: z.string().length(2, { message: 'UF é obrigatório.' })
   })
 )
@@ -46,8 +46,8 @@ const contactFormValues = ref({ nome: '', cargo: '', celular: '' })
 
 const contactFormValidator = zodResolver(
   z.object({
-    nome: z.string().min(1, { message: 'Nome do Contato é obrigatório.' }),
-    cargo: z.string().min(1, { message: 'Cargo é obrigatório.' }),
+    nome: z.string().trim().min(1, { message: 'Nome do Contato é obrigatório.' }),
+    cargo: z.string().trim().min(1, { message: 'Cargo é obrigatório.' }),
     celular: z.string().length(15, { message: 'Número do Celular é obrigatório.' })
   })
 )

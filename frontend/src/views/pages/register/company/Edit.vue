@@ -20,14 +20,14 @@ const companyFormValues = ref({ razaoSocial: '', nome: '', cnpj: '', fone: '', e
 
 const companyFormValidator = zodResolver(
   z.object({
-    razaoSocial: z.string().min(1, { message: 'Razão Social é obrigatório.' }),
-    nome: z.string().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
+    razaoSocial: z.string().trim().min(1, { message: 'Razão Social é obrigatório.' }),
+    nome: z.string().trim().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
     cnpj: z.string().length(18, { message: 'CNPJ é obrigatório.' }),
     fone: z.string().min(1, { message: 'Fone é obrigatório.' }).transform((val) => val.replaceAll(/\D/g, '')).refine((val) => val.length === 10 || val.length === 11, { message: 'O telefone deve conter DDD + (8 ou 9) dígitos).' }),
-    endereco: z.string().min(1, { message: 'Endereço é obrigatório.' }),
-    bairro: z.string().min(1, { message: 'Bairro é obrigatório.' }),
+    endereco: z.string().trim().min(1, { message: 'Endereço é obrigatório.' }),
+    bairro: z.string().trim().min(1, { message: 'Bairro é obrigatório.' }),
     cep: z.string().length(9, { message: 'CEP é obrigatório.' }),
-    cidade: z.string().min(1, { message: 'Cidade é obrigatório.' }),
+    cidade: z.string().trim().min(1, { message: 'Cidade é obrigatório.' }),
     uf: z.string().length(2, { message: 'UF é obrigatório.' })
   })
 )
@@ -46,14 +46,14 @@ const contactFormValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celula
 
 const contactFormValidator = zodResolver(
   z.object({
-    nome: z.string().min(1, { message: 'Nome do Contato é obrigatório.' }),
-    cargo: z.string().min(1, { message: 'Cargo é obrigatório.' }),
+    nome: z.string().trim().min(1, { message: 'Nome do Contato é obrigatório.' }),
+    cargo: z.string().trim().min(1, { message: 'Cargo é obrigatório.' }),
     fone: z.string().optional(),
-    ramal: z.string().optional(),
+    ramal: z.string().trim().optional(),
     celular: z.string().optional(),
-    email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
+    email: z.string().trim().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
     dataAniversario: z.date().optional(),
-    observacoes: z.string().optional()
+    observacoes: z.string().trim().optional()
   })
 )
 

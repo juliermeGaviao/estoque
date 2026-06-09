@@ -20,9 +20,9 @@ const personFormValues = ref({ nome: '', idEmpresa: null, cracha: null, limite: 
 
 const personFormValidator = zodResolver(
   z.object({
-    nome: z.string().min(1, { message: 'Nome é obrigatório.' }),
+    nome: z.string().trim().min(1, { message: 'Nome é obrigatório.' }),
     idEmpresa: z.number().nullable().optional(),
-    cracha: z.string().nullable().optional(),
+    cracha: z.string().trim().nullable().optional(),
     limite: z.number().nullable().optional(),
     fone: z.string().optional(),
     dataAniversario: z.any()
@@ -39,10 +39,10 @@ const personFormValidator = zodResolver(
         return false
         }, { message: 'Data de aniversário é obrigatória.' }
       ),
-    endereco: z.string().optional(),
-    bairro: z.string().optional(),
+    endereco: z.string().trim().optional(),
+    bairro: z.string().trim().optional(),
     cep: z.string().optional(),
-    cidade: z.string().optional(),
+    cidade: z.string().trim().optional(),
     uf: z.string().optional()
   })
 )
@@ -62,8 +62,8 @@ const contactFormValues = ref({ whatsapp: '', email: '', observacoes: '' })
 const contactFormValidator = zodResolver(
   z.object({
     whatsapp: z.string().min(15, { message: 'Whatsapp é obrigatório.' }),
-    email: z.string().optional().refine(val => val.trim() === '' || z.string().email().safeParse(val).success, { message: 'E-mail inválido ou vazio.' }),
-    observacoes: z.string().optional()
+    email: z.string().trim().optional().refine(val => val.trim() === '' || z.string().email().safeParse(val).success, { message: 'E-mail inválido ou vazio.' }),
+    observacoes: z.string().trim().optional()
   })
 )
 

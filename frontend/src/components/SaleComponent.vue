@@ -29,7 +29,7 @@ const formValidator = zodResolver(
     subTotal: z.number().nullable().optional(),
     desconto: z.number().nullable().optional(),
     total: z.number().nullable().optional(),
-    observacoes: z.string().nullable().optional()
+    observacoes: z.string().trim().nullable().optional()
   })
 )
 

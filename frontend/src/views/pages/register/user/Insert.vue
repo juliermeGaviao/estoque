@@ -19,9 +19,9 @@ const initialValues = ref({
 
 const resolver = zodResolver(
   z.object({
-    email: z.string().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
-    senha: z.string().min(1, { message: 'Senha é obrigatória.' }).min(8, { message: 'Senha deve ter no mínimo 8 caracteres.' }),
-    confirmarSenha: z.string().min(1, { message: 'Confirmação de senha é obrigatória.' }),
+    email: z.string().trim().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
+    senha: z.string().trim().min(1, { message: 'Senha é obrigatória.' }).min(8, { message: 'Senha deve ter no mínimo 8 caracteres.' }),
+    confirmarSenha: z.string().trim().min(1, { message: 'Confirmação de senha é obrigatória.' }),
     perfis: z.array(z.number()).optional()
   }).refine(data => data.senha === data.confirmarSenha, {
     message: 'As senhas não coincidem.',
