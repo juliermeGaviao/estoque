@@ -200,6 +200,7 @@ function closeDialog() {
         </Column>
       </DataTable>
       <div class="flex justify-end gap-2 mt-4">
+        <Button label="Fechar" icon="pi pi-times-circle" @click="closeDialog" severity="secondary" raised/>
         <Button label="Limpar" icon="pi pi-times" @click="cleanPrices" severity="secondary" raised/>
         <Button label="Salvar" icon="pi pi-save" @click="clickAndSaveAll" raised/>
       </div>

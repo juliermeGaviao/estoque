@@ -302,7 +302,7 @@ async function loadCompanies() {
           <template #body="slotProps">
             <div v-show="!slotProps.data.editando">{{slotProps.data.empresa?.nome}}</div>
             <div v-show="slotProps.data.editando">
-              <Select id="idEmpresa" v-model="slotProps.data.edicao.idEmpresa" :options="companies" optionLabel="nome" optionValue="id" filter fluid/>
+              <Select id="idEmpresa" v-model="slotProps.data.edicao.idEmpresa" :options="companies" optionLabel="nome" optionValue="id" fluid/>
             </div>
           </template>
         </Column>
