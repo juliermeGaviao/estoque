@@ -137,8 +137,8 @@ public class SaleServiceImpl implements SaleService {
 
 	@Override
 	@Transactional
-	public void delete(Long id) {
-		this.stockService.deleteBySale(id);
+	public void delete(Long id, Usuario usuario) {
+		this.stockService.undoSale(id, usuario);
 		this.itemVendaRepository.deleteByVenda_Id(id);
 		this.repository.deleteById(id);
 	}

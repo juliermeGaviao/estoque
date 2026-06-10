@@ -4,10 +4,8 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.entity.Estoque;
 
@@ -34,25 +32,7 @@ public interface EstoqueRepository extends JpaRepository<Estoque, Long>, JpaSpec
 	@Query("FROM Estoque e WHERE e.id IN (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = :idProduto GROUP BY s.pontoVenda.id) ORDER BY e.pontoVenda.nome")
 	List<Estoque> getStockByProductAndSalePoint(@Param("idProduto") Long idProduto);
 
-	@Transactional
-	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("delete from Estoque e where e.venda.id = :idVenda")
-	Integer deleteByVenda(@Param("idVenda") Long idVenda);
-
-	@Transactional
-    @Modifying
-    @Query(value = """
-		UPDATE estoque e
-        JOIN (
-            SELECT i.id,
-	           (SELECT COALESCE(SUM(CASE WHEN ii.tipo_operacao = 'C' THEN ii.quantidade ELSE -ii.quantidade END), 0)
-	            FROM estoque ii
-	            WHERE ii.id_ponto_venda = i.id_ponto_venda AND ii.id_produto = i.id_produto AND ii.id <= i.id) AS novo_saldo
-            FROM estoque i
-            WHERE i.id_ponto_venda = :idPontoVenda
-        ) src ON e.id = src.id
-        SET e.saldo = src.novo_saldo
-        """, nativeQuery = true)
-	void updateSalePointStock(@Param("idPontoVenda") Long idPontoVenda);
+	@Query("FROM Estoque e where e.venda.id = :idVenda")
+	List<Estoque> findByVenda(@Param("idVenda") Long idVenda);
 
 }

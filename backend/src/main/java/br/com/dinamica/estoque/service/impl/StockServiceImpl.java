@@ -9,7 +9,6 @@ import br.com.dinamica.estoque.entity.Estoque;
 import br.com.dinamica.estoque.entity.TipoOperacao;
 import br.com.dinamica.estoque.entity.TransferenciaEstoque;
 import br.com.dinamica.estoque.entity.Usuario;
-import br.com.dinamica.estoque.entity.Venda;
 import br.com.dinamica.estoque.mapper.StockMapper;
 import br.com.dinamica.estoque.repository.EstoqueRepository;
 import br.com.dinamica.estoque.repository.PedidoCompraRepository;
@@ -145,12 +144,13 @@ public class StockServiceImpl implements StockService {
 
 	@Override
 	@Transactional
-	public void deleteBySale(Long idVenda) {
-		this.repository.deleteByVenda(idVenda);
+	public void undoSale(Long idVenda, Usuario usuario) {
+		this.repository.findByVenda(idVenda).stream().forEach(estoque -> {
+			this.repository.save(this.getNewStock(estoque.getProduto().getId(), estoque.getPontoVenda().getId(), estoque.getQuantidade(), usuario));
 
-		Venda venda = this.vendaRepository.findById(idVenda).orElseThrow();
-
-		this.repository.updateSalePointStock(venda.getPontoVenda().getId());
+			estoque.setVenda(null);
+			this.repository.save(estoque);
+		});
 	}
 
 }

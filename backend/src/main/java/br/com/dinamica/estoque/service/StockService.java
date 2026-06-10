@@ -28,6 +28,6 @@ public interface StockService {
 
 	List<StockDto> getStockByProductAndSalePoint(Long idProduto);
 
-	void deleteBySale(Long idVenda);
+	void undoSale(Long idVenda, Usuario usuario);
 
 }
