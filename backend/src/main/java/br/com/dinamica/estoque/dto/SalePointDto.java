@@ -13,4 +13,6 @@ public class SalePointDto {
 
     private String nome;
 
+    private CommonClientDto empresa;
+
 }

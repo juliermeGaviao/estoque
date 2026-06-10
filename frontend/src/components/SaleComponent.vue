@@ -89,7 +89,7 @@ const save = async ({ valid, values }) => {
   if (values.idCliente) {
     params['cliente'] = { id: values.idCliente }
   }
-console.log(values)
+
   try {
     const response = await api.post('/sale', params)
 
@@ -133,7 +133,7 @@ onMounted(async () => {
     await load(id.value)
 
     const fields = form.value?.states
-    
+
     loadTables(fields.idVendedor.value)
     loadSalePoints(fields.idVendedor.value)
     if (fields.idCliente.value) {
@@ -149,7 +149,6 @@ onMounted(async () => {
   loadUsers()
   loadClients()
 })
-
 
 let users = ref([])
 
@@ -207,12 +206,29 @@ async function loadSalePoints(idVendedor) {
 const clients = ref([])
 
 async function loadClients() {
-  try {
-    const response = await api.get('/client/find-all')
+  const idSalePoint = form.value?.states?.idPontoVenda?.value
 
-    clients.value = response.data
-  } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de clientes terminou com o erro: ' + error.response.data, life: 10000 })
+  if (idSalePoint) {
+    const userSalePoint = salePoints.value.filter(item => item.pontoVenda.id === idSalePoint)
+    const salePoint = userSalePoint.length ? userSalePoint[0].pontoVenda : null
+
+    if (salePoint.empresa?.id) {
+      try {
+        const response = await api.get("/client/list-people", { params: { idEmpresa: salePoint.empresa.id, page: 0, size: 10000, sort: 'nome,asc' } })
+
+        clients.value = response.data.content
+      } catch (error) {
+        toast.add({ severity: "error", summary: "Falha de Carga Colaboradores", detail: "Requisição de lista de Colaboradores da Empresa terminou com o erro: " + error.response.data, life: 10000 })
+      }
+    }
+  } else {
+    try {
+      const response = await api.get('/client/find-all')
+
+      clients.value = response.data
+    } catch (error) {
+      toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de clientes terminou com o erro: ' + error.response.data, life: 10000 })
+    }
   }
 }
 

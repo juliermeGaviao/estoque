@@ -37,7 +37,7 @@ async function load(params) {
     data.value = response.data.content.map(item => ({
       ...item,
       editando: false,
-      edicao: { ...item }
+      edicao: { nome: item.nome, idEmpresa: item.empresa?.id }
     }))
 
     totalRecords.value = response.data.totalElements
@@ -48,6 +48,7 @@ async function load(params) {
 
 onMounted(async () => {
   load({})
+  loadCompanies()
 })
 
 async function onPage(event) {
@@ -101,6 +102,7 @@ async function onSort(event) {
 
 function edit(entity) {
   entity.edicao.nome = entity.nome
+  entity.edicao.idEmpresa = entity.empresa?.id
   entity.editando = true
 }
 
@@ -159,7 +161,8 @@ function addItem() {
   data.value.push({
     id: null,
     nome: null,
-    edicao: { id: null, nome: null },
+    empresa: { id: null },
+    edicao: { id: null, nome: null, idEmpresa: null },
     editando: true
   })
 }
@@ -173,12 +176,18 @@ async function commit(item) {
   item.nome = item.edicao.nome
   item.editando = false
 
+  const params = { id: item.id, nome: item.nome}
+  if (item.edicao.idEmpresa) {
+    params['empresa'] = { id: item.edicao.idEmpresa }
+  }
+
   try {
-    const response = await api.post('/sale-point', { id: item.id, nome: item.nome})
+    const response = await api.post('/sale-point', params)
 
     if (response.status === 200) {
       toast.add({ severity: 'success', summary: 'Sucesso', detail: `Ponto de venda ${item.id ? 'atualizado' : 'criado'} com sucesso`, life: 10000 })
       item.id = response.data.id
+      item.empresa = response.data.empresa
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Ponto de Venda', detail: 'Requisição de alteração de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
@@ -235,6 +244,21 @@ async function clickAndSaveAll() {
   }
 }
 
+let companies = ref([])
+
+async function loadCompanies() {
+  try {
+    const response = await api.get('/client/list-companies', { params: { page: 0, size: 10000, sort: 'nome,asc' } })
+
+    companies.value = [
+      { id: null, nome: "Nenhuma" },
+      ...response.data.content
+    ]
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresas', detail: 'Requisição de lista de empresas terminou com o erro: ' + error.response.data, life: 10000 })
+  }
+}
+
 </script>
 
 <template>
@@ -271,6 +295,14 @@ async function clickAndSaveAll() {
             <div v-show="!slotProps.data.editando">{{slotProps.data.nome}}</div>
             <div v-show="slotProps.data.editando">
               <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+            </div>
+          </template>
+        </Column>
+        <Column field="idEmpresa" header="Empresa" sortable>
+          <template #body="slotProps">
+            <div v-show="!slotProps.data.editando">{{slotProps.data.empresa?.nome}}</div>
+            <div v-show="slotProps.data.editando">
+              <Select id="idEmpresa" v-model="slotProps.data.edicao.idEmpresa" :options="companies" optionLabel="nome" optionValue="id" filter fluid/>
             </div>
           </template>
         </Column>

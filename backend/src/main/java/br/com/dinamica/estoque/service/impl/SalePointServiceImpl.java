@@ -9,9 +9,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import br.com.dinamica.estoque.dto.SalePointDto;
+import br.com.dinamica.estoque.entity.ClienteEmpresa;
 import br.com.dinamica.estoque.entity.PontoVenda;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.mapper.SalePointMapper;
+import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.PontoVendaRepository;
 import br.com.dinamica.estoque.service.SalePointService;
 import br.com.dinamica.estoque.util.DateUtil;
@@ -21,10 +23,13 @@ public class SalePointServiceImpl implements SalePointService {
 
 	private PontoVendaRepository repository;
 
+	private ClienteRepository clientRepository;
+
 	private SalePointMapper modelMapper;
 
-	public SalePointServiceImpl(PontoVendaRepository repository, SalePointMapper modelMapper) {
+	public SalePointServiceImpl(PontoVendaRepository repository, ClienteRepository clientRepository, SalePointMapper modelMapper) {
 		this.repository = repository;
+		this.clientRepository = clientRepository;
 		this.modelMapper = modelMapper;
 	}
 
@@ -61,6 +66,12 @@ public class SalePointServiceImpl implements SalePointService {
 		}
 
 		this.modelMapper.updateEntityFromDto(dto, entity);
+
+		if (dto.getEmpresa() != null && dto.getEmpresa().getId() != null) {
+			entity.setEmpresa((ClienteEmpresa) this.clientRepository.findById(dto.getEmpresa().getId()).orElseThrow());
+		} else {
+			entity.setEmpresa(null);
+		}
 
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);

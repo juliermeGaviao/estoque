@@ -27,6 +27,10 @@ public class PontoVenda {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cliente_empresa", foreignKey = @ForeignKey(name = "fk_ponto_venda_cliente_empresa"))
+    private ClienteEmpresa empresa;
+
     @Column(name = "nome", nullable = false, length = 255)
     private String nome;
 
