@@ -12,6 +12,7 @@ public interface SalePointMapper {
 
     SalePointDto toDto(PontoVenda entity);
 
+	@Mapping(target = "empresa", ignore = true)
 	@Mapping(target = "usuario", ignore = true)
 	@Mapping(target = "dataCriacao", ignore = true)
 	@Mapping(target = "dataAlteracao", ignore = true)

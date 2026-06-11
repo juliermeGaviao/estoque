@@ -16,12 +16,12 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
     Long deleteByVenda_Id(Long vendaId);
 
 	@Query(value = """
-            SELECT tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, tpp.preco,
-            COALESCE(
-                 (SELECT e.saldo
-                 FROM Estoque e
-                 WHERE e.produto.id = tpp.produto.id AND e.pontoVenda.id = :idPontoVenda AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = :idPontoVenda)), 
-                 0)
+            SELECT tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.tipoProduto.nome, tpp.produto.fornecedor.fantasia, tpp.produto.referencia, tpp.preco,
+	            COALESCE(
+	                 (SELECT e.saldo
+	                 FROM Estoque e
+	                 WHERE e.produto.id = tpp.produto.id AND e.pontoVenda.id = :idPontoVenda AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = :idPontoVenda)), 
+	                 0)
             FROM TabelaPrecoProduto tpp
             WHERE tpp.tabela.id = :idTabelaPreco
             ORDER BY tpp.produto.nome
@@ -29,12 +29,12 @@ public interface ItemVendaRepository extends JpaRepository<ItemVenda, Long>, Jpa
 	List<Object[]> getItensByPriceTable(@Param("idTabelaPreco") Long idTabelaPreco, @Param("idPontoVenda") Long idPontoVenda);
 
 	@Query(value = """
-            SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, iv.quantidade, tpp.preco, iv.total,
-            COALESCE(
-                 (SELECT e.saldo
-                 FROM Estoque e
-                 WHERE e.produto.id = tpp.produto.id AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = v.pontoVenda.id)), 
-                 0)
+            SELECT iv.id, iv.venda.id, tpp.produto.id, tpp.id, tpp.produto.nome, tpp.produto.referencia, tpp.produto.tipoProduto.nome, tpp.produto.fornecedor.fantasia, iv.quantidade, tpp.preco, iv.total,
+	            COALESCE(
+	                 (SELECT e.saldo
+	                 FROM Estoque e
+	                 WHERE e.produto.id = tpp.produto.id AND e.id = (SELECT MAX(s.id) FROM Estoque s WHERE s.produto.id = tpp.produto.id AND s.pontoVenda.id = v.pontoVenda.id)), 
+	                 0)
             FROM TabelaPrecoProduto tpp
             JOIN Venda v ON v.tabela.id = tpp.tabela.id
             LEFT JOIN ItemVenda iv ON iv.tabelaPrecoProduto = tpp AND iv.venda.id = v.id

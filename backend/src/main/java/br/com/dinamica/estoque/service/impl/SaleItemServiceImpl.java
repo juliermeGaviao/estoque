@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.dto.PriceTableProductDto;
 import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.ProductTypeDto;
+import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.dto.SaleDto;
 import br.com.dinamica.estoque.dto.SaleItemDto;
 import br.com.dinamica.estoque.entity.ItemVenda;
@@ -178,10 +180,12 @@ public class SaleItemServiceImpl implements SaleItemService {
 			productDto.setId((Long) linha[0]);
 			priceTableProductDto.setId((Long) linha[1]);
 			productDto.setNome((String) linha[2]);
-			productDto.setReferencia((String) linha[3]);
-			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
-			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
-			productDto.setEstoque((Integer) linha[5]);
+			productDto.setTipoProduto(new ProductTypeDto(null, (String) linha[3]));
+			productDto.setFornecedor(new ProviderDto((String) linha[4]));
+			productDto.setReferencia((String) linha[5]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[6]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[6]).doubleValue()));
+			productDto.setEstoque((Integer) linha[7]);
 
 			return dto;
 		}).toList();
@@ -207,11 +211,13 @@ public class SaleItemServiceImpl implements SaleItemService {
 			priceTableProductDto.setId((Long) linha[3]);
 			productDto.setNome((String) linha[4]);
 			productDto.setReferencia((String) linha[5]);
-			dto.setQuantidade((Integer) linha[6]);
-			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
-			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
-			dto.setTotal(linha[8] != null ? BigDecimal.valueOf(((Number) linha[8]).doubleValue()) : null);
-			productDto.setEstoque((Integer) linha[9]);
+			productDto.setTipoProduto(new ProductTypeDto(null, (String) linha[6]));
+			productDto.setFornecedor(new ProviderDto((String) linha[7]));
+			dto.setQuantidade((Integer) linha[8]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[9]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[9]).doubleValue()));
+			dto.setTotal(linha[10] != null ? BigDecimal.valueOf(((Number) linha[10]).doubleValue()) : null);
+			productDto.setEstoque((Integer) linha[11]);
 
 			return dto;
 		}).toList();

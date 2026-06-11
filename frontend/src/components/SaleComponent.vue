@@ -135,7 +135,7 @@ onMounted(async () => {
     const fields = form.value?.states
 
     loadTables(fields.idVendedor.value)
-    loadSalePoints(fields.idVendedor.value)
+    await loadSalePoints(fields.idVendedor.value)
     if (fields.idCliente.value) {
       loadClient(fields.idCliente.value)
     }
@@ -208,27 +208,32 @@ const clients = ref([])
 async function loadClients() {
   const idSalePoint = form.value?.states?.idPontoVenda?.value
 
-  // Usuário admin sempre carregará todos os clientes, entra no else durante a carga da tela
   if (idSalePoint) {
     const salePoint = salePoints.value.filter(item => item.id === idSalePoint)
 
-    if (salePoint.empresa?.id) {
+    if (salePoint?.length && salePoint[0].empresa?.id) {
       try {
-        const response = await api.get("/client/list-people", { params: { idEmpresa: salePoint.empresa.id, page: 0, size: 10000, sort: 'nome,asc' } })
+        const response = await api.get("/client/list-people", { params: { idEmpresa: salePoint[0].empresa.id, page: 0, size: 10000, sort: 'nome,asc' } })
 
         clients.value = response.data.content
       } catch (error) {
         toast.add({ severity: "error", summary: "Falha de Carga Colaboradores", detail: "Requisição de lista de Colaboradores da Empresa terminou com o erro: " + error.response.data, life: 10000 })
       }
+    } else {
+      loadAllClients()
     }
   } else {
-    try {
-      const response = await api.get('/client/find-all')
+    loadAllClients()
+  }
+}
 
-      clients.value = response.data
-    } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de clientes terminou com o erro: ' + error.response.data, life: 10000 })
-    }
+const loadAllClients = async () => {
+  try {
+    const response = await api.get('/client/find-all')
+
+    clients.value = response.data
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de clientes terminou com o erro: ' + error.response.data, life: 10000 })
   }
 }
 
@@ -405,7 +410,7 @@ function changeSalePoint(event) {
         <div class="flex justify-end gap-2 mt-2">
           <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised size="small"/>
           <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'" size="small"/>
-          <Button label="Salvar" icon="pi pi-save" type="submit" raised size="small"/>
+          <Button label="Salvar" icon="pi pi-save" type="submit" raised @click="submitAction = 'save'" size="small"/>
         </div>
       </Form>
     </template>
@@ -422,9 +427,11 @@ function changeSalePoint(event) {
 
     <template #content>
       <DataTable :value="itens" :lazy="true" responsiveLayout="scroll" stripedRows size="small">
-        <Column field="id" header="Id" v-if="id"/>
+        <Column field="id" header="Id" style="width: 75px"/>
         <Column field="tabelaPrecoProduto.produto.nome" header="Nome"/>
         <Column field="tabelaPrecoProduto.produto.referencia" header="Referência"/>
+        <Column field="tabelaPrecoProduto.produto.tipoProduto.nome" header="Tipo de Produto"/>
+        <Column field="tabelaPrecoProduto.produto.fornecedor.fantasia" header="Fornecedor"/>
         <Column field="tabelaPrecoProduto.produto.estoque" header="Estoque"/>
         <Column field="quantidade" header="Quantidade">
           <template #body="slotProps">
@@ -442,6 +449,11 @@ function changeSalePoint(event) {
           </template>
         </Column>
       </DataTable>
+      <div class="flex justify-end gap-2 mt-4">
+        <Button label="Limpar" icon="pi pi-times" @click="clear" severity="secondary" raised size="small"/>
+        <Button label="Salvar & Nova" icon="pi pi-plus" type="submit" iconPos="left" raised @click="submitAction = 'saveNew'" size="small"/>
+        <Button label="Salvar" icon="pi pi-save" type="submit" raised @click="submitAction = 'save'" size="small"/>
+      </div>
     </template>
   </Card>
 </template>
