@@ -123,8 +123,8 @@ async function loadTableProducts() {
   if (!eAdmin()) {
     form.value.setFieldValue('idVendedor', getUserId())
     form.value.setFieldValue('idTabela', tables.value[0].tabela.id)
-    form.value.setFieldValue('idPontoVenda', salePoints.value[0].pontoVenda.id)
-    loadItens('list-by-price-table', { idTabelaPreco: tables.value[0].tabela.id, idPontoVenda: salePoints.value[0].pontoVenda.id })
+    form.value.setFieldValue('idPontoVenda', salePoints.value[0].id)
+    loadItens('list-by-price-table', { idTabelaPreco: tables.value[0].tabela.id, idPontoVenda: salePoints.value[0].id })
   }
 }
 
@@ -197,7 +197,7 @@ async function loadSalePoints(idVendedor) {
   try {
     const response = await api.get("/user-sale-point/list", { params: { idUsuario: idVendedor, page: 0, size: 10000, sort: 'pontoVenda.nome,asc' } })
 
-    salePoints.value = response.data.content
+    salePoints.value = response.data.content.map(item => item.pontoVenda)
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Pontos de Venda do Vendedor", detail: "Requisição de lista de Pontos de Venda do Vendedor terminou com o erro: " + error.response.data, life: 10000 })
   }
@@ -208,9 +208,9 @@ const clients = ref([])
 async function loadClients() {
   const idSalePoint = form.value?.states?.idPontoVenda?.value
 
+  // Usuário admin sempre carregará todos os clientes, entra no else durante a carga da tela
   if (idSalePoint) {
-    const userSalePoint = salePoints.value.filter(item => item.pontoVenda.id === idSalePoint)
-    const salePoint = userSalePoint.length ? userSalePoint[0].pontoVenda : null
+    const salePoint = salePoints.value.filter(item => item.id === idSalePoint)
 
     if (salePoint.empresa?.id) {
       try {
@@ -277,7 +277,7 @@ async function changeSalesman(event) {
   await loadSalePoints(event.value)
 
   const idTable = tables.value[0].tabela.id
-  const idSalePoint = salePoints.value[0].pontoVenda.id
+  const idSalePoint = salePoints.value[0].id
 
   form.value.setValues({ idTabela: idTable, idPontoVenda: idSalePoint })
   loadItens('list-by-price-table', { idTabelaPreco: idTable, idPontoVenda: idSalePoint })
@@ -359,7 +359,7 @@ function changeSalePoint(event) {
           <div class="col-span-4">
             <FormField v-slot="$field" name="idPontoVenda">
               <FloatLabel variant="on">
-                <Select id="idPontoVenda" :options="salePoints" optionLabel="pontoVenda.nome" optionValue="pontoVenda.id" fluid @change="changeSalePoint($event)"/>
+                <Select id="idPontoVenda" :options="salePoints" optionLabel="nome" optionValue="id" fluid @change="changeSalePoint($event)"/>
                 <label for="idPontoVenda">Ponto de Venda</label>
               </FloatLabel>
               <Message v-if="$field?.invalid" size="small" severity="error" variant="simple">{{ $field.error?.message }}</Message>
