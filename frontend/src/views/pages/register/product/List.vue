@@ -11,7 +11,7 @@ const data = ref([])
 const totalRecords = ref(0)
 
 const page = ref(0)
-const size = ref(15)
+const size = ref(20)
 const first = ref(0)
 const sortField = ref(null)
 const sortOrder = ref(null)
@@ -379,7 +379,7 @@ const togglePopover = async (event, product) => {
 
       <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
         :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-        :rowsPerPageOptions="[15, 30, 60, 100]" size="small" class="mt-6">
+        :rowsPerPageOptions="[20, 40, 60, 100]" size="small" class="mt-6">
 
         <Column field="id" header="Id" sortable><template #body="slotProps">{{slotProps.data.id}}</template></Column>
         <Column field="nome" header="Nome" sortable>
