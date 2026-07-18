@@ -142,16 +142,7 @@ const purchaseOrderFormValidator = zodResolver(
     idFornecedor: z.number({ required_error: 'Fornecedor é obrigatório.' }),
     dataPedido: z.any()
       .refine(val => {
-        if (val === '' || !val) return false
-
-        if (val instanceof Date && !Number.isNaN(val.getTime())) return true
-
-        if (typeof val === 'string') {
-          const date = new Date(val)
-          return !Number.isNaN(date.getTime())
-        }
-
-        return false
+          return action.value === 'visualizar' || val
         }, { message: 'Data do Pedido é obrigatória.' }
       )
   })
@@ -222,6 +213,7 @@ const view = async (purchaseOrder) => {
   visible.value = true
 
   await nextTick()
+
   purchaseOrderForm.value.setValues({ numeroPedido: purchaseOrder.numeroPedido, idFornecedor: purchaseOrder.fornecedor.id, dataPedido: formatDate(toDate(purchaseOrder.dataPedido)) })
   loadPurchaseOrderProducts(purchaseOrder.id)
 }

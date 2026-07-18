@@ -140,20 +140,7 @@ const stockTransferFormValidator = zodResolver(
   z.object({
     idPontoVendaOrigem: z.number({ required_error: 'Ponto de Venda Origem é obrigatório.' }).nullable().refine((val) => val !== null && val !== undefined, { message: 'Ponto de Venda Origem é obrigatório.' }),
     idPontoVendaDestino: z.number({ required_error: 'Ponto de Venda Destino é obrigatório.' }).nullable().refine((val) => val !== null && val !== undefined, { message: 'Ponto de Venda Destino é obrigatório.' }),
-    dataTransferencia: z.any()
-      .refine(val => {
-        if (val === '' || !val) return false
-
-        if (val instanceof Date && !Number.isNaN(val.getTime())) return true
-
-        if (typeof val === 'string') {
-          const date = new Date(val)
-          return !Number.isNaN(date.getTime())
-        }
-
-        return false
-        }, { message: 'Data da Transferência é obrigatória.' }
-      )
+    dataTransferencia: z.any().nullable().optional()
   })
 )
 
@@ -228,6 +215,7 @@ const view = async (stockTransfer) => {
   visible.value = true
 
   await nextTick()
+
   stockTransferForm.value.setValues({ idPontoVendaOrigem: stockTransfer.pontoVendaOrigem.id, idPontoVendaDestino: stockTransfer.pontoVendaDestino.id, dataTransferencia: formatDate(toDate(stockTransfer.dataTransferencia)) })
   loadStockTransferProducts(stockTransfer.id)
 }
