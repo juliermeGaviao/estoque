@@ -1,9 +1,9 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import br.com.dinamica.estoque.service.ReportService;
 @Service
 public class ReportServiceImpl implements ReportService {
 
-	private SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
 	private VendaRepository vendaRepository;
 
@@ -39,7 +39,7 @@ public class ReportServiceImpl implements ReportService {
 		List<ReportGroupDTO> result = new ArrayList<>();
 
 		for (Object[] linha : records) {
-			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
+			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((LocalDate) linha[0]);
 			ReportGroupDTO dto = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 
 			if (dto == null) {
@@ -114,7 +114,7 @@ public class ReportServiceImpl implements ReportService {
 		List<ReportGroupDTO> result = new ArrayList<>();
 
 		for (Object[] linha : records) {
-			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((Date) linha[0]);
+			String periodo = frequency.equals(3) ? (String) linha[0] : this.dateFormatter.format((LocalDate) linha[0]);
 			String email = (String) linha[1];
 			ReportGroupDTO grupo = result.stream().filter(item -> periodo.equals(item.getGrupo())).findFirst().orElse(null);
 

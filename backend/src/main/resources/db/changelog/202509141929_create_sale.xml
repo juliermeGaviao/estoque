@@ -15,7 +15,7 @@
 			</column>
 
             <column name="id_cliente" type="bigint">
-                <constraints nullable="false" foreignKeyName="fk_venda_cliente" references="cliente(id)"/>
+                <constraints foreignKeyName="fk_venda_cliente" references="cliente(id)"/>
             </column>
 
             <column name="id_vendedor" type="bigint">
@@ -24,6 +24,10 @@
 
             <column name="id_tabela_preco" type="bigint">
                 <constraints nullable="false" foreignKeyName="fk_venda_tabela_preco" references="tabela_preco(id)"/>
+            </column>
+
+            <column name="id_ponto_venda" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_venda_ponto_venda" references="ponto_venda(id)"/>
             </column>
 
             <column name="sub_total" type="decimal(10, 2)">

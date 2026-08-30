@@ -2,7 +2,7 @@ package br.com.dinamica.estoque.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -102,8 +102,8 @@ public class ClientController {
 			@RequestParam(required = false) String fone,
 			@RequestParam(required = false) BigDecimal minLimite,
 			@RequestParam(required = false) BigDecimal maxLimite,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date minAniversario,
-			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") Date maxAniversario,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate minAniversario,
+			@RequestParam(required = false) @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate maxAniversario,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "id,asc") String[] sort) {

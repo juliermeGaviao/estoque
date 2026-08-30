@@ -1,7 +1,7 @@
 package br.com.dinamica.estoque.entity;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,9 +52,9 @@ public class TabelaPrecoProduto {
     private Usuario usuario;
 
     @Column(name = "data_criacao", nullable = false)
-    private Date dataCriacao;
+    private LocalDateTime dataCriacao;
 
     @Column(name = "data_alteracao", nullable = false)
-    private Date dataAlteracao;
+    private LocalDateTime dataAlteracao;
 
 }

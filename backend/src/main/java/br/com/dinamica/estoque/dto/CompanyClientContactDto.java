@@ -1,6 +1,6 @@
 package br.com.dinamica.estoque.dto;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +27,7 @@ public class CompanyClientContactDto {
 
     private String email;
 
-    private Date dataAniversario;
+    private LocalDate dataAniversario;
 
     private String observacoes;
 

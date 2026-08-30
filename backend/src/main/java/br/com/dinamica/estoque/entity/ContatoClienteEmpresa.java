@@ -1,6 +1,7 @@
 package br.com.dinamica.estoque.entity;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,7 +50,7 @@ public class ContatoClienteEmpresa {
     private String email;
 
     @Column(name = "data_aniversario", columnDefinition = "date")
-    private Date dataAniversario;
+    private LocalDate dataAniversario;
 
     @Column(name = "observacoes", length = 1024)
     private String observacoes;
@@ -59,9 +60,9 @@ public class ContatoClienteEmpresa {
     private Usuario usuario;
 
     @Column(name = "data_criacao", nullable = false)
-    private Date dataCriacao;
+    private LocalDateTime dataCriacao;
 
     @Column(name = "data_alteracao", nullable = false)
-    private Date dataAlteracao;
+    private LocalDateTime dataAlteracao;
 
 }

@@ -1,7 +1,7 @@
 package br.com.dinamica.estoque.entity;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,10 +48,10 @@ public class Usuario implements UserDetails {
     private Usuario cadastrante;
 
     @Column(name = "data_criacao", nullable = false)
-    private Date dataCriacao;
+    private LocalDateTime dataCriacao;
 
     @Column(name = "data_alteracao", nullable = false)
-    private Date dataAlteracao;
+    private LocalDateTime dataAlteracao;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "usuario_perfil", joinColumns = @JoinColumn(name = "id_usuario"), inverseJoinColumns = @JoinColumn(name = "id_perfil"))
@@ -101,19 +101,19 @@ public class Usuario implements UserDetails {
 		this.cadastrante = cadastrante;
 	}
 
-	public Date getDataCriacao() {
+	public LocalDateTime getDataCriacao() {
 		return dataCriacao;
 	}
 
-	public void setDataCriacao(Date dataCriacao) {
+	public void setDataCriacao(LocalDateTime dataCriacao) {
 		this.dataCriacao = dataCriacao;
 	}
 
-	public Date getDataAlteracao() {
+	public LocalDateTime getDataAlteracao() {
 		return dataAlteracao;
 	}
 
-	public void setDataAlteracao(Date dataAlteracao) {
+	public void setDataAlteracao(LocalDateTime dataAlteracao) {
 		this.dataAlteracao = dataAlteracao;
 	}
 

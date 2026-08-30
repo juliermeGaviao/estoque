@@ -14,10 +14,9 @@ const confirm = useConfirm()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
-const size = ref(15)
+const size = ref(20)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
@@ -42,8 +41,6 @@ async function load(params) {
     query.sort = "id,desc"
   }
 
-  loading.value = true
-
   try {
     const response = await api.get("/sale/list", { params: query })
 
@@ -51,12 +48,10 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: "error", summary: "Falha de Carga de Vendas", detail: "Requisição de lista de vendas terminou com o erro: " + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   load({})
   loadUsers()
   loadClients()
@@ -117,32 +112,24 @@ const confirmDelete = entity => {
 let users = ref([])
 
 async function loadUsers() {
-  loading.value = true
-
   try {
     const response = await api.get('/user/list', { params: { page: 0, size: 10000, sort: 'email,asc' } })
 
     users.value = response.data.content
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Vendedores', detail: 'Requisição de lista de Vendedores terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
 const clients = ref([])
 
 async function loadClients() {
-  loading.value = true
-
   try {
     const response = await api.get('/client/find-all')
 
     clients.value = response.data
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Clientes', detail: 'Requisição de lista de Clientes terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -172,90 +159,89 @@ function limpar() {
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Vendas</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div :class="'col-span-' + (eAdmin() ? 2 : 4)">
-              <FormField name="idCliente">
-                <FloatLabel variant="on">
-                  <Select :options="clients" optionLabel="nome" optionValue="id" filter fluid/>
-                  <label for="idCliente">Clientes</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div :class="'col-span-' + (eAdmin() ? 2 : 3)" v-show="eAdmin()">
-              <FormField name="idVendedor">
-                <FloatLabel variant="on">
-                  <Select :options="users" optionLabel="email" optionValue="id" fluid/>
-                  <label for="idVendedor">Vendedores</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="minDesconto">
-                <FloatLabel variant="on">
-                  <InputNumber id="minDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="minDesconto">Desconto Mínimo (%)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="maxDesconto">
-                <FloatLabel variant="on">
-                  <InputNumber id="maxDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
-                  <label for="maxDesconto">Desconto Máximo (%)</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField name="observacoes">
-                <FloatLabel variant="on">
-                  <InputText id="observacoes" maxlength="255" autocomplete="off" fluid/>
-                  <label for="observacoes">Observações</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
+  <Card>
+    <template #title><h3>Lista de Vendas</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
+        <div class="grid grid-cols-12 gap-2">
+          <div :class="'col-span-' + (eAdmin() ? 2 : 4)">
+            <FormField name="idCliente">
+              <FloatLabel variant="on">
+                <Select :options="clients" optionLabel="nome" optionValue="id" filter fluid/>
+                <label for="idCliente">Clientes</label>
+              </FloatLabel>
+            </FormField>
           </div>
-        </Form>
+          <div :class="'col-span-' + (eAdmin() ? 2 : 3)" v-show="eAdmin()">
+            <FormField name="idVendedor">
+              <FloatLabel variant="on">
+                <Select :options="users" optionLabel="email" optionValue="id" fluid/>
+                <label for="idVendedor">Vendedores</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField name="minDesconto">
+              <FloatLabel variant="on">
+                <InputNumber id="minDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                <label for="minDesconto">Desconto Mínimo (%)</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField name="maxDesconto">
+              <FloatLabel variant="on">
+                <InputNumber id="maxDesconto" :max="100" :minFractionDigits="2" :maxFractionDigits="2" fluid/>
+                <label for="maxDesconto">Desconto Máximo (%)</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField name="observacoes">
+              <FloatLabel variant="on">
+                <InputText id="observacoes" maxlength="255" autocomplete="off" fluid/>
+                <label for="observacoes">Observações</label>
+              </FloatLabel>
+            </FormField>
+          </div>
+          <div class="col-span-2">
+            <FormField class="flex justify-end gap-2">
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+            </FormField>
+          </div>
+        </div>
+      </Form>
 
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[20, 40, 60, 100]" size="small">
 
-          <Column field="id" header="Id" sortable/>
-          <Column field="cliente.nome" header="Cliente" sortable/>
-          <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
-          <Column field="subTotal" header="Subtotal (R$)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal) }}</template>
-          </Column>
-          <Column field="desconto" header="Desconto (%)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.desconto) }}</template>
-          </Column>
-          <Column field="total" header="Total (R$)" sortable>
-            <template #body="slotProps">{{ formatNumber(slotProps.data.total) }}</template>
-          </Column>
+        <Column field="id" header="Id" sortable/>
+        <Column field="cliente.nome" header="Cliente" sortable/>
+        <Column field="vendedor.email" header="Vendedor" sortable v-if="eAdmin()"/>
+        <Column field="pontoVenda.nome" header="Ponto de Venda" sortable v-if="eAdmin()"/>
+        <Column field="subTotal" header="Subtotal (R$)" sortable>
+          <template #body="slotProps">{{ formatNumber(slotProps.data.subTotal) }}</template>
+        </Column>
+        <Column field="desconto" header="Desconto (%)" sortable>
+          <template #body="slotProps">{{ formatNumber(slotProps.data.desconto) }}</template>
+        </Column>
+        <Column field="total" header="Total (R$)" sortable>
+          <template #body="slotProps">{{ formatNumber(slotProps.data.total) }}</template>
+        </Column>
 
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Venda'"/>
-            </template>
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" v-tooltip.bottom="'Nova Venda'"/>
+          </template>
 
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-  </BlockUI>
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'"/>
+          </template>
+        </Column>
+      </DataTable>
+    </template>
+  </Card>
 </template>

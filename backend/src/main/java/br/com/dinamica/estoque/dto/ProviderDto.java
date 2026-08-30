@@ -29,4 +29,8 @@ public class ProviderDto {
 
     private String uf;
 
+    public ProviderDto(String fantasia) {
+    	this.fantasia = fantasia;
+    }
+
 }

@@ -8,12 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -62,8 +61,6 @@ public class ClientServiceImpl implements ClientService {
 
 	private ArquivoClientePessoaRepository arquivoClientePessoaRepository;
 
-	private ModelMapper modelMapper;
-
 	private String fileSystem;
 
 	public ClientServiceImpl(
@@ -72,7 +69,6 @@ public class ClientServiceImpl implements ClientService {
 			ContatoClientePessoaRepository contatoClientePessoaRepository,
 			ArquivoEmpresaRepository arquivoEmpresaRepository,
 			ArquivoClientePessoaRepository arquivoClientePessoaRepository,
-			ModelMapper modelMapper,
 			@Value("${estoque.sistema-arquivos}") String fileSystem
 	) {
 		this.repository = repository;
@@ -80,22 +76,14 @@ public class ClientServiceImpl implements ClientService {
 		this.contatoClientePessoaRepository = contatoClientePessoaRepository;
 		this.arquivoEmpresaRepository = arquivoEmpresaRepository;
 		this.arquivoClientePessoaRepository = arquivoClientePessoaRepository;
-		this.modelMapper = modelMapper;
 		this.fileSystem = fileSystem;
-
-		this.modelMapper.addMappings(new PropertyMap<ClientDto, ClientePessoa>() {
-            @Override
-            protected void configure() {
-                skip(destination.getEmpresa());
-            }
-        });
 	}
 
 	@Override
 	public ClientDto get(Long id) {
 		Cliente entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, ClientDto.class);
+		return this.toDto(entity);
 	}
 
 	@Override
@@ -107,66 +95,97 @@ public class ClientServiceImpl implements ClientService {
 
 	@Override
 	public Page<ClientDto> list(String razaoSocial, String nome, String cnpj, String fone, Pageable pageable) {
-        Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClienteEmpresa.class);
+	    Specification<Cliente> specification = (root, _, cb) -> cb.equal(root.type(), ClienteEmpresa.class);
 
-        if (razaoSocial != null && !razaoSocial.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%"));
-        }
+	    if (razaoSocial != null && !razaoSocial.isBlank()) {
+	        specification = specification.and((root, _, cb) -> {
+	            var empresaRoot = cb.treat(root, ClienteEmpresa.class);
+	            return cb.like(cb.lower(empresaRoot.get("razaoSocial")), "%" + razaoSocial.toLowerCase() + "%");
+	        });
+	    }
 
-        if (nome != null && !nome.isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%"));
-        }
+	    if (nome != null && !nome.isBlank()) {
+	        specification = specification.and((root, _, cb) -> 
+	            cb.like(cb.lower(root.get("nome")), "%" + nome.toLowerCase() + "%")
+	        );
+	    }
 
-        if (cnpj != null && !cnpj.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("cnpj"), cnpj));
-        }
+	    if (cnpj != null && !cnpj.isBlank()) {
+	        specification = specification.and((root, _, cb) -> {
+	            var empresaRoot = cb.treat(root, ClienteEmpresa.class);
+	            return cb.equal(empresaRoot.get("cnpj"), cnpj);
+	        });
+	    }
 
-        if (fone != null && !fone.isBlank()) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), fone));
-        }
+	    if (fone != null && !fone.isBlank()) {
+	        specification = specification.and((root, _, cb) -> 
+	            cb.equal(root.get("fone"), fone)
+	        );
+	    }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));
+	    return this.repository.findAll(specification, pageable).map(this::toDto);
 	}
 
 	@Override
 	public Page<ClientDto> list(PersonFilterDto filter, Pageable pageable) {
-        Specification<Cliente> specification = (root, query, cb) -> cb.equal(root.type(), ClientePessoa.class);
+        Specification<Cliente> specification = (root, _, cb) -> cb.equal(root.type(), ClientePessoa.class);
 
         if (filter.getNome() != null && !filter.getNome().isBlank()) {
-        	specification = specification.and((root, query, cb) -> cb.like(cb.lower(root.get("nome")), "%" + filter.getNome().toLowerCase() + "%"));
+        	specification = specification.and((root, _, cb) -> cb.like(cb.lower(root.get("nome")), "%" + filter.getNome().toLowerCase() + "%"));
         }
 
         if (filter.getIdEmpresa() != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("empresa").get("id"), filter.getIdEmpresa()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.equal(pessoaRoot.get("empresa").get("id"), filter.getIdEmpresa());
+            });
         }
 
-        if (filter.getFone() != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("fone"), filter.getFone()));
+        if (filter.getFone() != null && !filter.getFone().isBlank()) {
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("fone"), filter.getFone()));
         }
 
         if (filter.getMinLimite() != null && filter.getMaxLimite() != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(LIMITE), filter.getMinLimite(), filter.getMaxLimite()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.between(pessoaRoot.get(LIMITE), filter.getMinLimite(), filter.getMaxLimite());
+            });
         } else if (filter.getMinLimite() != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(LIMITE), filter.getMinLimite()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.greaterThanOrEqualTo(pessoaRoot.get(LIMITE), filter.getMinLimite());
+            });
         } else if (filter.getMaxLimite() != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(LIMITE), filter.getMaxLimite()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.lessThanOrEqualTo(pessoaRoot.get(LIMITE), filter.getMaxLimite());
+            });
         }
 
         if (filter.getMinAniversario() != null && filter.getMaxAniversario() != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(DATA_ANIVERSARIO), filter.getMinAniversario(), filter.getMaxAniversario()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.between(pessoaRoot.get(DATA_ANIVERSARIO), filter.getMinAniversario(), filter.getMaxAniversario());
+            });
         } else if (filter.getMinAniversario() != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DATA_ANIVERSARIO), filter.getMinAniversario()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.greaterThanOrEqualTo(pessoaRoot.get(DATA_ANIVERSARIO), filter.getMinAniversario());
+            });
         } else if (filter.getMaxAniversario() != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DATA_ANIVERSARIO), filter.getMaxAniversario()));
+            specification = specification.and((root, _, cb) -> {
+                var pessoaRoot = cb.treat(root, ClientePessoa.class);
+                return cb.lessThanOrEqualTo(pessoaRoot.get(DATA_ANIVERSARIO), filter.getMaxAniversario());
+            });
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ClientDto.class));
+		return this.repository.findAll(specification, pageable).map(this::toDto);
 	}
 
 	@Override
 	public ClientDto save(ClientDto dto, Usuario usuario) {
 		Cliente entity;
-        Date agora = DateUtil.now();
+        LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -176,20 +195,14 @@ public class ClientServiceImpl implements ClientService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
-
-		if (dto.getEmpresa() != null) {
-			Cliente empresa = this.repository.findById(dto.getEmpresa().getId()).orElseThrow();
-
-			((ClientePessoa) entity).setEmpresa(empresa);
-		}
+		this.toEntity(dto, entity);
 
 		entity.setUsuario(usuario);
 		entity.setDataAlteracao(agora);
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, ClientDto.class);
+		return this.toDto(entity);
 	}
 
 	@Override
@@ -203,7 +216,7 @@ public class ClientServiceImpl implements ClientService {
 	public ResultadoCargaEmpregadosDto loadEmployees(Long idEmpresa, MultipartFile file, Usuario usuario) throws IOException {
 		Cliente empresa = this.repository.findById(idEmpresa).orElseThrow();
 		ArquivoEmpresa arquivoEmpresa = new ArquivoEmpresa();
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		arquivoEmpresa.setEmpresa((ClienteEmpresa) empresa);
 		arquivoEmpresa.setArquivo(file.getOriginalFilename());
@@ -272,6 +285,65 @@ public class ClientServiceImpl implements ClientService {
         }
 
 		return new ResultadoCargaEmpregadosDto(carregados, total);
+	}
+
+	private ClientDto toDto(Cliente entity) {
+		Cliente unproxiedEntity = (Cliente) Hibernate.unproxy(entity);
+		ClientDto result = new ClientDto();
+
+		result.setId(unproxiedEntity.getId());
+		result.setNome(unproxiedEntity.getNome());
+		result.setFone(unproxiedEntity.getFone());
+		result.setEndereco(unproxiedEntity.getEndereco());
+		result.setBairro(unproxiedEntity.getBairro());
+		result.setCep(unproxiedEntity.getCep());
+		result.setCidade(unproxiedEntity.getCidade());
+		result.setUf(unproxiedEntity.getUf());
+
+		if (unproxiedEntity instanceof ClientePessoa pessoa) {
+			if (pessoa.getEmpresa() != null) {
+				result.setEmpresa((this.toDto(pessoa.getEmpresa())));
+			}
+
+			result.setDataAniversario(pessoa.getDataAniversario());
+			result.setLimite(pessoa.getLimite());
+			result.setCracha(pessoa.getCracha());
+		} else if (unproxiedEntity instanceof ClienteEmpresa empresa) {
+			result.setRazaoSocial(empresa.getRazaoSocial());
+			result.setCnpj(empresa.getCnpj());
+		}
+
+		return result;
+	}
+
+	private void toEntity(ClientDto dto, Cliente entity) {
+	    if (dto.getCnpj() != null && !dto.getCnpj().isBlank()) {
+	        ClienteEmpresa empresa = (ClienteEmpresa) entity;
+
+	        empresa.setRazaoSocial(dto.getRazaoSocial());
+	        empresa.setCnpj(dto.getCnpj());
+	    } else {
+	        ClientePessoa pessoa = (ClientePessoa) entity;
+
+			if (dto.getEmpresa() != null) {
+				Cliente empresa = this.repository.findById(dto.getEmpresa().getId()).orElseThrow();
+
+				((ClientePessoa) entity).setEmpresa(empresa);
+			}
+
+			pessoa.setDataAniversario(dto.getDataAniversario());
+	        pessoa.setLimite(dto.getLimite());
+	        pessoa.setCracha(dto.getCracha());
+	    }
+
+	    entity.setId(dto.getId());
+	    entity.setNome(dto.getNome());
+	    entity.setFone(dto.getFone());
+	    entity.setEndereco(dto.getEndereco());
+	    entity.setBairro(dto.getBairro());
+	    entity.setCep(dto.getCep());
+	    entity.setCidade(dto.getCidade());
+	    entity.setUf(dto.getUf());
 	}
 
 }

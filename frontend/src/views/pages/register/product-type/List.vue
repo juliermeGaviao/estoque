@@ -3,19 +3,16 @@ import api from '@/util/api'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 
 const toast = useToast()
 const confirm = useConfirm()
 
 const data = ref([])
 const totalRecords = ref(0)
-const loading = ref(false)
 
 const page = ref(0)
-const size = ref(15)
+const size = ref(20)
+const first = ref(0)
 const sortField = ref(null)
 const sortOrder = ref(null)
 
@@ -34,8 +31,6 @@ async function load(params) {
     }
   }
 
-  loading.value = true
-
   try {
     const response = await api.get('/product-type/list', { params: query })
 
@@ -48,8 +43,6 @@ async function load(params) {
     totalRecords.value = response.data.totalElements
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Carga de Tipos de Produtos', detail: 'Requisição de lista de tipos de produtos terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -57,19 +50,53 @@ onMounted(async () => {
   load({})
 })
 
-function onPage(event) {
-  page.value = event.page
-  size.value = event.rows
+async function onPage(event) {
+  const result = await saveAll(false)
 
-  load( { ...filterValues.value } )
+  if (result) {
+    page.value = event.page
+    size.value = event.rows
+    first.value = event.first
+
+    load( { ...filterValues.value } )
+  } else {
+    const currentFirst = page.value * size.value
+
+    first.value = -1
+    await nextTick()
+    first.value = currentFirst
+  }
 }
 
-function onSort(event) {
-  page.value = 0
-  sortField.value = event.sortField
-  sortOrder.value = event.sortOrder
+async function onSort(event) {
+  const result = await saveAll(false)
 
-  load( { ...filterValues.value } )
+  if (result) {
+    first.value = 0
+    page.value = 0
+    sortField.value = event.sortField
+    sortOrder.value = event.sortOrder
+
+    load( { ...filterValues.value } )
+  } else {
+    const oldField = sortField.value
+    const oldOrder = sortOrder.value
+    const oldFirst = page.value * size.value
+
+    sortField.value = oldField === null ? undefined : null 
+    sortOrder.value = 0 
+    first.value = -1
+
+    await nextTick()
+
+    sortField.value = oldField
+    sortOrder.value = oldOrder
+    first.value = oldFirst
+
+    if (event.originalEvent) {
+      event.originalEvent.preventDefault();
+    }
+  }
 }
 
 function edit(entity) {
@@ -155,8 +182,6 @@ async function commit(item) {
     }
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Falha de Gravação de Tipo de Produto', detail: 'Requisição de alteração de tipo de produto terminou com o erro: ' + error.response.data, life: 10000 })
-  } finally {
-    loading.value = false
   }
 }
 
@@ -168,61 +193,105 @@ function cancel(item) {
   }
 }
 
+async function saveAll(emitirMensagem) {
+  for (const item of data.value) {
+    if (item.editando) {
+      if (!item.edicao.nome || !item.edicao.nome.trim().length) {
+        toast.add({ severity: 'error', summary: 'Dados Insuficientes', detail: 'Nome é obrigatório.', life: 10000 })
+        return false
+      }
+    }
+  }
+
+  data.value.forEach(item => {
+    if (item.editando) {
+      item.nome = item.edicao.nome
+      item.editando = false
+    }
+  })
+
+  try {
+    const response = await api.post('/product-type/save-all', data.value)
+
+    if (response.status === 200) {
+      if (emitirMensagem) {
+        toast.add({ severity: 'success', summary: 'Sucesso', detail: `Tipos de produtos salvos com sucesso`, life: 10000 })
+      }
+    }
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Produto', detail: `Requisição de salvamento de tipos de produtos terminou com o erro: ` + error.response.data, life: 10000 })
+
+    return false
+  }
+
+  return true
+}
+
+async function clickAndSaveAll() {
+  const result = await saveAll(true)
+
+  if (result) {
+    load( { ...filterValues.value } )
+  }
+}
+
 </script>
 
 <template>
   <ConfirmDialog :closable="false"></ConfirmDialog>
-  <BlockUI :blocked="loading" fullScreen>
-    <Card>
-      <template #title><h3>Lista de Tipos de Produtos</h3></template>
-      <template #content>
-        <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-10">
-              <FormField name="nome">
-                <FloatLabel variant="on">
-                  <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
-                  <label for="nome">Nome</label>
-                </FloatLabel>
-              </FormField>
-            </div>
-            <div class="col-span-2">
-              <FormField class="flex justify-end gap-2">
-                <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
-                <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
-              </FormField>
-            </div>
+  <Card>
+    <template #title><h3>Lista de Tipos de Produtos</h3></template>
+    <template #content>
+      <Form ref="form" :initialValues="formValues" @submit="filter" @reset="limpar" class="grid flex flex-column gap-2 mb-4">
+        <div class="grid grid-cols-12 gap-2">
+          <div class="col-span-10">
+            <FormField name="nome">
+              <FloatLabel variant="on">
+                <InputText id="nome" maxlength="255" autocomplete="off" fluid/>
+                <label for="nome">Nome</label>
+              </FloatLabel>
+            </FormField>
           </div>
-        </Form>
+          <div class="col-span-2">
+            <FormField class="flex justify-end gap-2">
+              <Button label="Limpar" icon="pi pi-times" type="reset" severity="secondary" raised/>
+              <Button label="Buscar" icon="pi pi-search" type="submit" raised/>
+            </FormField>
+          </div>
+        </div>
+      </Form>
 
-        <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
-          :first="page * size" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
-          :rowsPerPageOptions="[15, 30, 60, 100]" size="small">
+      <DataTable :value="data" :lazy="true" :paginator="true" :rows="size" :totalRecords="totalRecords"
+        :first="first" @page="onPage" @sort="onSort" :sortField="sortField" :sortOrder="sortOrder" responsiveLayout="scroll" stripedRows
+        :rowsPerPageOptions="[20, 40, 60, 100]" size="small">
 
-          <Column field="id" header="Id" sortable/>
-          <Column field="nome" header="Nome" sortable>
-            <template #body="slotProps">
-              <div v-show="!slotProps.data.editando">{{slotProps.data.nome}}</div>
-              <div v-show="slotProps.data.editando">
-                <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
-              </div>
-            </template>
-          </Column>
+        <Column field="id" header="Id" sortable/>
+        <Column field="nome" header="Nome" sortable>
+          <template #body="slotProps">
+            <div v-show="!slotProps.data.editando">{{slotProps.data.nome}}</div>
+            <div v-show="slotProps.data.editando">
+              <InputText v-model="slotProps.data.edicao.nome" maxlength="255" autocomplete="off" fluid/>
+            </div>
+          </template>
+        </Column>
 
-          <Column headerClass="flex justify-center" bodyClass="flex justify-center">
-            <template #header>
-              <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Tipo de Produto'"/>
-            </template>
+        <Column headerClass="flex justify-center" bodyClass="flex justify-center">
+          <template #header>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="addItem" v-tooltip.bottom="'Novo Tipo de Produto'"/>
+          </template>
 
-            <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
-              <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-show="slotProps.data.editando"/>
-              <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
-            </template>
-          </Column>
-        </DataTable>
-      </template>
-    </Card>
-  </BlockUI>
+          <template #body="slotProps">
+            <Button icon="pi pi-pencil" class="p-button-sm p-button-text p-mr-2" @click="edit(slotProps.data)" v-tooltip.bottom="'Editar'" v-show="!slotProps.data.editando"/>
+            <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" @click="confirmDelete(slotProps.data)" v-tooltip.bottom="'Remover'" v-show="!slotProps.data.editando"/>
+            <Button icon="pi pi-check" class="p-button-sm p-button-text p-mr-2" @click="commit(slotProps.data)" v-tooltip.bottom="'Consolidar'" v-show="slotProps.data.editando"/>
+            <Button icon="pi pi-times" class="p-button-sm p-button-text p-mr-2" @click="cancel(slotProps.data)" v-tooltip.bottom="'Cancelar'" v-show="slotProps.data.editando"/>
+          </template>
+        </Column>
+      </DataTable>
+
+      <div class="flex justify-end mt-4">
+        <Button label="Salvar" icon="pi pi-save" raised @click="clickAndSaveAll"/>
+      </div>
+    </template>
+  </Card>
 </template>

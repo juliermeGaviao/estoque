@@ -106,9 +106,9 @@ public class SaleItemController {
 	}
 
 	@DeleteMapping
-	public ResponseEntity<Object> delete(@RequestParam Long id) {
+	public ResponseEntity<Object> delete(@RequestParam Long id, @AuthenticationPrincipal Usuario usuario) {
 		try {
-			this.service.delete(id);
+			this.service.delete(id, usuario);
 
 			return ResponseEntity.ok().build();
 		} catch (NoSuchElementException e) {
@@ -123,9 +123,9 @@ public class SaleItemController {
 	}
 
 	@GetMapping("/list-by-price-table")
-	public ResponseEntity<Object> getItensByPriceTable(@RequestParam(required = false) Long idTabelaPreco) {
+	public ResponseEntity<Object> getItensByPriceTableAndSalePoint(@RequestParam Long idTabelaPreco, @RequestParam Long idPontoVenda) {
 		try {
-			List<SaleItemDto> result = this.service.getItensByPriceTable(idTabelaPreco);
+			List<SaleItemDto> result = this.service.getItensByPriceTableAndSalePoint(idTabelaPreco, idPontoVenda);
 
 			return ResponseEntity.ok(result);
 		} catch (RuntimeException e) {

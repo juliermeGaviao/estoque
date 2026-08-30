@@ -1,12 +1,10 @@
 package br.com.dinamica.estoque.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,48 +13,47 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.dinamica.estoque.dto.PriceTableProductDto;
 import br.com.dinamica.estoque.dto.ProductDto;
+import br.com.dinamica.estoque.dto.ProductTypeDto;
+import br.com.dinamica.estoque.dto.ProviderDto;
 import br.com.dinamica.estoque.dto.SaleDto;
 import br.com.dinamica.estoque.dto.SaleItemDto;
 import br.com.dinamica.estoque.entity.ItemVenda;
 import br.com.dinamica.estoque.entity.TabelaPrecoProduto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.entity.Venda;
+import br.com.dinamica.estoque.mapper.SaleItemMapper;
 import br.com.dinamica.estoque.repository.ItemVendaRepository;
 import br.com.dinamica.estoque.repository.TabelaPrecoProdutoRepository;
 import br.com.dinamica.estoque.repository.VendaRepository;
 import br.com.dinamica.estoque.service.SaleItemService;
+import br.com.dinamica.estoque.service.StockService;
 import br.com.dinamica.estoque.util.DateUtil;
 
 @Service
 public class SaleItemServiceImpl implements SaleItemService {
-	
+
 	private ItemVendaRepository repository;
 
 	private VendaRepository vendaRepository;
 
 	private TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository;
 
-	private ModelMapper modelMapper;
+	private StockService stockService;
 
-	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository, ModelMapper modelMapper) {
+	private SaleItemMapper modelMapper;
+
+	public SaleItemServiceImpl(ItemVendaRepository repository, VendaRepository vendaRepository, TabelaPrecoProdutoRepository tabelaPrecoProdutoRepository, StockService stockService, SaleItemMapper modelMapper) {
 		this.repository = repository;
 		this.vendaRepository = vendaRepository;
 		this.tabelaPrecoProdutoRepository = tabelaPrecoProdutoRepository;
+		this.stockService = stockService;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<SaleItemDto, ItemVenda>() {
-            @Override
-            protected void configure() {
-                skip(destination.getVenda());
-                skip(destination.getTabelaPrecoProduto());
-            }
-        });
 	}
 
 	@Override
 	public SaleItemDto get(Long id) {
 		ItemVenda entity = this.repository.findById(id).orElseThrow();
-		SaleItemDto result = this.modelMapper.map(entity, SaleItemDto.class);
+		SaleItemDto result = this.modelMapper.toDto(entity);
 
 		result.getVenda().getVendedor().setPerfis(null);
 		result.getTabelaPrecoProduto().getProduto().setTipoProduto(null);
@@ -69,26 +66,26 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 	@Override
 	public Page<SaleItemDto> list(Long idVenda, Long idTabelaPrecoProduto, Integer minQuantidade, Integer maxQuantidade, Pageable pageable) {
-        Specification<ItemVenda> specification = (root, query, cb) -> null;
+        Specification<ItemVenda> specification = (_, _, _) -> null;
 
         if (idVenda != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("venda").get("id"), idVenda));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("venda").get("id"), idVenda));
         }
 
         if (idTabelaPrecoProduto != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("tabelaPrecoProduto").get("id"), idTabelaPrecoProduto));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("tabelaPrecoProduto").get("id"), idTabelaPrecoProduto));
         }
 
         if (minQuantidade != null && maxQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.between(root.get(DISCOUNT_FIELD), minQuantidade, maxQuantidade));
+            specification = specification.and((root, _, cb) -> cb.between(root.get(DISCOUNT_FIELD), minQuantidade, maxQuantidade));
         } else if (minQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minQuantidade));
+            specification = specification.and((root, _, cb) -> cb.greaterThanOrEqualTo(root.get(DISCOUNT_FIELD), minQuantidade));
         } else if (maxQuantidade != null) {
-            specification = specification.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxQuantidade));
+            specification = specification.and((root, _, cb) -> cb.lessThanOrEqualTo(root.get(DISCOUNT_FIELD), maxQuantidade));
         }
 
 		return this.repository.findAll(specification, pageable).map(entity -> {
-			SaleItemDto result = this.modelMapper.map(entity, SaleItemDto.class);
+			SaleItemDto result = this.modelMapper.toDto(entity);
 
 			result.getVenda().getVendedor().setPerfis(null);
 			result.getTabelaPrecoProduto().getProduto().setTipoProduto(null);
@@ -101,7 +98,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 	@Override
 	public SaleItemDto save(SaleItemDto dto, Usuario usuario) {
 		ItemVenda entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -111,7 +108,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Venda venda = this.vendaRepository.findById(dto.getVenda().getId()).orElseThrow();
 		TabelaPrecoProduto tabelaPrecoProduto = this.tabelaPrecoProdutoRepository.findById(dto.getTabelaPrecoProduto().getId()).orElseThrow();
@@ -123,7 +120,7 @@ public class SaleItemServiceImpl implements SaleItemService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, SaleItemDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
@@ -132,26 +129,45 @@ public class SaleItemServiceImpl implements SaleItemService {
 		List<Long> ids = new ArrayList<>();
 
 		List<SaleItemDto> result = list.stream().map(dto -> {
-			SaleItemDto entity = this.save(dto, usuario);
+			Long idProduto = dto.getTabelaPrecoProduto().getProduto().getId();
 
+			if (dto.getId() != null) {
+				ItemVenda itemVenda = this.repository.findById(dto.getId()).orElseThrow();
+
+				this.stockService.saleStock(idProduto, itemVenda.getVenda().getPontoVenda().getId(), itemVenda.getVenda().getId(), itemVenda.getQuantidade() - dto.getQuantidade(), usuario);
+			} else {
+				this.stockService.saleStock(idProduto, dto.getVenda().getPontoVenda().getId(), dto.getVenda().getId(), -dto.getQuantidade(), usuario);
+			}
+
+			SaleItemDto entity = this.save(dto, usuario);
+			
 			ids.add(entity.getId());
 
 			return entity;
 		}).toList();
 
-		this.repository.deleteByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
+		List<ItemVenda> toBeDeleted = this.repository.getItensByVendaIdAndNotInIds(list.getFirst().getVenda().getId(), ids);
+
+		toBeDeleted.stream().forEach(item -> {
+			this.stockService.saleStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getVenda().getId(), item.getQuantidade(), usuario);
+			this.repository.delete(item);
+		});
 
 		return result;
 	}
 
 	@Override
-	public void delete(Long id) {
+	public void delete(Long id, Usuario usuario) {
+		ItemVenda item = this.repository.findById(id).orElseThrow();
+
+		this.stockService.saleStock(item.getTabelaPrecoProduto().getProduto().getId(), item.getVenda().getPontoVenda().getId(), item.getVenda().getId(), item.getQuantidade(), usuario);
+
 		this.repository.deleteById(id);
 	}
 
 	@Override
-	public List<SaleItemDto> getItensByPriceTable(Long idTabelaPreco) {
-		List<Object[]> result = this.repository.getItensByPriceTable(idTabelaPreco);
+	public List<SaleItemDto> getItensByPriceTableAndSalePoint(Long idTabelaPreco,  Long idPontoVenda) {
+		List<Object[]> result = this.repository.getItensByPriceTable(idTabelaPreco, idPontoVenda);
 
 		return result.stream().map(linha -> {
 			SaleItemDto dto = new SaleItemDto();
@@ -164,9 +180,12 @@ public class SaleItemServiceImpl implements SaleItemService {
 			productDto.setId((Long) linha[0]);
 			priceTableProductDto.setId((Long) linha[1]);
 			productDto.setNome((String) linha[2]);
-			productDto.setReferencia((String) linha[3]);
-			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
-			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[4]).doubleValue()));
+			productDto.setTipoProduto(new ProductTypeDto(null, (String) linha[3]));
+			productDto.setFornecedor(new ProviderDto((String) linha[4]));
+			productDto.setReferencia((String) linha[5]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[6]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[6]).doubleValue()));
+			productDto.setEstoque((Integer) linha[7]);
 
 			return dto;
 		}).toList();
@@ -192,10 +211,13 @@ public class SaleItemServiceImpl implements SaleItemService {
 			priceTableProductDto.setId((Long) linha[3]);
 			productDto.setNome((String) linha[4]);
 			productDto.setReferencia((String) linha[5]);
-			dto.setQuantidade((Integer) linha[6]);
-			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
-			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[7]).doubleValue()));
-			dto.setTotal(linha[8] != null ? BigDecimal.valueOf(((Number) linha[8]).doubleValue()) : null);
+			productDto.setTipoProduto(new ProductTypeDto(null, (String) linha[6]));
+			productDto.setFornecedor(new ProviderDto((String) linha[7]));
+			dto.setQuantidade((Integer) linha[8]);
+			priceTableProductDto.setPreco(BigDecimal.valueOf(((Number) linha[9]).doubleValue()));
+			dto.setPrecoUnitario(BigDecimal.valueOf(((Number) linha[9]).doubleValue()));
+			dto.setTotal(linha[10] != null ? BigDecimal.valueOf(((Number) linha[10]).doubleValue()) : null);
+			productDto.setEstoque((Integer) linha[11]);
 
 			return dto;
 		}).toList();

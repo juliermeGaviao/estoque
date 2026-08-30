@@ -1,7 +1,7 @@
 package br.com.dinamica.estoque.entity;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -29,7 +29,7 @@ public class ClientePessoa extends Cliente {
     private Cliente empresa;
 
     @Column(name = "data_aniversario", nullable = false, columnDefinition = "date")
-    private Date dataAniversario;
+    private LocalDate dataAniversario;
 
     @Column(name = "limite", precision = 19, scale = 2, columnDefinition = "decimal")
     private BigDecimal limite;

@@ -1,9 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +11,7 @@ import br.com.dinamica.estoque.dto.ProviderContactDto;
 import br.com.dinamica.estoque.entity.ContatoFornecedor;
 import br.com.dinamica.estoque.entity.Fornecedor;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.ProviderContactMapper;
 import br.com.dinamica.estoque.repository.ContatoFornecedorRepository;
 import br.com.dinamica.estoque.repository.FornecedorRepository;
 import br.com.dinamica.estoque.service.ProviderContactService;
@@ -25,50 +24,36 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 
 	private FornecedorRepository fornecedorRepository;
 
-	private ModelMapper modelMapper;
+	private ProviderContactMapper modelMapper;
 
-	public ProviderContactServiceImpl(ContatoFornecedorRepository repository, FornecedorRepository fornecedorRepository, ModelMapper modelMapper) {
+	public ProviderContactServiceImpl(ContatoFornecedorRepository repository, FornecedorRepository fornecedorRepository, ProviderContactMapper modelMapper) {
 		this.repository = repository;
 		this.fornecedorRepository = fornecedorRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<ContatoFornecedor, ProviderContactDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getFornecedor());
-            }
-        });
-
-		this.modelMapper.addMappings(new PropertyMap<ProviderContactDto, ContatoFornecedor>() {
-            @Override
-            protected void configure() {
-                skip(destination.getFornecedor());
-            }
-        });
 	}
 
 	@Override
 	public ProviderContactDto get(Long id) {
 		ContatoFornecedor entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, ProviderContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<ProviderContactDto> list(Long idFornecedor, Pageable pageable) {
-        Specification<ContatoFornecedor> specification = (root, query, cb) -> null;
+        Specification<ContatoFornecedor> specification = (_, _, _) -> null;
 
         if (idFornecedor != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("fornecedor").get("id"), idFornecedor));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("fornecedor").get("id"), idFornecedor));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, ProviderContactDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public ProviderContactDto save(ProviderContactDto dto, Usuario usuario) {
 		ContatoFornecedor entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -78,7 +63,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Fornecedor fornecedor = this.fornecedorRepository.findById(dto.getFornecedor().getId()).orElseThrow();
 		
@@ -88,7 +73,7 @@ public class ProviderContactServiceImpl implements ProviderContactService {
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, ProviderContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

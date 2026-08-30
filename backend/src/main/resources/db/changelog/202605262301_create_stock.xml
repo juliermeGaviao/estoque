@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
+      http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.5.xsd">
+
+	<changeSet id="202605262301" author="julierme">
+
+		<createTable tableName="estoque">
+
+			<column name="id" type="bigint" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false"/>
+			</column>
+
+            <column name="id_produto" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_estoque_produto" references="produto(id)"/>
+            </column>
+
+            <column name="id_ponto_venda" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_estoque_pv" references="ponto_venda(id)"/>
+            </column>
+
+            <column name="id_pedido_compra" type="bigint">
+                <constraints foreignKeyName="fk_estoque_pedido" references="pedido_compra(id)"/>
+            </column>
+
+            <column name="id_venda" type="bigint">
+                <constraints foreignKeyName="fk_estoque_venda" references="venda(id)"/>
+            </column>
+            
+            <column name="id_transferencia_estoque" type="bigint">
+                <constraints foreignKeyName="fk_estoque_transferencia" references="transferencia_estoque(id)"/>
+            </column>
+
+            <column name="quantidade" type="int">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="tipo_operacao" type="ENUM('C', 'D')">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="saldo" type="int">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="id_usuario" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_estoque_usuario" references="usuario(id)"/>
+            </column>
+
+            <column name="data_criacao" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+		</createTable>
+
+	    <rollback>
+	        <dropTable tableName="estoque"/>
+	    </rollback>
+
+	</changeSet>
+
+</databaseChangeLog>

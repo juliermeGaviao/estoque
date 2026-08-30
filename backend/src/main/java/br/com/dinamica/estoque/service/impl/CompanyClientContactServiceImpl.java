@@ -1,9 +1,7 @@
 package br.com.dinamica.estoque.service.impl;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,6 +11,7 @@ import br.com.dinamica.estoque.dto.CompanyClientContactDto;
 import br.com.dinamica.estoque.entity.Cliente;
 import br.com.dinamica.estoque.entity.ContatoClienteEmpresa;
 import br.com.dinamica.estoque.entity.Usuario;
+import br.com.dinamica.estoque.mapper.CompanyClientContactMapper;
 import br.com.dinamica.estoque.repository.ClienteRepository;
 import br.com.dinamica.estoque.repository.ContatoClienteEmpresaRepository;
 import br.com.dinamica.estoque.service.CompanyClientContactService;
@@ -25,50 +24,36 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 
 	private ClienteRepository clienteRepository;
 
-	private ModelMapper modelMapper;
+	private CompanyClientContactMapper modelMapper;
 
-	public CompanyClientContactServiceImpl(ContatoClienteEmpresaRepository repository, ClienteRepository clienteRepository, ModelMapper modelMapper) {
+	public CompanyClientContactServiceImpl(ContatoClienteEmpresaRepository repository, ClienteRepository clienteRepository, CompanyClientContactMapper modelMapper) {
 		this.repository = repository;
 		this.clienteRepository = clienteRepository;
 		this.modelMapper = modelMapper;
-
-		this.modelMapper.addMappings(new PropertyMap<ContatoClienteEmpresa, CompanyClientContactDto>() {
-            @Override
-            protected void configure() {
-                skip(destination.getCliente());
-            }
-        });
-
-		this.modelMapper.addMappings(new PropertyMap<CompanyClientContactDto, ContatoClienteEmpresa>() {
-            @Override
-            protected void configure() {
-                skip(destination.getCliente());
-            }
-        });
 	}
 
 	@Override
 	public CompanyClientContactDto get(Long id) {
 		ContatoClienteEmpresa entity = this.repository.findById(id).orElseThrow();
 
-		return this.modelMapper.map(entity, CompanyClientContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override
 	public Page<CompanyClientContactDto> list(Long idEmpresa, Pageable pageable) {
-        Specification<ContatoClienteEmpresa> specification = (root, query, cb) -> null;
+        Specification<ContatoClienteEmpresa> specification = (_, _, _) -> null;
 
         if (idEmpresa != null) {
-            specification = specification.and((root, query, cb) -> cb.equal(root.get("cliente").get("id"), idEmpresa));
+            specification = specification.and((root, _, cb) -> cb.equal(root.get("cliente").get("id"), idEmpresa));
         }
 
-		return this.repository.findAll(specification, pageable).map(entity -> this.modelMapper.map(entity, CompanyClientContactDto.class));
+		return this.repository.findAll(specification, pageable).map(this.modelMapper::toDto);
 	}
 
 	@Override
 	public CompanyClientContactDto save(CompanyClientContactDto dto, Usuario usuario) {
 		ContatoClienteEmpresa entity;
-        Date agora = DateUtil.now();
+		LocalDateTime agora = DateUtil.now();
 
 		if (dto.getId() != null) {
 			entity = this.repository.findById(dto.getId()).orElseThrow();
@@ -78,7 +63,7 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 			entity.setDataCriacao(agora);
 		}
 
-		this.modelMapper.map(dto, entity);
+		this.modelMapper.updateEntityFromDto(dto, entity);
 
 		Cliente cliente = this.clienteRepository.findById(dto.getCliente().getId()).orElseThrow();
 
@@ -88,7 +73,7 @@ public class CompanyClientContactServiceImpl implements CompanyClientContactServ
 
 		entity = this.repository.save(entity);
 
-		return this.modelMapper.map(entity, CompanyClientContactDto.class);
+		return this.modelMapper.toDto(entity);
 	}
 
 	@Override

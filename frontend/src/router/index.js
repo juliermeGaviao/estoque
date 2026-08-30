@@ -27,12 +27,24 @@ const router = createRouter({
                   component: () => import('@/views/pages/register/user/Edit.vue')
                 },
                 {
+                  path: '/stock/purchase-order',
+                  component: () => import('@/views/pages/stock/purchase-order/List.vue')
+                },
+                {
+                  path: '/stock/transfer',
+                  component: () => import('@/views/pages/stock/transfer/List.vue')
+                },
+                {
                   path: '/register/provider',
                   component: () => import('@/views/pages/register/provider/List.vue')
                 },
                 {
                   path: '/register/provider/edit',
                   component: () => import('@/views/pages/register/provider/Edit.vue')
+                },
+                {
+                  path: '/register/sale-point',
+                  component: () => import('@/views/pages/register/sale-point/List.vue')
                 },
                 {
                   path: '/register/company',

@@ -14,6 +14,6 @@ public interface SaleService {
 
 	SaleDto save(SaleDto dto, Usuario usuario);
 
-	void delete(Long id);
+	void delete(Long id, Usuario usuario);
 
 }

@@ -1,0 +1,47 @@
+package br.com.dinamica.estoque.entity;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "ponto_venda")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PontoVenda {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_cliente_empresa", foreignKey = @ForeignKey(name = "fk_ponto_venda_cliente_empresa"))
+    private ClienteEmpresa empresa;
+
+    @Column(name = "nome", nullable = false, length = 255)
+    private String nome;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_usuario", nullable = false, foreignKey = @ForeignKey(name = "fk_ponto_venda_usuario"))
+    private Usuario usuario;
+
+    @Column(name = "data_criacao", nullable = false, updatable = false)
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_alteracao", nullable = false)
+    private LocalDateTime dataAlteracao;
+
+}

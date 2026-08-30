@@ -1,5 +1,6 @@
 package br.com.dinamica.estoque.controller;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import br.com.dinamica.estoque.dto.ProductDto;
 import br.com.dinamica.estoque.dto.ProductFilterDto;
 import br.com.dinamica.estoque.entity.Usuario;
 import br.com.dinamica.estoque.service.ProductService;
+import br.com.dinamica.estoque.service.StockService;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
@@ -35,8 +37,11 @@ public class ProductController {
 
 	private ProductService service;
 
-	public ProductController(ProductService service) {
+	private StockService stockService;
+
+	public ProductController(ProductService service, StockService stockService) {
 		this.service = service;
+		this.stockService = stockService;
 	}
 
 	@GetMapping
@@ -106,6 +111,30 @@ public class ProductController {
 			String mensagem = "Erro ao remover " + ENTITY.toLowerCase() + ".";
 			log.error(mensagem, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@PostMapping("save-all")
+	public ResponseEntity<Object> save(@RequestBody List<ProductDto> dtos, @AuthenticationPrincipal Usuario usuario) {
+		try {
+			this.service.save(dtos, usuario);
+
+			return ResponseEntity.ok().build();
+		} catch (RuntimeException e) {
+			String mensagem = "Erro ao salvar " + ENTITY.toLowerCase() + ".";
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mensagem);
+		}
+	}
+
+	@GetMapping("stock-product-sale-point")
+	public ResponseEntity<Object> getStockByProductAndSalePoint(@RequestParam Long idProduto) {
+		try {
+			return ResponseEntity.ok(this.stockService.getStockByProductAndSalePoint(idProduto));
+		} catch (NoSuchElementException e) {
+			String mensagem = NOT_FOUND + idProduto;
+			log.error(mensagem, e);
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
 		}
 	}
 

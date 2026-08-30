@@ -17,4 +17,6 @@ public class UserListDto {
 
     private String tabelas;
 
+    private String pontos;
+
 }
