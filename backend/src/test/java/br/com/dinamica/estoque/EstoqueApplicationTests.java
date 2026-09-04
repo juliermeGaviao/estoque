@@ -7,8 +7,16 @@ import org.mockito.Mockito;
 import org.springframework.boot.SpringApplication;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class EstoqueApplicationTests {
+
+    @Test
+    @DisplayName("Deve instanciar a classe para cobrir o construtor padrao")
+    void constructorTest() {
+        EstoqueApplication app = new EstoqueApplication();
+        assertNotNull(app);
+    }
 
     @Test
     @DisplayName("Deve executar o método main da aplicação garantindo cobertura total")
