@@ -125,7 +125,7 @@ class PriceTableProductServiceImplTest {
     // list(Long idTabelaPreco, Long idProduto, Pageable pageable)
     // -------------------------------------------------------------------------
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Test
     @DisplayName("list - deve buscar com filtros e retornar paginado executando as lambdas de Specification")
     void list_withFilters() {
@@ -134,9 +134,18 @@ class PriceTableProductServiceImplTest {
 
         when(repository.findAll(any(Specification.class), eq(pageable))).thenAnswer(invocation -> {
             Specification<TabelaPrecoProduto> spec = invocation.getArgument(0);
-            
-            // Força a execução das lambdas internas da Specification para atingir 100% de cobertura
-            spec.toPredicate(null, null, null);
+
+            // Criar mocks para simular a execução do Criteria Builder sem disparar NullPointerException
+            jakarta.persistence.criteria.Root<TabelaPrecoProduto> root = org.mockito.Mockito.mock(jakarta.persistence.criteria.Root.class);
+            jakarta.persistence.criteria.CriteriaQuery<?> query = org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaQuery.class);
+            jakarta.persistence.criteria.CriteriaBuilder cb = org.mockito.Mockito.mock(jakarta.persistence.criteria.CriteriaBuilder.class);
+            jakarta.persistence.criteria.Path path = org.mockito.Mockito.mock(jakarta.persistence.criteria.Path.class);
+
+            when(root.get(anyString())).thenReturn(path);
+            when(path.get(anyString())).thenReturn(path);
+
+            // Força a execução das lambdas internas para garantir cobertura sem estourar NullPointerException
+            spec.toPredicate(root, query, cb);
 
             return entityPage;
         });
@@ -148,7 +157,6 @@ class PriceTableProductServiceImplTest {
         assertNotNull(result);
         assertEquals(1, result.getTotalElements());
     }
-
     @SuppressWarnings("unchecked")
     @Test
     @DisplayName("list - deve buscar sem filtros (ids nulos)")
