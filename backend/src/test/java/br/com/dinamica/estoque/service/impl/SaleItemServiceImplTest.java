@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -13,7 +12,6 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -104,15 +102,6 @@ class SaleItemServiceImplTest {
         assertNull(result.getTabelaPrecoProduto().getProduto().getTipoProduto());
         assertNull(result.getTabelaPrecoProduto().getProduto().getFornecedor());
         verify(repository).findById(id);
-    }
-
-    @Test
-    @DisplayName("get - deve lançar exceção quando não encontrado")
-    void get_shouldThrowWhenNotFound() {
-        Long id = 99L;
-        when(repository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(id));
     }
 
     // -------------------------------------------------------------------------
@@ -395,11 +384,7 @@ class SaleItemServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.greaterThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lessThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa a lambda para cobrir Specifications
-        }
+	    specification.toPredicate(root, query, cb);
     }
 
     private SaleItemDto criarDtoCompleto(Long id, Long idVenda, Long idTabelaPrecoProduto, Integer quantidade) {

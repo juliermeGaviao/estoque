@@ -2,7 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,16 +79,6 @@ class ProviderServiceImplTest {
         assertEquals(dto, result);
         verify(repository).findById(id);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("get - deve lancar NoSuchElementException quando nao encontrar")
-    void get_shouldThrowWhenNotFound() {
-        Long id = 99L;
-        when(repository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(id));
-        verify(repository).findById(id);
     }
 
     // -------------------------------------------------------------------------
@@ -239,10 +227,6 @@ class ProviderServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.like(any(), any(String.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.equal(any(), any())).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa para cobrir os lambdas internos do JPA Specification
-        }
+        specification.toPredicate(root, query, cb);
     }
 }

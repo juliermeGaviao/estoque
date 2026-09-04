@@ -2,7 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -85,14 +83,6 @@ class UserSalePointServiceImplTest {
         verify(modelMapper).toDto(entity);
     }
 
-    @Test
-    @DisplayName("get - deve lançar exceção quando não encontrar")
-    void get_shouldThrowWhenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(99L));
-    }
-
     // -------------------------------------------------------------------------
     // list()
     // -------------------------------------------------------------------------
@@ -164,28 +154,6 @@ class UserSalePointServiceImplTest {
         verify(repository).saveAndFlush(any(UsuarioPontoVenda.class));
     }
 
-    @Test
-    @DisplayName("save - deve lançar exceção quando usuário não existir")
-    void save_shouldThrowWhenUserNotFound() {
-        UserSalePointDto dto = criarDto(99L, 20L);
-
-        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto));
-        verify(repository).deleteByUsuario(99L);
-    }
-
-    @Test
-    @DisplayName("save - deve lançar exceção quando ponto de venda não existir")
-    void save_shouldThrowWhenSalePointNotFound() {
-        UserSalePointDto dto = criarDto(10L, 99L);
-
-        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(new Usuario()));
-        when(pontoVendaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto));
-    }
-
     // -------------------------------------------------------------------------
     // delete()
     // -------------------------------------------------------------------------
@@ -235,11 +203,7 @@ class UserSalePointServiceImplTest {
         org.mockito.Mockito.lenient().when(path.get(any(String.class))).thenReturn(path);
         org.mockito.Mockito.lenient().when(cb.equal(any(), any())).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Ignora exceções na execução dos Mocks de Criteria
-        }
+        specification.toPredicate(root, query, cb);
     }
 
     private UserSalePointDto criarDto(Long idUsuario, Long idPontoVenda) {

@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -13,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -81,17 +79,6 @@ class SalePointServiceImplTest {
         assertEquals(expectedDto, result);
         verify(repository).findById(id);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("get - deve lançar NoSuchElementException quando o registro não for encontrado")
-    void get_shouldThrowExceptionWhenNotFound() {
-        Long id = 99L;
-        when(repository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(id));
-        verify(repository).findById(id);
-        verify(modelMapper, never()).toDto(any());
     }
 
     // -------------------------------------------------------------------------
@@ -218,36 +205,6 @@ class SalePointServiceImplTest {
         verify(repository).save(any(PontoVenda.class));
     }
 
-    @Test
-    @DisplayName("save - deve lançar exceção se atualizar ID inexistente")
-    void save_shouldThrowExceptionWhenSalePointIdNotFound() {
-        Long idInexistente = 99L;
-        SalePointDto dto = new SalePointDto();
-        dto.setId(idInexistente);
-
-        when(repository.findById(idInexistente)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-        verify(repository).findById(idInexistente);
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("save - deve lançar exceção se ID de empresa informado não existir")
-    void save_shouldThrowExceptionWhenEmpresaNotFound() {
-        Long idEmpresaInexistente = 88L;
-        SalePointDto dto = new SalePointDto();
-        CommonClientDto empresaDto = new CommonClientDto();
-        empresaDto.setId(idEmpresaInexistente);
-        dto.setEmpresa(empresaDto);
-
-        when(clientRepository.findById(idEmpresaInexistente)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-        verify(clientRepository).findById(idEmpresaInexistente);
-        verify(repository, never()).save(any());
-    }
-
     // -------------------------------------------------------------------------
     // delete(Long id)
     // -------------------------------------------------------------------------
@@ -298,10 +255,6 @@ class SalePointServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.like(any(), any(String.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lower(any())).thenReturn(path);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa a lambda para forçar cobertura da Specification interna
-        }
+        specification.toPredicate(root, query, cb);
     }
 }

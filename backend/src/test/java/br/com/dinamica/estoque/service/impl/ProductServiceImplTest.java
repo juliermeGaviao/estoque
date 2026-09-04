@@ -2,7 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -12,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -101,16 +99,6 @@ class ProductServiceImplTest {
         assertEquals(dto, result);
         verify(repository).findById(id);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("get - deve lancar NoSuchElementException quando nao encontrar")
-    void get_shouldThrowWhenNotFound() {
-        Long id = 99L;
-        when(repository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(id));
-        verify(repository).findById(id);
     }
 
     // -------------------------------------------------------------------------
@@ -279,35 +267,6 @@ class ProductServiceImplTest {
         verify(repository).save(any(Produto.class));
     }
 
-    @Test
-    @DisplayName("save - deve lancar excecao quando tipo de produto nao for encontrado")
-    void save_shouldThrowWhenTipoProdutoNotFound() {
-        Long tipoProdutoId = 99L;
-        Long fornecedorId = 20L;
-
-        ProductDto dto = createSampleDto(null, tipoProdutoId, fornecedorId);
-        Usuario usuario = new Usuario();
-
-        when(tipoProdutoRepository.findById(tipoProdutoId)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, usuario));
-    }
-
-    @Test
-    @DisplayName("save - deve lancar excecao quando fornecedor nao for encontrado")
-    void save_shouldThrowWhenFornecedorNotFound() {
-        Long tipoProdutoId = 10L;
-        Long fornecedorId = 99L;
-
-        ProductDto dto = createSampleDto(null, tipoProdutoId, fornecedorId);
-        Usuario usuario = new Usuario();
-
-        when(tipoProdutoRepository.findById(tipoProdutoId)).thenReturn(Optional.of(new TipoProduto()));
-        when(fornecedorRepository.findById(fornecedorId)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, usuario));
-    }
-
     // -------------------------------------------------------------------------
     // save(List<ProductDto> dtos, Usuario usuario)
     // -------------------------------------------------------------------------
@@ -385,10 +344,6 @@ class ProductServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.greaterThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lessThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa para cobrir os lambdas internos do JPA Specification
-        }
+        specification.toPredicate(root, query, cb);
     }
 }

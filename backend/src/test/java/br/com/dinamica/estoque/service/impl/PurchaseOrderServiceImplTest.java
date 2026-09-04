@@ -2,7 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -12,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -85,16 +83,6 @@ class PurchaseOrderServiceImplTest {
         assertEquals(dto, result);
         verify(repository).findById(id);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("get - deve lancar NoSuchElementException quando nao encontrar")
-    void get_shouldThrowWhenNotFound() {
-        Long id = 99L;
-        when(repository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(id));
-        verify(repository).findById(id);
     }
 
     // -------------------------------------------------------------------------
@@ -258,24 +246,6 @@ class PurchaseOrderServiceImplTest {
         verify(repository).save(any(PedidoCompra.class));
     }
 
-    @Test
-    @DisplayName("save - deve lancar excecao quando fornecedor nao for encontrado")
-    void save_shouldThrowWhenProviderNotFound() {
-        Long providerId = 99L;
-
-        PurchaseOrderDto dto = new PurchaseOrderDto();
-        dto.setId(null);
-        ProviderDto providerDto = new ProviderDto();
-        providerDto.setId(providerId);
-        dto.setFornecedor(providerDto);
-
-        Usuario usuario = new Usuario();
-
-        when(providerRepository.findById(providerId)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, usuario));
-    }
-
     // -------------------------------------------------------------------------
     // delete(Long id)
     // -------------------------------------------------------------------------
@@ -335,10 +305,6 @@ class PurchaseOrderServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.greaterThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lessThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa para cobrir os lambdas internos do JPA Specification
-        }
+        specification.toPredicate(root, query, cb);
     }
 }

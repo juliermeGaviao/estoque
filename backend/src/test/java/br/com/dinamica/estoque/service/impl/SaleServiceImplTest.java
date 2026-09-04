@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -12,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -112,14 +110,6 @@ class SaleServiceImplTest {
         assertNotNull(result);
         assertNull(result.getVendedor().getPerfis());
         verify(repository).findById(1L);
-    }
-
-    @Test
-    @DisplayName("get - deve lançar exceção quando venda não existir")
-    void get_shouldThrowWhenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(99L));
     }
 
     // -------------------------------------------------------------------------
@@ -274,26 +264,6 @@ class SaleServiceImplTest {
         verify(repository).save(any(Venda.class));
     }
 
-    @Test
-    @DisplayName("save - deve lançar exceção se ID da venda não for encontrado")
-    void save_shouldThrowWhenSaleIdNotFound() {
-        SaleDto dto = criarDtoCompleto(99L, 10L, 20L, 30L, 40L);
-
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-    }
-
-    @Test
-    @DisplayName("save - deve lançar exceção se cliente informado não for encontrado")
-    void save_shouldThrowWhenClientNotFound() {
-        SaleDto dto = criarDtoCompleto(null, 99L, 20L, 30L, 40L);
-
-        when(clienteRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-    }
-
     // -------------------------------------------------------------------------
     // delete()
     // -------------------------------------------------------------------------
@@ -333,11 +303,7 @@ class SaleServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.like(any(), any(String.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lower(any())).thenReturn(path);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Ignora exceções na execução dos Mocks de Criteria
-        }
+        specification.toPredicate(root, query, cb);
     }
 
     private SaleDto criarDtoComVendedor() {

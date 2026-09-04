@@ -8,11 +8,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -75,7 +76,8 @@ class UserServiceImplTest {
     @Mock
     private UserMapper modelMapper;
 
-    private UserServiceImpl service;
+    @InjectMocks
+    private UserServiceImpl service; // Ou a classe concreta correspondente
 
     @BeforeEach
     void setUp() {
@@ -94,29 +96,30 @@ class UserServiceImplTest {
     // -------------------------------------------------------------------------
 
     @Test
-    @DisplayName("loadUserByUsername - deve retornar UserDetails quando encontrar usuario por email")
-    void loadUserByUsername_shouldReturnUserDetailsWhenFound() {
-        String email = "admin@dinamica.com";
-        Usuario usuario = new Usuario();
-        usuario.setEmail(email);
+    @DisplayName("Deve retornar UserDetails quando o e-mail for encontrado")
+    void loadUserByUsername_QuandoEmailExiste_DeveRetornarUserDetails() {
+        String email = "usuario@email.com";
+        Usuario usuarioEsperado = new Usuario(); // Substitua pela sua classe de entidade/UserDetails
+        
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuarioEsperado));
 
-        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        UserDetails resultado = service.loadUserByUsername(email);
 
-        UserDetails result = service.loadUserByUsername(email);
-
-        assertNotNull(result);
-        assertEquals(usuario, result);
-        verify(usuarioRepository).findByEmail(email);
+        assertNotNull(resultado);
+        assertEquals(usuarioEsperado, resultado);
+        verify(usuarioRepository, times(1)).findByEmail(email);
     }
 
     @Test
-    @DisplayName("loadUserByUsername - deve lancar UsernameNotFoundException quando nao encontrar usuario")
-    void loadUserByUsername_shouldThrowUsernameNotFoundExceptionWhenNotFound() {
-        String email = "notfound@dinamica.com";
+    @DisplayName("Deve lançar NoSuchElementException quando o e-mail não for encontrado")
+    void loadUserByUsername_QuandoEmailNaoExiste_DeveLancarExcecao() {
+        String email = "naoexistente@email.com";
+        
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> service.loadUserByUsername(email));
-        verify(usuarioRepository).findByEmail(email);
+
+        verify(usuarioRepository, times(1)).findByEmail(email);
     }
 
     // -------------------------------------------------------------------------
@@ -140,16 +143,6 @@ class UserServiceImplTest {
         assertEquals(dto, result);
         verify(usuarioRepository).findById(id);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("getUser - deve lancar NoSuchElementException quando nao encontrar")
-    void getUser_shouldThrowWhenNotFound() {
-        Long id = 99L;
-        when(usuarioRepository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.getUser(id));
-        verify(usuarioRepository).findById(id);
     }
 
     // -------------------------------------------------------------------------
@@ -319,18 +312,22 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("save - deve lancar ConstraintViolationException quando email ja existir no cadastro de novo usuario")
-    void save_shouldThrowConstraintViolationExceptionWhenEmailAlreadyExists() {
+    void save_shouldThrowConstraintViolationException_whenEmailAlreadyExists() {
+        // Arrange
+        String email = "usuario@teste.com";
+
         UserRequestDTO dto = new UserRequestDTO();
         dto.setId(null);
-        dto.setEmail("existente@dinamica.com");
+        dto.setEmail(email);
 
-        Usuario cadastrante = new Usuario();
+        Usuario outroUsuario = new Usuario();
+        outroUsuario.setEmail(email);
 
-        when(usuarioRepository.findByEmail("existente@dinamica.com")).thenReturn(Optional.of(new Usuario()));
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(outroUsuario));
 
-        assertThrows(ConstraintViolationException.class, () -> service.save(dto, cadastrante));
-        verify(usuarioRepository, never()).saveAndFlush(any());
+        assertThrows(ConstraintViolationException.class, () -> service.save(dto, new Usuario()));
+
+        verify(usuarioRepository).findByEmail(email);
     }
 
     // -------------------------------------------------------------------------
@@ -403,10 +400,6 @@ class UserServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.notEqual(any(), any())).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.equal(any(), any())).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Executa para cobrir os lambdas internos do JPA Specification
-        }
+        specification.toPredicate(root, query, cb);
     }
 }

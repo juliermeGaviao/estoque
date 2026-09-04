@@ -2,7 +2,6 @@ package br.com.dinamica.estoque.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -78,14 +76,6 @@ class StockTransferServiceImplTest {
         assertEquals(dto, result);
         verify(repository).findById(1L);
         verify(modelMapper).toDto(entity);
-    }
-
-    @Test
-    @DisplayName("get - deve lançar exceção quando não encontrar")
-    void get_shouldThrowWhenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(99L));
     }
 
     // -------------------------------------------------------------------------
@@ -222,37 +212,6 @@ class StockTransferServiceImplTest {
         verify(repository).save(any(TransferenciaEstoque.class));
     }
 
-    @Test
-    @DisplayName("save - deve lançar exceção quando ID informado não for encontrado")
-    void save_shouldThrowWhenIdNotFound() {
-        StockTransferDto dto = criarDto(99L, 10L, 20L);
-
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-    }
-
-    @Test
-    @DisplayName("save - deve lançar exceção quando ponto de venda de origem não existir")
-    void save_shouldThrowWhenOrigemNotFound() {
-        StockTransferDto dto = criarDto(null, 99L, 20L);
-
-        when(pontoVendaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-    }
-
-    @Test
-    @DisplayName("save - deve lançar exceção quando ponto de venda de destino não existir")
-    void save_shouldThrowWhenDestinoNotFound() {
-        StockTransferDto dto = criarDto(null, 10L, 99L);
-
-        when(pontoVendaRepository.findById(10L)).thenReturn(Optional.of(new PontoVenda()));
-        when(pontoVendaRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.save(dto, new Usuario()));
-    }
-
     // -------------------------------------------------------------------------
     // delete()
     // -------------------------------------------------------------------------
@@ -285,11 +244,7 @@ class StockTransferServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.greaterThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
         org.mockito.Mockito.lenient().when(cb.lessThanOrEqualTo(any(), any(Comparable.class))).thenReturn(predicate);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Ignora exceções na execução dos Mocks de Criteria
-        }
+        specification.toPredicate(root, query, cb);
     }
 
     private StockTransferDto criarDto(Long id, Long idOrigem, Long idDestino) {

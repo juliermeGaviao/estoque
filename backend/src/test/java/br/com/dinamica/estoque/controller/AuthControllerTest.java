@@ -104,21 +104,12 @@ class AuthControllerTest {
         doThrow(new BadCredentialsException("Credenciais inválidas"))
                 .when(authManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 
-        assertThrowsExceptionOrUnauthorized(request);
-    }
-
-    private void assertThrowsExceptionOrUnauthorized(AuthRequest request) throws Exception {
-        try {
+        // Valida diretamente que a chamada ao controller lança a exceção esperada sem a necessidade do try-catch manual
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> 
             mockMvc.perform(post("/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isUnauthorized());
-        } catch (Exception e) {
-            // Em testes standalone sem GlobalExceptionHandler, a exceção é lançada diretamente
-            if (!(e.getCause() instanceof BadCredentialsException)) {
-                throw e;
-            }
-        }
+        ).hasCauseInstanceOf(BadCredentialsException.class);
     }
 
     @Test

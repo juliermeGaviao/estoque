@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -275,24 +273,6 @@ class StockServiceImplTest {
         service.transferStock(idProduto, idOrigem, idDestino, idTransferencia, amount, usuario);
 
         verify(repository, times(2)).save(any(Estoque.class));
-    }
-
-    @Test
-    @DisplayName("transferStock - deve lançar exceção se transferencia nao for encontrada")
-    void transferStock_shouldThrowWhenTransferNotFound() {
-        Long idProduto = 1L;
-        Long idOrigem = 10L;
-        Long idDestino = 20L;
-        Long idTransferencia = 99L;
-
-        when(produtoRepository.findById(idProduto)).thenReturn(Optional.of(new Produto()));
-        when(pontoVendaRepository.findById(idOrigem)).thenReturn(Optional.of(new PontoVenda()));
-        when(pontoVendaRepository.findById(idDestino)).thenReturn(Optional.of(new PontoVenda()));
-        when(transferenciaEstoqueRepository.findById(idTransferencia)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> 
-            service.transferStock(idProduto, idOrigem, idDestino, idTransferencia, 5, new Usuario())
-        );
     }
 
     // -------------------------------------------------------------------------

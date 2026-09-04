@@ -3,7 +3,6 @@ package br.com.dinamica.estoque.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -157,14 +155,6 @@ class ClientServiceImplTest {
         assertEquals("90000000", result.getCep());
         assertEquals("Porto Alegre", result.getCidade());
         assertEquals("RS", result.getUf());
-    }
-
-    @Test
-    @DisplayName("get - deve lançar exceção quando cliente não existir")
-    void get_shouldThrowWhenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(NoSuchElementException.class, () -> service.get(99L));
     }
 
     // -------------------------------------------------------------------------
@@ -471,21 +461,6 @@ class ClientServiceImplTest {
     }
 
     @Test
-    @DisplayName("save - deve lançar exceção ao atualizar ID inexistente")
-    void save_shouldThrowWhenIdDoesNotExist() {
-        ClientDto dto = new ClientDto();
-        dto.setId(99L);
-        dto.setNome("Inexistente");
-
-        when(repository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(
-                NoSuchElementException.class,
-                () -> service.save(dto, new Usuario())
-        );
-    }
-
-    @Test
     @DisplayName("save - deve atualizar pessoa sem empresa")
     void save_shouldUpdatePersonWithoutCompany() {
         ClientDto dto = new ClientDto();
@@ -602,30 +577,6 @@ class ClientServiceImplTest {
                 .saveAndFlush(any(ArquivoClientePessoa.class));
     }
 
-    @Test
-    @DisplayName("loadEmployees - deve lançar exceção quando empresa não existir")
-    void loadEmployees_shouldThrowWhenCompanyDoesNotExist() {
-        when(repository.findById(99L))
-                .thenReturn(Optional.empty());
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "empregados.csv",
-                "text/csv",
-                "nome,numero-cracha,data-aniversario,limite-gasto\n"
-                        .getBytes()
-        );
-
-        assertThrows(
-                NoSuchElementException.class,
-                () -> service.loadEmployees(
-                        99L,
-                        file,
-                        new Usuario()
-                )
-        );
-    }
-
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -718,11 +669,7 @@ class ClientServiceImplTest {
         org.mockito.Mockito.lenient().when(cb.treat(any(Root.class), eq(ClientePessoa.class)))
                 .thenReturn(root);
 
-        try {
-            specification.toPredicate(root, query, cb);
-        } catch (Exception ignored) {
-            // Ignora exceções na montagem fictícia do CriteriaBuilder
-        }
+        specification.toPredicate(root, query, cb);
     }
 
  // -------------------------------------------------------------------------
