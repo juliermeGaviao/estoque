@@ -10,6 +10,7 @@ import ToastService from 'primevue/toastservice'
 import api from './util/api'
 
 import '@/assets/styles.scss'
+import '@/assets/tailwind.css'
 
 import { Chart as ChartJS } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
