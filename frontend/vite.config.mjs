@@ -7,27 +7,40 @@ import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-    optimizeDeps: {
-        noDiscovery: true
-    },
-    plugins: [
-        vue(),
-        tailwindcss(),
-        Components({
-            resolvers: [PrimeVueResolver()]
-        })
-    ],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
-        }
-    },
-    server: {
+  optimizeDeps: {
+    noDiscovery: true
+  },
+  plugins: [
+    vue(),
+    tailwindcss(),
+    Components({
+      resolvers: [PrimeVueResolver()]
+    })
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
+  server: {
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true
       }
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/**/*.js'],
+    coverage: {
+      provider: 'v8',
+      exclude: [
+        'src/assets/**',
+        '**/node_modules/**',
+        '**/dist/**'
+      ]
     }
   }
 })
