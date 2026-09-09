@@ -171,7 +171,7 @@ function updateColors(type, color) {
     if (type === 'primary') {
       layoutConfig.primary = color.name
       localStorage.setItem('primary-color', color)
-    } else if (type === 'surface') {
+    } else {
       layoutConfig.surface = color.name
     }
 
@@ -181,7 +181,7 @@ function updateColors(type, color) {
 function applyTheme(type, color) {
     if (type === 'primary') {
         updatePreset(getPresetExt())
-    } else if (type === 'surface') {
+    } else {
         updateSurfacePalette(color.palette)
     }
 }
