@@ -78,7 +78,7 @@ async function load() {
       })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresa Cliente', detail: 'Requisição de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresa Cliente', detail: 'Requisição de empresa cliente terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 
   loadContacts()
@@ -105,7 +105,7 @@ async function loadContacts() {
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Empresa Cliente', detail: 'Requisição de lista de contatos da empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos da Empresa Cliente', detail: 'Requisição de lista de contatos da empresa cliente terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -135,7 +135,7 @@ const save = async ({ valid, values }) => {
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Empresa Cliente atualizada com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -204,7 +204,7 @@ const saveContact = async ({ valid, values }) => {
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Empresa Cliente atualizado com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Contato de Empresa Cliente', detail: 'Requisição de alteração de empresa cliente de fornecedor terminou com o erro: ' + error?.response?.data, life: 10000 })
   } finally {
     visible.value = false
     loadContacts()
@@ -232,7 +232,7 @@ const confirmDelete = entity => {
 
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Contato de Empresa Cliente removido com sucesso', life: 10000 })
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Empresa Cliente', detail: 'Requisição de remoção de contato de empresa cliente terminou com o erro: ' + error.response.data, life: 10000 })
+        toast.add({ severity: 'error', summary: 'Falha de Remoção de Contato de Empresa Cliente', detail: 'Requisição de remoção de contato de empresa cliente terminou com o erro: ' + error?.response?.data, life: 10000 })
       } finally {
         loadContacts()
       }
@@ -481,7 +481,7 @@ function togglePopover(event) {
         <FileUpload ref="fileupload" mode="basic" accept=".csv, text/csv" :maxFileSize="10*1024*1024"/>
         <div class="flex justify-end gap-2">
           <Button label="Limpar" @click="clearUpload" icon="pi pi-times" severity="secondary" raised/>
-          <Button label="Carregar" @click="upload" severity="primary" raised :disabled="!fileupload.files.length"/>
+          <Button label="Carregar" @click="upload" severity="primary" raised :disabled="!fileupload?.files?.length"/>
         </div>
       </div>
     </template>

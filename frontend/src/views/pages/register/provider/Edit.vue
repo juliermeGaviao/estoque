@@ -73,7 +73,7 @@ async function load() {
       })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedor', detail: 'Requisição de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Fornecedor', detail: 'Requisição de fornecedor terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 
   loadContacts()
@@ -87,10 +87,10 @@ async function loadContacts() {
       size: size.value
     }
 
-    if (sortField.value) {
+    if (sortField?.value) {
       params.sort = sortField.value
   
-      if (sortOrder) {
+      if (sortOrder?.value) {
         params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
       }
     }
@@ -100,7 +100,7 @@ async function loadContacts() {
     data.value = response.data.content
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos do Fornecedor', detail: 'Requisição de lista de contatos do fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Contatos do Fornecedor', detail: 'Requisição de lista de contatos do fornecedor terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -130,7 +130,7 @@ const save = async ({ valid, values }) => {
       toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Fornecedor atualizado com sucesso', life: 10000 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Fornecedor', detail: 'Requisição de alteração de fornecedor terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Fornecedor', detail: 'Requisição de alteração de fornecedor terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 

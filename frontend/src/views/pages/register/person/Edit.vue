@@ -62,7 +62,7 @@ const contactFormValues = ref({ whatsapp: '', email: '', observacoes: '' })
 const contactFormValidator = zodResolver(
   z.object({
     whatsapp: z.string().min(15, { message: 'Whatsapp é obrigatório.' }),
-    email: z.string().trim().optional().refine(val => val.trim() === '' || z.string().email().safeParse(val).success, { message: 'E-mail inválido ou vazio.' }),
+    email: z.string().trim().optional().refine(val => !val || val.trim() === '' || z.string().email().safeParse(val).success, { message: 'E-mail inválido ou vazio.' }),
     observacoes: z.string().trim().optional()
   })
 )

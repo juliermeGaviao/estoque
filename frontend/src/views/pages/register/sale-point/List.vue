@@ -23,10 +23,10 @@ async function load(params) {
     size: size.value,
   }
 
-  if (sortField.value) {
+  if (sortField?.value) {
     query.sort = sortField.value
 
-    if (sortOrder) {
+    if (sortOrder?.value) {
       query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
   }
@@ -42,7 +42,7 @@ async function load(params) {
 
     totalRecords.value = response.data.totalElements
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -129,7 +129,7 @@ const confirmDelete = entity => {
 
         load()
       } catch (error) {
-        toast.add({ severity: 'error', summary: 'Falha de Remoção de Ponto de Venda', detail: 'Requisição de remoção de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
+        toast.add({ severity: 'error', summary: 'Falha de Remoção de Ponto de Venda', detail: 'Requisição de remoção de ponto de venda terminou com o erro: ' + error?.response?.data, life: 10000 })
       }
     }
   })
@@ -190,7 +190,7 @@ async function commit(item) {
       item.empresa = response.data.empresa
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Ponto de Venda', detail: 'Requisição de alteração de ponto de venda terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Ponto de Venda', detail: 'Requisição de alteração de ponto de venda terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -228,7 +228,7 @@ async function saveAll(emitirMensagem) {
       }
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Gravação de Ponto de Venda', detail: `Requisição de salvamento de ponto de venda terminou com o erro: ` + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Gravação de Ponto de Venda', detail: `Requisição de salvamento de ponto de venda terminou com o erro: ` + error?.response?.data, life: 10000 })
 
     return false
   }
@@ -255,7 +255,7 @@ async function loadCompanies() {
       ...response.data.content
     ]
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresas', detail: 'Requisição de lista de empresas terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Empresas', detail: 'Requisição de lista de empresas terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
