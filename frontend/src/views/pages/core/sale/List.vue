@@ -34,7 +34,7 @@ async function load(params) {
   if (sortField.value) {
     query.sort = sortField.value
 
-    if (sortOrder) {
+    if (sortOrder?.value) {
       query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
   } else {
