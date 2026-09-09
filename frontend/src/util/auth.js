@@ -44,7 +44,7 @@ export function eAdmin() {
 export function temPerfil(perfil) {
   const perfis = getProfiles()
 
-  return perfis.includes(perfil)
+  return !!perfis?.includes(perfil)
 }
 
 function getProfiles() {

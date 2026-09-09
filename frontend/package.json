@@ -6,8 +6,7 @@
         "build": "vite build",
         "preview": "vite preview",
         "lint": "eslint . --fix",
-        "test": "vitest",
-        "test:coverage": "vitest run --coverage"
+        "test": "vitest"
     },
     "dependencies": {
         "@primeuix/themes": "^1.0.0",
