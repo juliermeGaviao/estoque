@@ -15,10 +15,10 @@ const route = useRoute()
 const toast = useToast()
 const states = ref([])
 
-const companyForm = ref(null)
-const companyFormValues = ref({ razaoSocial: '', nome: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
+const form = ref(null)
+const formValues = ref({ razaoSocial: '', nome: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' })
 
-const companyFormValidator = zodResolver(
+const formValidator = zodResolver(
   z.object({
     razaoSocial: z.string().trim().min(1, { message: 'Razão Social é obrigatório.' }),
     nome: z.string().trim().min(1, { message: 'Nome de Fantasia é obrigatório.' }),
@@ -38,8 +38,8 @@ async function load() {
   try {
     const res = await api.get('/client', { params: { id: id.value } })
 
-    if (companyForm.value) {
-      companyForm.value.setValues({
+    if (form.value) {
+      form.value.setValues({
         razaoSocial: res.data.razaoSocial,
         nome: res.data.nome,
         cnpj: res.data.cnpj,
@@ -108,7 +108,7 @@ onMounted(() => {
     </template>
 
     <template #content>
-      <Form ref="companyForm" :resolver="companyFormValidator" :initialValues="companyFormValues" @submit="save" class="grid flex flex-column gap-2">
+      <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
         <FormField v-slot="$field" name="razaoSocial">
           <FloatLabel variant="on">
             <InputText id="razaoSocial" maxlength="255" autocomplete="off" fluid/>

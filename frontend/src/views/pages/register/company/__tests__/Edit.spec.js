@@ -1,494 +1,566 @@
-import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick, ref } from 'vue'
-import api from '../../../../../util/api'
+// @vitest-environment jsdom
+//
+// Testes unitários para src/views/pages/register/company/Edit.vue
+// ------------------------------------------------------------------
+// Stack: Vitest + @vue/test-utils
+//
+// LEIA ANTES DE RODAR:
+// 1. Coloque este arquivo em
+//    src/views/pages/register/company/__tests__/Edit.spec.js
+//    (o import relativo '../Edit.vue' já assume esse caminho).
+// 2. Este projeto usa `unplugin-vue-components` com `PrimeVueResolver()`
+//    (ver vite.config), que injeta os imports do PrimeVue diretamente no
+//    <script setup> do componente (ex.: `import Form from
+//    '@primevue/forms/form'`). Por isso os componentes do PrimeVue são
+//    mockados aqui via `vi.mock` nos caminhos reais dos módulos — os
+//    mesmos caminhos que o resolver usa — obtidos a partir de
+//    `@primevue/metadata`. Isso funciona independentemente de o
+//    componente vir de auto-import ou de registro global.
+// 3. `Contact.vue` e `Employee.vue` (importados por Edit.vue) são
+//    mockados como componentes vazios — o teste cobre Edit.vue
+//    isoladamente, não o conteúdo desses componentes filhos. Ajuste o
+//    caminho do vi.mock se a localização real desses arquivos diferir.
+// 4. `@primevue/forms/resolvers/zod` e `zod` são dependências reais do
+//    projeto e NÃO são mockadas — usamos o `formValidator` de verdade
+//    num describe dedicado para cobrir os `.refine()`/`.transform()` do
+//    schema.
+// 5. Não foi possível rodar este arquivo neste ambiente (sandbox sem
+//    acesso à rede para instalar as dependências). Rode
+//    `npx vitest run --coverage` no seu projeto para confirmar os
+//    números e ajustar qualquer detalhe específico do seu setup real.
+
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
+
 import Edit from '../Edit.vue'
 
-const mockToastAdd = vi.fn()
-const mockConfirmRequire = vi.fn()
-const mockRouterPush = vi.fn()
-let mockRouteQuery = {}
+import { StateService } from '@/service/StateService'
+import api from '@/util/api'
 
-vi.mock('primevue/usetoast', () => ({
-  useToast: () => ({ add: mockToastAdd })
-}))
+// ------------------------------------------------------------------
+// Mocks de módulos utilitários e de app
+// ------------------------------------------------------------------
 
-vi.mock('primevue/useconfirm', () => ({
-  useConfirm: () => ({ require: mockConfirmRequire })
-}))
-
-vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: mockRouteQuery }),
-  useRouter: () => ({ push: mockRouterPush })
-}))
-
-vi.mock('../../../../../util/api', () => ({
+vi.mock('@/util/api', () => ({
   default: {
     get: vi.fn(),
-    post: vi.fn(),
-    delete: vi.fn()
+    post: vi.fn()
   }
 }))
 
-describe('company/Edit.vue', () => {
-  const mockCompany = {
-    razaoSocial: 'Empresa Teste LTDA',
-    nome: 'Empresa Teste',
-    cnpj: '12.345.678/0001-95',
-    fone: '(51) 99999-9999',
-    endereco: 'Rua A, 123',
-    bairro: 'Centro',
-    cep: '90000-000',
-    cidade: 'Porto Alegre',
-    uf: 'RS'
-  }
+vi.mock('@/util/util', () => ({
+  onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
+}))
 
-  const mockContactsResponse = {
-    data: {
-      content: [
+vi.mock('@/service/StateService', () => ({
+  StateService: {
+    getStates: vi.fn()
+  }
+}))
+
+const toastAddMock = vi.fn()
+vi.mock('primevue/usetoast', () => ({
+  useToast: () => ({ add: toastAddMock })
+}))
+
+const routerPushMock = vi.fn()
+let mockRouteQuery = {}
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: mockRouteQuery }),
+  useRouter: () => ({ push: routerPushMock })
+}))
+
+// Componentes filhos delegados — fora do escopo deste teste (testam-se
+// isoladamente em seus próprios arquivos de spec).
+vi.mock('../Contact.vue', () => ({
+  default: { name: 'Contact', props: ['id'], template: '<div class="contact-stub"/>' }
+}))
+vi.mock('../Employee.vue', () => ({
+  default: { name: 'Employee', props: ['id'], template: '<div class="employee-stub"/>' }
+}))
+
+// ------------------------------------------------------------------
+// Stubs dos componentes do PrimeVue, definidos em vi.hoisted para
+// poderem ser referenciados dentro das factories de vi.mock (içadas
+// para o topo do arquivo pelo Vitest).
+// ------------------------------------------------------------------
+const { FormStub, FormFieldStub, CardStub, genericStub, ButtonStub, FieldControlStub } = await vi.hoisted(async () => {
+  // Não referenciamos os imports de nível superior deste arquivo aqui
+  // dentro (Vitest içar vi.hoisted/vi.mock para o topo do arquivo não
+  // garante, em toda versão, que outros imports do MESMO arquivo já
+  // estejam inicializados nesse ponto — daí o
+  // "Cannot access '__vi_import_N__' before initialization"). Import
+  // dinâmico de 'vue' é a forma correta e estável de obter essas APIs
+  // aqui dentro, independente da versão do Vitest.
+  const { defineComponent, h, inject, provide, reactive } = await import('vue')
+  // Stub de <Form> (@primevue/forms) — expõe de fato states/setValues/
+  // setFieldValue/reset (a implementação "burra" de um <form> que só
+  // reemite @submit sem payload quebra qualquer chamada a
+  // form.value.setValues, gerando "Unhandled Rejection" mesmo com os
+  // testes "passando"). Também expõe helpers só de teste
+  // (submitWith/setFieldInvalid) para simular resultados de validação
+  // sem depender do zodResolver de verdade nesses testes.
+  const FormStub = defineComponent({
+    name: 'Form',
+    props: ['resolver', 'validateOn', 'initialValues'],
+    emits: ['submit', 'reset'],
+    setup(props, { slots, expose, emit }) {
+      const values = reactive({ ...(props.initialValues || {}) })
+      const invalidMap = reactive({})
+
+      function setValues(newValues) {
+        Object.assign(values, newValues)
+      }
+      function setFieldValue(key, val) {
+        values[key] = val
+      }
+      function reset() {
+        Object.keys(values).forEach((key) => {
+          values[key] = (props.initialValues || {})[key] ?? null
+        })
+      }
+      function setFieldInvalid(key, message = 'Campo inválido.') {
+        invalidMap[key] = message
+      }
+      function clearFieldInvalid(key) {
+        delete invalidMap[key]
+      }
+      function submitWith(payload) {
+        emit('submit', payload)
+      }
+
+      const states = new Proxy(
+        {},
         {
-          id: 10,
-          nome: 'João Silva',
-          cargo: 'Gerente',
-          celular: '51988888888',
-          email: 'joao@teste.com',
-          dataAniversario: '1990-01-01',
-          observacoes: 'Obs'
+          get(_t, key) {
+            if (typeof key !== 'string') return undefined
+            return {
+              get value() {
+                return values[key]
+              },
+              set value(v) {
+                values[key] = v
+              },
+              get invalid() {
+                return Boolean(invalidMap[key])
+              },
+              get error() {
+                return invalidMap[key] ? { message: invalidMap[key] } : null
+              }
+            }
+          }
         }
-      ],
-      totalElements: 1
-    }
-  }
+      )
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockRouteQuery = {}
-    api.get.mockImplementation((url) => {
-      if (url === '/client') return Promise.resolve({ data: mockCompany })
-      if (url === '/company-client-contact/list') return Promise.resolve(mockContactsResponse)
-      return Promise.resolve({ data: {} })
-    })
+      provide('__formStubCtx', { values, invalidMap })
+      expose({ states, setValues, setFieldValue, reset, setFieldInvalid, clearFieldInvalid, submitWith, values })
+
+      return () =>
+        h(
+          'form',
+          {
+            onSubmit: (event) => {
+              event.preventDefault()
+              emit('submit', { valid: true, values: { ...values } })
+            },
+            onReset: () => {
+              reset()
+              emit('reset')
+            }
+          },
+          slots.default ? slots.default() : null
+        )
+    }
   })
 
-  function mountComponent() {
-    return mount(Edit, {
-      global: {
-        stubs: {
-          Card: { template: '<div><slot name="title" /><slot name="content" /></div>' },
-          DataTable: {
-            props: ['value'],
-            template: `
-              <div>
-                <slot />
-                <div v-for="(item, index) in value" :key="index" class="data-table-row">
-                  <slot name="default" :data="item" />
-                </div>
-              </div>
-            `
-          },
-          Column: {
-            props: ['field', 'header', 'headerClass', 'bodyClass'],
-            template: `
-              <div class="column-stub">
-                <slot name="header" />
-                <slot name="body" :data="{ id: 10, celular: '51988888888' }" />
-              </div>
-            `
-          },
-          Button: {
-            props: ['label', 'icon'],
-            template: '<button type="button" :data-icon="icon" @click="$emit(\'click\', $event)">{{ label }}<slot /></button>'
-          },
-          InputText: { template: '<input type="text" />' },
-          InputMask: { template: '<input type="text" />' },
-          DatePicker: { template: '<input type="date" />' },
-          Textarea: { template: '<textarea></textarea>' },
-          Select: { template: '<select></select>' },
-          Message: {
-            name: 'Message',
-            props: ['severity', 'size', 'variant'],
-            template: '<span class="message-stub"><slot /></span>'
-          },
-          ConfirmDialog: true,
-          Dialog: {
-            props: ['visible'],
-            template: '<div class="dialog-stub" v-if="visible"><slot /></div>'
-          },
-          Popover: {
-            template: `
-              <div class="popover-stub">
-                <slot />
-                <h4>Arquivo de Colaboradores</h4>
-                <p>O arquivo de colaboradores da empresa é um arquivo texto onde cada linha contém dados do colaborador.</p>
-                <p>A primeira linha do arquivo é a linha de cabeçalho identificando os campos de dados do colaboradores</p>
-                <ul style="list-style-type: disc; margin-left: 1.5rem;">
-                  <li>nome: contém o nome completo do colaborador;</li>
-                </ul>
-                <p>Assim, as demais linhas devem conter os dados dos colaboradores</p>
-                <p>Exemplo:</p>
-                <p>nome, numero-cracha, data-aniversario, limite-gasto<br/>Fulano, DKJF-DC, 01/01/1970, 400</p>
-              </div>
-            `,
-            methods: { toggle: vi.fn() }
-          },
-          FloatLabel: { template: '<div><slot /></div>' },
-          FileUpload: defineComponent({
-            name: 'FileUpload',
-            template: '<div><slot /></div>',
-            setup() {
-              const files = ref([])
-              const clear = vi.fn()
-              return { files, clear }
+  // Stub de <FormField> — repassa invalid/error (para os <Message v-if>)
+  // e um `.value` get/set escrevendo direto no Form pai (necessário para
+  // o campo cnpj, que usa v-model="$field.value").
+  const FormFieldStub = defineComponent({
+    name: 'FormField',
+    props: ['name'],
+    setup(props, { slots }) {
+      const ctx = inject('__formStubCtx', null)
+      return () => {
+        const field = ctx
+          ? {
+              get value() {
+                return props.name ? ctx.values[props.name] : undefined
+              },
+              set value(v) {
+                if (props.name) ctx.values[props.name] = v
+              },
+              invalid: Boolean(props.name && ctx.invalidMap[props.name]),
+              error: props.name && ctx.invalidMap[props.name] ? { message: ctx.invalidMap[props.name] } : null
             }
-          }),
-          Form: defineComponent({
-            name: 'Form',
-            props: ['resolver', 'initialValues'],
-            emits: ['submit', 'reset'],
-            template: '<form @submit.prevent="handleSubmit" @reset="$emit(\'reset\')"><slot /></form>',
-            setup(props, { emit }) {
-              const setValues = vi.fn((vals) => {
-                if (vals) Object.assign(props.initialValues || {}, vals)
-              })
-              const reset = vi.fn()
-              const handleSubmit = async () => {
-                let valid = true
-                let values = props.initialValues || {}
-                if (props.resolver) {
-                  const res = await props.resolver(values)
-                  if (res && res.errors && Object.keys(res.errors).length > 0) {
-                    valid = false
-                  }
-                }
-                emit('submit', { valid, values })
-              }
-              return { setValues, reset, handleSubmit }
-            }
-          }),
-          FormField: {
-            name: 'FormField',
-            props: ['name', 'initialValue'],
-            template: `
-              <div>
-                <slot :$field="{ invalid: false, error: { message: 'Erro' }, value: '' }" />
-                <slot :$field="{ invalid: true, error: { message: 'Erro' }, value: '51999999999' }" />
-              </div>
-            `
-          }
-        },
-        directives: {
-          tooltip: {}
-        }
+          : { value: undefined, invalid: false, error: null }
+        return slots.default ? slots.default(field) : null
+      }
+    }
+  })
+
+  const CardStub = defineComponent({
+    name: 'Card',
+    setup(_, { slots }) {
+      return () =>
+        h('div', { class: 'card-teststub' }, [
+          slots.title ? h('div', {}, slots.title()) : null,
+          slots.content ? h('div', {}, slots.content()) : null,
+          slots.default ? slots.default() : null
+        ])
+    }
+  })
+
+  function genericStub(name, tag) {
+    const renderTag = tag || `${name.toLowerCase()}-teststub`
+    return defineComponent({
+      name,
+      inheritAttrs: false,
+      setup(_, { attrs, slots }) {
+        return () => h(renderTag, attrs, slots.default ? slots.default() : undefined)
       }
     })
   }
 
-  it('carrega os estados e dados da empresa quando ID está presente', async () => {
-    mockRouteQuery = { id: '5' }
-    mountComponent()
-    await nextTick()
-    await nextTick()
+  const ButtonStub = genericStub('Button', 'button')
+
+  // Stub genérico para campos que podem receber v-model (InputText,
+  // InputMask, Select): renderiza um <input> nativo de verdade e liga
+  // manualmente onUpdate:modelValue/onInput/onChange — recebidos como
+  // props não-declaradas (attrs) — aos eventos nativos do DOM. Isso
+  // permite exercitar de fato o v-model do campo cnpj
+  // (v-model="$field.value"), em vez de só desenhar a tag.
+  const FieldControlStub = defineComponent({
+    name: 'FieldControl',
+    inheritAttrs: false,
+    setup(_, { attrs }) {
+      return () =>
+        h('input', {
+          ...attrs,
+          onInput: (event) => {
+            const value = event.target.value
+            if (typeof attrs['onUpdate:modelValue'] === 'function') attrs['onUpdate:modelValue'](value)
+            if (typeof attrs.onInput === 'function') attrs.onInput({ value, originalEvent: event })
+          },
+          onChange: (event) => {
+            const value = event.target.value
+            if (typeof attrs.onChange === 'function') attrs.onChange({ value, originalEvent: event })
+          }
+        })
+    }
+  })
+
+  return { FormStub, FormFieldStub, CardStub, genericStub, ButtonStub, FieldControlStub }
+})
+
+vi.mock('@primevue/forms/form', () => ({ default: FormStub }))
+vi.mock('@primevue/forms/formfield', () => ({ default: FormFieldStub }))
+vi.mock('primevue/card', () => ({ default: CardStub }))
+vi.mock('primevue/button', () => ({ default: ButtonStub }))
+vi.mock('primevue/inputtext', () => ({ default: FieldControlStub }))
+vi.mock('primevue/inputmask', () => ({ default: FieldControlStub }))
+vi.mock('primevue/select', () => ({ default: FieldControlStub }))
+vi.mock('primevue/message', () => ({ default: genericStub('Message') }))
+vi.mock('primevue/floatlabel', () => ({ default: genericStub('FloatLabel') }))
+vi.mock('primevue/confirmdialog', () => ({ default: genericStub('ConfirmDialog') }))
+
+// ------------------------------------------------------------------
+// Fixtures
+// ------------------------------------------------------------------
+
+const statesFixture = [
+  { name: 'Rio Grande do Sul', code: 'RS' },
+  { name: 'São Paulo', code: 'SP' }
+]
+
+const clientFixture = {
+  razaoSocial: 'Empresa Teste LTDA',
+  nome: 'Empresa Teste',
+  cnpj: '12.345.678/0001-95',
+  fone: '(51) 99999-9999',
+  endereco: 'Rua A, 123',
+  bairro: 'Centro',
+  cep: '90000-000',
+  cidade: 'Porto Alegre',
+  uf: 'RS'
+}
+
+function rejectWith(message) {
+  return Promise.reject({ response: { data: message } })
+}
+
+async function mountComponent(routeQuery = {}) {
+  mockRouteQuery = routeQuery
+  const wrapper = mount(Edit)
+  await flushPromises()
+  return wrapper
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  StateService.getStates.mockResolvedValue(statesFixture)
+  api.get.mockResolvedValue({ data: clientFixture })
+  api.post.mockResolvedValue({ status: 200, data: { id: 7 } })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+// ==================================================================
+// onMounted / load()
+// ==================================================================
+describe('onMounted', () => {
+  it('sempre carrega os estados', async () => {
+    await mountComponent({})
+
+    expect(StateService.getStates).toHaveBeenCalled()
+  })
+
+  it('carrega a empresa cliente quando há id na rota', async () => {
+    const wrapper = await mountComponent({ id: '5' })
 
     expect(api.get).toHaveBeenCalledWith('/client', { params: { id: '5' } })
-    expect(api.get).toHaveBeenCalledWith('/company-client-contact/list', expect.anything())
+    expect(wrapper.vm.form.states.razaoSocial.value).toBe(clientFixture.razaoSocial)
+    expect(wrapper.vm.form.states.cnpj.value).toBe(clientFixture.cnpj)
   })
 
-  it('trata erro na carga da empresa cliente e na carga de contatos', async () => {
-    mockRouteQuery = { id: '5' }
-    api.get.mockImplementation((url) => {
-      if (url === '/client') return Promise.reject({ response: { data: 'Erro ao carregar empresa' } })
-      if (url === '/company-client-contact/list') return Promise.reject({ response: { data: 'Erro ao carregar contatos' } })
-      return Promise.resolve({ data: {} })
-    })
+  it('não carrega a empresa cliente quando não há id na rota', async () => {
+    await mountComponent({})
 
-    mountComponent()
-    await nextTick()
-    await nextTick()
+    expect(api.get).not.toHaveBeenCalled()
+  })
 
-    expect(mockToastAdd).toHaveBeenCalledWith(
+  it('exibe toast de erro quando a carga falha (erro com response)', async () => {
+    api.get.mockImplementation(() => rejectWith('Empresa não encontrada'))
+
+    await mountComponent({ id: '5' })
+
+    expect(toastAddMock).toHaveBeenCalledWith(
       expect.objectContaining({
         severity: 'error',
-        summary: 'Falha de Carga de Empresa Cliente'
-      })
-    )
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: 'error',
-        summary: 'Falha de Carga de Contatos da Empresa Cliente'
+        summary: 'Falha de Carga de Empresa Cliente',
+        detail: expect.stringContaining('Empresa não encontrada')
       })
     )
   })
 
-  it('executa a alteração de paginação (onPage) e ordenação (onSort com asc e desc)', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
+  it('exibe toast de erro quando a carga falha (erro sem response)', async () => {
+    api.get.mockImplementation(() => Promise.reject(new Error('Falha de rede')))
 
-    api.get.mockClear()
+    await mountComponent({ id: '5' })
 
-    wrapper.vm.onPage({ page: 1, rows: 40 })
-    expect(api.get).toHaveBeenLastCalledWith('/company-client-contact/list', {
-      params: { idEmpresa: '5', page: 1, size: 40 }
-    })
-
-    wrapper.vm.onSort({ sortField: 'nome', sortOrder: 1 })
-    expect(api.get).toHaveBeenLastCalledWith('/company-client-contact/list', {
-      params: { idEmpresa: '5', page: 0, size: 40, sort: 'nome,asc' }
-    })
-
-    wrapper.vm.onSort({ sortField: 'nome', sortOrder: -1 })
-    expect(api.get).toHaveBeenLastCalledWith('/company-client-contact/list', {
-      params: { idEmpresa: '5', page: 0, size: 40, sort: 'nome,desc' }
-    })
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'error', summary: 'Falha de Carga de Empresa Cliente' })
+    )
   })
 
-  it('interrompe a gravação se o formulário for inválido', async () => {
-    const wrapper = mountComponent()
-    await nextTick()
+  it('não faz nada se o formulário ainda não estiver disponível', async () => {
+    const wrapper = await mountComponent({ id: '5' })
+    wrapper.vm.form = null
+
+    await expect(wrapper.vm.load()).resolves.not.toThrow()
+  })
+})
+
+// ==================================================================
+// save()
+// ==================================================================
+describe('save', () => {
+  it('não faz nada quando o formulário é inválido', async () => {
+    const wrapper = await mountComponent({})
+    api.post.mockClear()
 
     await wrapper.vm.save({ valid: false, values: {} })
-    expect(api.post).not.toHaveBeenCalled()
 
-    await wrapper.vm.saveContact({ valid: false, values: {} })
     expect(api.post).not.toHaveBeenCalled()
   })
 
-  it('salva a empresa cliente com sucesso, testa validador Zod (transform/refine) e trata falhas', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
-
+  it('salva com sucesso, higienizando os campos numéricos e strings', async () => {
+    const wrapper = await mountComponent({ id: '5' })
     api.post.mockResolvedValueOnce({ status: 200, data: { id: 5 } })
 
-    const formValues = { ...mockCompany, cnpj: '12345678000195', fone: '(51) 99999-9999', cep: '90000000' }
-    await wrapper.vm.save({ valid: true, values: formValues })
+    const values = { ...clientFixture, razaoSocial: '  Empresa Teste LTDA  ' }
+    await wrapper.vm.save({ valid: true, values })
 
-    expect(api.post).toHaveBeenCalledWith('/client', expect.objectContaining({ id: 5 }))
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
-    )
+    const [, paramsSent] = api.post.mock.calls[0]
+    expect(paramsSent.id).toBe(5)
+    expect(paramsSent.razaoSocial).toBe('Empresa Teste LTDA')
+    expect(paramsSent.cnpj).toBe('12345678000195')
+    expect(wrapper.vm.id).toBe(5)
+    expect(toastAddMock).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success', summary: 'Sucesso' }))
+  })
 
-    // Testa validação Zod via submissão do formulário principal
-    const companyFormEl = wrapper.findComponent({ name: 'Form' })
-    if (companyFormEl.exists()) {
-      await companyFormEl.vm.handleSubmit()
-    }
+  it('não exibe sucesso quando a API não retorna status 200', async () => {
+    const wrapper = await mountComponent({})
+    api.post.mockResolvedValueOnce({ status: 204, data: {} })
 
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro de validação no banco' } })
-    await wrapper.vm.save({ valid: true, values: formValues })
+    await wrapper.vm.save({ valid: true, values: { ...clientFixture } })
 
-    expect(mockToastAdd).toHaveBeenCalledWith(
+    expect(toastAddMock).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+  })
+
+  it('exibe toast de erro quando a gravação falha (erro com response)', async () => {
+    const wrapper = await mountComponent({})
+    api.post.mockImplementationOnce(() => rejectWith('Erro de validação no banco'))
+
+    await wrapper.vm.save({ valid: true, values: { ...clientFixture } })
+
+    expect(toastAddMock).toHaveBeenCalledWith(
       expect.objectContaining({
         severity: 'error',
-        summary: 'Falha de Gravação de Empresa Cliente'
+        summary: 'Falha de Gravação de Empresa Cliente',
+        detail: expect.stringContaining('Erro de validação no banco')
       })
     )
   })
 
-  it('gerencia abertura do modal de contato para novo e edição, e cobre campos do contato', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
+  it('exibe toast de erro quando a gravação falha (erro sem response)', async () => {
+    const wrapper = await mountComponent({})
+    api.post.mockImplementationOnce(() => Promise.reject(new Error('Falha de rede')))
 
-    const contact = mockContactsResponse.data.content[0]
-    wrapper.vm.edit(contact)
-    await nextTick()
-    expect(wrapper.vm.visible).toBe(true)
+    await wrapper.vm.save({ valid: true, values: { ...clientFixture } })
 
-    wrapper.vm.edit(null)
-    await nextTick()
-    expect(wrapper.vm.visible).toBe(true)
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'error', summary: 'Falha de Gravação de Empresa Cliente' })
+    )
   })
+})
 
-  it('salva contato da empresa cliente com sucesso e trata falhas', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
+// ==================================================================
+// formValidator (schema zod real)
+// ------------------------------------------------------------------
+// O <Form> é substituído por um stub que nunca chama o resolver de
+// verdade, então os .refine()/.transform() do schema (incluindo a
+// normalização do telefone) nunca executam via save()/onMounted().
+// Chamamos `formValidator` diretamente — é o resolver real
+// (zodResolver + zod, dependências reais do projeto) — para exercitar
+// a validação de fato.
+// ==================================================================
+describe('formValidator', () => {
+  it('valida com sucesso quando todos os campos obrigatórios estão preenchidos corretamente', async () => {
+    const wrapper = await mountComponent({})
 
-    api.post.mockResolvedValueOnce({ status: 200 })
-
-    await wrapper.vm.saveContact({
-      valid: true,
-      values: { nome: 'Maria', cargo: 'Analista', fone: '(51) 3333-3333', celular: '(51) 99999-9999', email: 'maria@teste.com' }
+    const result = await wrapper.vm.formValidator({
+      values: { ...clientFixture, fone: '(51) 99999-9999' }
     })
 
-    expect(api.post).toHaveBeenCalledWith('/company-client-contact', expect.objectContaining({ cliente: { id: '5' } }))
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
-    )
-
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro ao salvar contato' } })
-    await wrapper.vm.saveContact({ valid: true, values: { nome: 'Maria', email: 'maria@teste.com' } })
-
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        severity: 'error',
-        summary: 'Falha de Gravação de Contato de Empresa Cliente'
-      })
-    )
+    expect(result.errors).toEqual({})
   })
 
-  it('remove contato via caixa de confirmação (confirmDelete)', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
+  it('acusa erro em cada campo obrigatório quando vazio', async () => {
+    const wrapper = await mountComponent({})
 
-    wrapper.vm.confirmDelete({ id: 10 })
-    expect(mockConfirmRequire).toHaveBeenCalled()
-
-    api.delete.mockResolvedValueOnce({})
-    const confirmOptions = mockConfirmRequire.mock.calls[0][0]
-    await confirmOptions.accept()
-
-    expect(api.delete).toHaveBeenCalledWith('/company-client-contact?id=10')
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
-    )
-
-    wrapper.vm.confirmDelete({ id: 10 })
-    api.delete.mockRejectedValueOnce({ response: { data: 'Erro ao remover' } })
-    await mockConfirmRequire.mock.calls[1][0].accept()
-
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'error', summary: 'Falha de Remoção de Contato de Empresa Cliente' })
-    )
-  })
-
-  it('realiza validações e upload do arquivo de colaboradores (plural, singular e erros)', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
-
-    const fileUploadComponent = wrapper.findComponent({ ref: 'fileupload' })
-
-    fileUploadComponent.vm.files = [{ name: 'invalid.pdf', size: 100 }]
-    await wrapper.vm.upload()
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ summary: 'Tipo inválido' })
-    )
-
-    fileUploadComponent.vm.files = [{ name: 'employees.csv', size: 11 * 1024 * 1024 }]
-    await wrapper.vm.upload()
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ summary: 'Arquivo muito grande' })
-    )
-
-    fileUploadComponent.vm.files = [{ name: 'employees.csv', size: 1024 }]
-    api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 2, total: 2 } })
-    await wrapper.vm.upload()
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        summary: 'Carga concluída',
-        detail: '2 colaboradores carregados de 2 enviados.'
-      })
-    )
-
-    fileUploadComponent.vm.files = [{ name: 'employees.csv', size: 1024 }]
-    api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 1, total: 1 } })
-    await wrapper.vm.upload()
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({
-        summary: 'Carga concluída',
-        detail: '1 colaborador carregado de 1 enviados.'
-      })
-    )
-
-    api.post.mockRejectedValueOnce(new Error('Falha de rede'))
-    await wrapper.vm.upload()
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ summary: 'Erro na carga' })
-    )
-
-    wrapper.vm.clearUpload()
-    expect(fileUploadComponent.vm.clear).toHaveBeenCalled()
-
-    mockToastAdd.mockClear()
-
-    api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 2, total: 2 } })
-    await wrapper.vm.upload()
-
-    expect(mockToastAdd).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        summary: 'Carga concluída',
-        detail: '2 colaboradores carregados de 2 enviados.'
-      })
-    )
-  })
-
-  it('alterna a exibição do Popover explicativo e interage com todos os botões e formulários', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
-    await nextTick()
-
-    const mockToggle = vi.fn()
-    wrapper.vm.pop = { toggle: mockToggle }
-    const infoIcon = wrapper.find('.pi-info-circle')
-    if (infoIcon.exists()) {
-      await infoIcon.trigger('click')
-    }
-    wrapper.vm.togglePopover({ target: {} })
-    expect(mockToggle).toHaveBeenCalled()
-
-    const buttons = wrapper.findAll('button[data-icon="pi pi-replay"]')
-    for (const btn of buttons) {
-      await btn.trigger('click')
-    }
-    expect(mockRouterPush).toHaveBeenCalledWith('/register/company')
-
-    wrapper.vm.visible = true
-    await nextTick()
-
-    const cancelBtn = wrapper.findAll('button').find((b) => b.text().includes('Cancelar'))
-    if (cancelBtn) {
-      await cancelBtn.trigger('click')
-      expect(wrapper.vm.visible).toBe(false)
-    }
-
-    wrapper.vm.edit(null)
-    await nextTick()
-
-    await wrapper.vm.saveContact({
-      valid: true,
-      values: {
-        nome: 'Contato Completo',
-        cargo: 'Gerente Geral',
-        fone: '(51) 3333-3333',
-        ramal: '456',
-        celular: '(51) 98888-8888',
-        email: 'completo@teste.com',
-        dataAniversario: new Date('1995-05-15'),
-        observacoes: 'Observações completas'
-      }
+    const result = await wrapper.vm.formValidator({
+      values: { razaoSocial: '', nome: '', cnpj: '', fone: '', endereco: '', bairro: '', cep: '', cidade: '', uf: '' }
     })
+
+    expect(result.errors.razaoSocial[0].message).toBe('Razão Social é obrigatório.')
+    expect(result.errors.nome[0].message).toBe('Nome de Fantasia é obrigatório.')
+    expect(result.errors.cnpj[0].message).toBe('CNPJ é obrigatório.')
+    expect(result.errors.fone[0].message).toBe('Fone é obrigatório.')
+    expect(result.errors.endereco[0].message).toBe('Endereço é obrigatório.')
+    expect(result.errors.bairro[0].message).toBe('Bairro é obrigatório.')
+    expect(result.errors.cep[0].message).toBe('CEP é obrigatório.')
+    expect(result.errors.cidade[0].message).toBe('Cidade é obrigatório.')
+    expect(result.errors.uf[0].message).toBe('UF é obrigatório.')
   })
 
-  it('valida corretamente o telefone com máscara através do Zod e executa a submissão do formulário principal', async () => {
-    mockRouteQuery = { id: '5' }
-    const wrapper = mountComponent()
+  it('acusa erro quando o telefone não tem DDD + 8 ou 9 dígitos', async () => {
+    const wrapper = await mountComponent({})
+
+    const result = await wrapper.vm.formValidator({
+      values: { ...clientFixture, fone: '123' }
+    })
+
+    expect(result.errors.fone[0].message).toBe('O telefone deve conter DDD + (8 ou 9) dígitos.')
+  })
+})
+
+// ==================================================================
+// Template
+// ==================================================================
+describe('Template', () => {
+  it('mostra "Inserir Empresa Cliente" sem id e "Editar Empresa Cliente" com id', async () => {
+    const semId = await mountComponent({})
+    expect(semId.text()).toContain('Inserir Empresa Cliente')
+
+    const comId = await mountComponent({ id: '5' })
+    expect(comId.text()).toContain('Editar Empresa Cliente')
+  })
+
+  it('navega para a lista de empresas ao clicar no botão de voltar', async () => {
+    const wrapper = await mountComponent({})
+
+    await wrapper.find('[icon="pi pi-replay"]').trigger('click')
+
+    expect(routerPushMock).toHaveBeenCalledWith('/register/company')
+  })
+
+  it('exibe a mensagem de erro de todos os campos do formulário quando estão inválidos', async () => {
+    const wrapper = await mountComponent({})
+    const campos = ['razaoSocial', 'nome', 'cnpj', 'fone', 'endereco', 'bairro', 'cep', 'cidade', 'uf']
+
+    campos.forEach((campo) => wrapper.vm.form.setFieldInvalid(campo, `${campo} inválido`))
     await nextTick()
 
+    expect(wrapper.findAll('message-teststub').length).toBe(campos.length)
+  })
+
+  it('salva a empresa cliente disparando o submit real do formulário (botão "Salvar")', async () => {
+    const wrapper = await mountComponent({ id: '5' })
     api.post.mockResolvedValueOnce({ status: 200, data: { id: 5 } })
 
-    const companyFormEl = wrapper.findComponent({ name: 'Form' })
-    expect(companyFormEl.exists()).toBe(true)
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
 
-    companyFormEl.vm.setValues({
-      razaoSocial: 'Empresa Teste LTDA',
-      nome: 'Empresa Teste',
-      cnpj: '12.345.678/0001-95',
-      fone: '(51) 99999-9999',
-      endereco: 'Rua A, 123',
-      bairro: 'Centro',
-      cep: '90000-000',
-      cidade: 'Porto Alegre',
-      uf: 'RS'
-    })
+    expect(api.post).toHaveBeenCalledWith('/client', expect.anything())
+  })
 
-    await companyFormEl.vm.handleSubmit()
+  it('reseta o formulário via evento nativo de reset (botão "Limpar")', async () => {
+    const wrapper = await mountComponent({ id: '5' })
+    await flushPromises()
 
-    expect(api.post).toHaveBeenCalledWith('/client', expect.any(Object))
-    expect(mockToastAdd).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
-    )
+    expect(wrapper.vm.form.states.razaoSocial.value).toBe(clientFixture.razaoSocial)
+
+    await wrapper.find('form').trigger('reset')
+
+    expect(wrapper.vm.form.states.razaoSocial.value).toBe('')
+  })
+
+  it('escreve no campo CNPJ através do v-model="$field.value"', async () => {
+    const wrapper = await mountComponent({})
+
+    const cnpjInput = wrapper.find('#cnpj')
+    expect(cnpjInput.exists()).toBe(true)
+
+    await cnpjInput.setValue('98.765.432/0001-10')
+
+    expect(wrapper.vm.form.states.cnpj.value).toBe('98.765.432/0001-10')
+  })
+
+  it('repassa o id atual para os componentes Contact e Employee', async () => {
+    const wrapper = await mountComponent({ id: '5' })
+
+    expect(wrapper.findComponent({ name: 'Contact' }).props('id')).toBe('5')
+    expect(wrapper.findComponent({ name: 'Employee' }).props('id')).toBe('5')
+  })
+
+  it('ignora propriedades que não sejam strings ao sanitizar os parâmetros', async () => {
+    const wrapper = await mountComponent({ id: '5' })
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 5 } })
+
+    const values = { 
+      ...clientFixture, 
+      razaoSocial: ' Empresa Teste ', 
+      campoNaoString: 12345
+    }
+    
+    await wrapper.vm.save({ valid: true, values })
+
+    const [, paramsSent] = api.post.mock.calls[0]
+    expect(paramsSent.campoNaoString).toBe(12345)
+    expect(api.post).toHaveBeenCalled()
   })
 })

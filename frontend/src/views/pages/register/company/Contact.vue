@@ -41,7 +41,7 @@ const formValidator = zodResolver(
   })
 )
 
-let idContact
+const idContact = ref(null)
 const visible = ref(false)
 
 async function load() {
@@ -88,7 +88,7 @@ function edit(contact) {
 
   nextTick(() => {
     if (contact) {
-      idContact = contact.id
+      idContact.value = contact.id
 
       form.value.setValues({
         nome: contact.nome,
@@ -101,6 +101,7 @@ function edit(contact) {
         observacoes: contact.observacoes
       })
     } else {
+      idContact.value = null
       form.value.setValues(formValues.value)
     }
   })
@@ -113,8 +114,8 @@ const save = async ({ valid, values }) => {
 
   params['cliente'] = { "id": id.value }
 
-  if (idContact) {
-    params['id'] = idContact
+  if (idContact?.value) {
+    params['id'] = idContact.value
   }
 
   for (let field of ['fone', 'celular']) {
@@ -175,6 +176,11 @@ onMounted(() => {
     load()
   }
 })
+
+const modalHeader = () => {
+  return idContact?.value ? 'Editar Contato' : 'Inserir Contato'
+}
+
 </script>
 
 <template>
@@ -215,7 +221,7 @@ onMounted(() => {
       </DataTable>
     </template>
   </Card>
-  <Dialog v-model:visible="visible" modal :closable="false" :header="idContact ? 'Editar Contato' : 'Inserir Contato'" style="width: 40%">
+  <Dialog v-model:visible="visible" modal :closable="false" :header="modalHeader()" style="width: 40%">
     <Form ref="form" :resolver="formValidator" :initialValues="formValues" @submit="save" class="grid flex flex-column gap-2">
       <FormField v-slot="$field" name="nome" class="mt-1">
         <FloatLabel variant="on">
