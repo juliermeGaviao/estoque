@@ -70,7 +70,7 @@ export function formatarCEP(cep) {
 }
 
 export function onlyDigits(str) {
-  return str.replace(/\D/g, '')
+  return str ? String(str).replace(/\D/g, '') : ''
 }
 
 export function formatNumber(value, locale = 'pt-BR', options = { style: 'decimal', minimumFractionDigits: 2 }) {

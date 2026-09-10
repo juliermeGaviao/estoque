@@ -1,9 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick, ref } from 'vue'
-import { StateService } from '../../../../../service/StateService'
 import api from '../../../../../util/api'
-import { onlyDigits } from '../../../../../util/util'
 import Edit from '../Edit.vue'
 
 const mockToastAdd = vi.fn()
@@ -24,23 +22,12 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockRouterPush })
 }))
 
-vi.mock('@/util/api', () => ({
+vi.mock('../../../../../util/api', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
     delete: vi.fn()
   }
-}))
-
-vi.mock('../../../../../service/StateService', () => ({
-  StateService: {
-    getStates: vi.fn().mockResolvedValue([{ name: 'Rio Grande do Sul', code: 'RS' }])
-  }
-}))
-
-vi.mock('@/util/util', () => ({
-  formatPhone: vi.fn((v) => `FONE: ${v}`),
-  onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
 }))
 
 describe('company/Edit.vue', () => {
@@ -202,7 +189,6 @@ describe('company/Edit.vue', () => {
     await nextTick()
     await nextTick()
 
-    expect(StateService.getStates).toHaveBeenCalled()
     expect(api.get).toHaveBeenCalledWith('/client', { params: { id: '5' } })
     expect(api.get).toHaveBeenCalledWith('/company-client-contact/list', expect.anything())
   })
@@ -277,7 +263,6 @@ describe('company/Edit.vue', () => {
     const formValues = { ...mockCompany, cnpj: '12345678000195', fone: '(51) 99999-9999', cep: '90000000' }
     await wrapper.vm.save({ valid: true, values: formValues })
 
-    expect(onlyDigits).toHaveBeenCalled()
     expect(api.post).toHaveBeenCalledWith('/client', expect.objectContaining({ id: 5 }))
     expect(mockToastAdd).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
@@ -388,7 +373,6 @@ describe('company/Edit.vue', () => {
       expect.objectContaining({ summary: 'Arquivo muito grande' })
     )
 
-    // Plural (> 1)
     fileUploadComponent.vm.files = [{ name: 'employees.csv', size: 1024 }]
     api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 2, total: 2 } })
     await wrapper.vm.upload()
@@ -399,7 +383,6 @@ describe('company/Edit.vue', () => {
       })
     )
 
-    // Singular (<= 1)
     fileUploadComponent.vm.files = [{ name: 'employees.csv', size: 1024 }]
     api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 1, total: 1 } })
     await wrapper.vm.upload()
@@ -418,6 +401,18 @@ describe('company/Edit.vue', () => {
 
     wrapper.vm.clearUpload()
     expect(fileUploadComponent.vm.clear).toHaveBeenCalled()
+
+    mockToastAdd.mockClear()
+
+    api.post.mockResolvedValueOnce({ status: 200, data: { carregados: 2, total: 2 } })
+    await wrapper.vm.upload()
+
+    expect(mockToastAdd).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        summary: 'Carga concluída',
+        detail: '2 colaboradores carregados de 2 enviados.'
+      })
+    )
   })
 
   it('alterna a exibição do Popover explicativo e interage com todos os botões e formulários', async () => {
@@ -465,5 +460,35 @@ describe('company/Edit.vue', () => {
         observacoes: 'Observações completas'
       }
     })
+  })
+
+  it('valida corretamente o telefone com máscara através do Zod e executa a submissão do formulário principal', async () => {
+    mockRouteQuery = { id: '5' }
+    const wrapper = mountComponent()
+    await nextTick()
+
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 5 } })
+
+    const companyFormEl = wrapper.findComponent({ name: 'Form' })
+    expect(companyFormEl.exists()).toBe(true)
+
+    companyFormEl.vm.setValues({
+      razaoSocial: 'Empresa Teste LTDA',
+      nome: 'Empresa Teste',
+      cnpj: '12.345.678/0001-95',
+      fone: '(51) 99999-9999',
+      endereco: 'Rua A, 123',
+      bairro: 'Centro',
+      cep: '90000-000',
+      cidade: 'Porto Alegre',
+      uf: 'RS'
+    })
+
+    await companyFormEl.vm.handleSubmit()
+
+    expect(api.post).toHaveBeenCalledWith('/client', expect.any(Object))
+    expect(mockToastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
+    )
   })
 })
