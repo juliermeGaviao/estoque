@@ -309,7 +309,6 @@ describe('Edit.vue', () => {
 
     const resolver = wrapper.vm.formValidator
 
-    // Helper para verificar se um campo possui erro no retorno do resolver
     const hasFieldError = (res, fieldName) => {
       if (!res || !res.errors) return false
       if (res.errors[fieldName]) return true
@@ -319,7 +318,6 @@ describe('Edit.vue', () => {
       return false
     }
 
-    // 1. Dados Válidos gerais (Date válido)
     const validRes = await resolver({
       nome: 'Maria Silva',
       idEmpresa: 1,
@@ -335,49 +333,42 @@ describe('Edit.vue', () => {
     })
     expect(Object.keys(validRes.errors || {})).toHaveLength(0)
 
-    // 2. dataAniversario como String de data válida (ex: '1995-08-20')
     const validStringDateRes = await resolver({
       nome: 'Maria Silva',
       dataAniversario: '1995-08-20'
     })
     expect(Object.keys(validStringDateRes.errors || {})).toHaveLength(0)
 
-    // 3. Falha: Nome vazio / apenas espaços (com dataAniversario válida fornecida)
     const invalidNameRes = await resolver({
       nome: '   ',
       dataAniversario: new Date()
     })
     expect(hasFieldError(invalidNameRes, 'nome')).toBe(false)
 
-    // 4. Falha: dataAniversario como string vazia (cobertura do ramo val === '')
     const emptyStrDateRes = await resolver({
       nome: 'Maria',
       dataAniversario: ''
     })
     expect(hasFieldError(emptyStrDateRes, 'dataAniversario')).toBe(false)
 
-    // 5. Falha: dataAniversario como null ou undefined (cobertura do ramo !val)
     const nullDateRes = await resolver({
       nome: 'Maria',
       dataAniversario: null
     })
     expect(hasFieldError(nullDateRes, 'dataAniversario')).toBe(false)
 
-    // 6. Falha: dataAniversario como objeto Date inválido / NaN (cobertura do ramo val instanceof Date && Number.isNaN)
     const invalidDateObjRes = await resolver({
       nome: 'Maria',
       dataAniversario: new Date('Data Invalida')
     })
     expect(hasFieldError(invalidDateObjRes, 'dataAniversario')).toBe(false)
 
-    // 7. Falha: dataAniversario como string de data inválida (cobertura do ramo typeof val === 'string' e Date inválido)
     const invalidDateStrRes = await resolver({
       nome: 'Maria',
       dataAniversario: 'texto-invalido'
     })
     expect(hasFieldError(invalidDateStrRes, 'dataAniversario')).toBe(false)
 
-    // 8. Falha: dataAniversario com tipo não suportado (ex: número/boolean - cobertura do return false final)
     const invalidTypeDateRes = await resolver({
       nome: 'Maria',
       dataAniversario: 12345
