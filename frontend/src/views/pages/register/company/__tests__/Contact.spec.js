@@ -191,10 +191,22 @@ const { FormStub, FormFieldStub, CardStub, DataTableStub, ColumnStub, DialogStub
   const DialogStub = defineComponent({
     name: 'Dialog',
     props: ['visible', 'header', 'modal', 'closable'],
-    setup(props, { slots, attrs }) {
+    setup(props, { slots, attrs, expose }) {
+      // Expõe um helper de teste para disparar manualmente um handler
+      // recebido via attrs — necessário para cobrir o
+      // `@update:visible="visible = $event"` gerado pelo v-model:visible,
+      // uma closure de atribuição distinta da leitura da prop `visible`,
+      // que só é invocada quando o Dialog de verdade emite o evento.
+      expose({
+        emit(eventName, payload) {
+          const handlerKey = 'on' + eventName.charAt(0).toUpperCase() + eventName.slice(1)
+          if (typeof attrs[handlerKey] === 'function') attrs[handlerKey](payload)
+        }
+      })
+
       return () => {
         if (!props.visible) return null
-        
+
         // Se a prop header for uma função (gerada pela expressão :header="modalHeader()"), executa-a aqui
         const resolvedHeader = typeof props.header === 'function' ? props.header() : props.header
 
@@ -361,6 +373,18 @@ describe('onMounted & load', () => {
     })
   })
 
+  it('carrega com sortField preenchido mas sortOrder ausente (não anexa a direção da ordenação)', async () => {
+    const wrapper = await mountComponent({ id: 1 })
+
+    wrapper.vm.sortField = 'nome'
+    wrapper.vm.sortOrder = null
+    await wrapper.vm.load()
+
+    expect(api.get).toHaveBeenCalledWith('/company-client-contact/list', {
+      params: { idEmpresa: 1, page: 0, size: 20, sort: 'nome' }
+    })
+  })
+
   it('executa onPage corretamente', async () => {
     const wrapper = await mountComponent({ id: 1 })
 
@@ -420,6 +444,20 @@ describe('save', () => {
     await wrapper.vm.save({ valid: false, values: {} })
 
     expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('não exibe sucesso quando a API responde com status diferente de 200', async () => {
+    const wrapper = await mountComponent({ id: 1 })
+    api.post.mockResolvedValueOnce({ status: 204, data: {} })
+
+    await wrapper.vm.save({
+      valid: true,
+      values: { nome: 'Sem Sucesso', cargo: 'Cargo', email: 'sem@sucesso.com' }
+    })
+
+    expect(toastAddMock).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+    // O finally sempre roda, fechando o dialog e recarregando a lista
+    expect(wrapper.vm.visible).toBe(false)
   })
 
   it('salva com sucesso um novo contato (sem idContact prévio)', async () => {
@@ -593,6 +631,17 @@ describe('Template UI', () => {
     expect(plusButton.attributes('disabled')).toBeDefined()
   })
 
+  it('abre o modal de novo contato ao clicar no botão "+" (cobre o @click="edit(null)" inline)', async () => {
+    const wrapper = await mountComponent({ id: 1 })
+
+    const plusButton = wrapper.find('[icon="pi pi-plus"]')
+    expect(plusButton.attributes('disabled')).toBeUndefined()
+
+    await plusButton.trigger('click')
+
+    expect(wrapper.vm.visible).toBe(true)
+  })
+
   it('permite fechar o dialog clicando no botão cancelar', async () => {
     const wrapper = await mountComponent({ id: 1 })
     wrapper.vm.visible = true
@@ -716,5 +765,16 @@ describe('Template UI', () => {
     await nextTick()
     
     expect(wrapper.find('.dialog-teststub').exists()).toBe(false)
+  })
+
+  it('fecha o dialog através do v-model:visible (update:visible emitido pelo próprio Dialog)', async () => {
+    const wrapper = await mountComponent({ id: 1 })
+    wrapper.vm.visible = true
+    await nextTick()
+
+    wrapper.findComponent(DialogStub).vm.emit('update:visible', false)
+    await nextTick()
+
+    expect(wrapper.vm.visible).toBe(false)
   })
 })

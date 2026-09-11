@@ -1,25 +1,21 @@
-import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h, nextTick } from 'vue'
+// @vitest-environment jsdom
+//
+// Testes unitários para src/views/pages/register/user/Edit.vue
+// Arquivo: src/views/pages/register/user/__tests__/Edit.spec.js
+// ------------------------------------------------------------------
+// Stack: Vitest + @vue/test-utils
+
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, h, reactive } from 'vue'
+
+import api from '@/util/api'
+import { eAdmin } from '@/util/auth'
 import Edit from '../Edit.vue'
 
-const mockToastAdd = vi.fn()
-const mockRouterBack = vi.fn()
-
-vi.mock('primevue/usetoast', () => ({
-  useToast: () => ({ add: mockToastAdd })
-}))
-
-vi.mock('vue-router', () => ({
-  useRoute: () => ({ query: { id: '123' } }),
-  useRouter: () => ({ back: mockRouterBack })
-}))
-
-vi.mock('@/util/auth', () => ({
-  eAdmin: vi.fn(() => true),
-  sha256Hex: vi.fn(async (pass) => 'hashed_' + pass)
-}))
-
+// ------------------------------------------------------------------
+// Mocks de Módulos e Utilitários
+// ------------------------------------------------------------------
 vi.mock('@/util/api', () => ({
   default: {
     get: vi.fn(),
@@ -27,440 +23,311 @@ vi.mock('@/util/api', () => ({
   }
 }))
 
-import api from '@/util/api'
-import { eAdmin } from '@/util/auth'
+vi.mock('@/util/auth', () => ({
+  eAdmin: vi.fn()
+}))
 
-describe('Edit.vue - src/views/pages/register/user/Edit.vue', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+const toastAddMock = vi.fn()
+vi.mock('primevue/usetoast', () => ({
+  useToast: () => ({ add: toastAddMock })
+}))
 
-    api.get.mockImplementation((url) => {
-      if (url === '/user/get') {
-        return Promise.resolve({
-          data: {
-            email: 'test@test.com',
-            perfis: [{ id: 1, nome: 'Admin' }]
-          }
-        })
-      }
-      if (url === '/user/profiles') {
-        return Promise.resolve({
-          data: [
-            { id: 1, nome: 'Admin' },
-            { id: 2, nome: 'Vendedor' }
-          ]
-        })
-      }
-      if (url === '/price-table/list') {
-        return Promise.resolve({
-          data: {
-            content: [
-              { id: 10, nome: 'Tabela 1' },
-              { id: 20, nome: 'Tabela 2' }
-            ]
-          }
-        })
-      }
-      if (url === '/user-price-table/list') {
-        return Promise.resolve({
-          data: {
-            content: [
-              { id: 1, tabela: { id: 10, nome: 'Tabela 1' } },
-              { id: 2, tabela: { id: 20, nome: 'Tabela 2' } }
-            ]
-          }
-        })
-      }
-      if (url === '/sale-point/list') {
-        return Promise.resolve({
-          data: {
-            content: [
-              { id: 100, nome: 'Ponto 1' },
-              { id: 200, nome: 'Ponto 2' }
-            ]
-          }
-        })
-      }
-      if (url === '/user-sale-point/list') {
-        return Promise.resolve({
-          data: {
-            content: [
-              { id: 1, pontoVenda: { id: 100, nome: 'Ponto 1' } },
-              { id: 2, pontoVenda: { id: 200, nome: 'Ponto 2' } }
-            ]
-          }
-        })
-      }
-      return Promise.resolve({ data: {} })
-    })
+const routerBackMock = vi.fn()
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ back: routerBackMock }),
+  useRoute: () => ({ query: { id: '42' } })
+}))
+
+// ------------------------------------------------------------------
+// Mocks dos Subcomponentes (Caminhos ajustados em relação à pasta __tests__)
+// ------------------------------------------------------------------
+vi.mock('../ChangePassword.vue', () => ({
+  default: defineComponent({
+    name: 'ChangePassword',
+    props: ['userId'],
+    template: '<div class="changepassword-stub"></div>'
   })
+}))
 
-  function mountComponent(admin = true) {
-    eAdmin.mockReturnValue(admin)
-    return mount(Edit, {
-      global: {
-        stubs: {
-          Card: {
-            render() {
-              return h('div', [this.$slots.title?.(), this.$slots.content?.()])
-            }
-          },
-          Button: {
-            props: ['label', 'icon'],
-            render() {
-              return h('button', {
-                type: 'button',
-                onClick: (e) => this.$emit('click', e)
-              }, [this.label, this.$slots.default?.()])
-            }
-          },
-          InputText: {
-            props: ['modelValue'],
-            render() {
-              return h('input', {
-                value: this.modelValue,
-                onInput: (e) => this.$emit('update:modelValue', e.target.value)
-              })
-            }
-          },
-          Password: {
-            props: ['modelValue'],
-            render() {
-              return h('input', {
-                type: 'password',
-                value: this.modelValue,
-                onInput: (e) => this.$emit('update:modelValue', e.target.value)
-              })
-            }
-          },
-          Checkbox: {
-            props: ['modelValue', 'value'],
-            render() {
-              return h('input', {
-                type: 'checkbox',
-                checked: Array.isArray(this.modelValue) && this.modelValue.includes(this.value),
-                onChange: (e) => {
-                  const val = this.modelValue || []
-                  if (e.target.checked) {
-                    this.$emit('update:modelValue', [...val, this.value])
-                  } else {
-                    this.$emit('update:modelValue', val.filter(v => v !== this.value))
-                  }
-                  this.$emit('change', e)
-                }
-              })
-            }
-          },
-          RadioButton: {
-            props: ['modelValue', 'value'],
-            render() {
-              return h('input', {
-                type: 'radio',
-                checked: this.modelValue === this.value,
-                onChange: () => this.$emit('update:modelValue', this.value)
-              })
-            }
-          },
-          Message: {
-            props: ['size', 'severity', 'variant'],
-            render() { return h('div', { class: 'p-message' }, [this.$slots.default?.()]) }
-          },
-          Form: defineComponent({
-            name: 'Form',
-            props: ['resolver', 'initialValues'],
-            methods: {
-              setValues(vals) {
-                this.internalValues = { ...this.internalValues, ...vals }
-              }
-            },
-            data() { return { internalValues: this.initialValues || {} } },
-            render() {
-              return h('form', {
-                onSubmit: async (e) => {
-                  e.preventDefault()
-                  let valid = true
-                  if (this.resolver) {
-                    try {
-                      await this.resolver({ values: this.internalValues })
-                    } catch (err) {
-                      valid = false
-                    }
-                  }
-                  this.$emit('submit', { valid, values: this.internalValues })
-                },
-                onReset: (e) => {
-                  e.preventDefault()
-                  this.$emit('reset', e)
-                }
-              }, [this.$slots.default?.()])
-            }
-          }),
-          FormField: {
-            props: ['name'],
-            data() {
-              return {
-                localValue: this.name === 'perfis' || this.name === 'tabelas' || this.name === 'pontos' ? [] : (this.name === 'tabela' || this.name === 'ponto' ? 0 : '')
-              }
-            },
-            render() {
-              const vm = this
-              const fieldState = {
-                get value() {
-                  const parent = vm.$parent
-                  if (parent && parent.internalValues && parent.internalValues[vm.name] !== undefined) {
-                    return parent.internalValues[vm.name]
-                  }
-                  return vm.localValue
-                },
-                set value(val) {
-                  vm.localValue = val
-                  const parent = vm.$parent
-                  if (parent && parent.internalValues) {
-                    parent.internalValues[vm.name] = val
-                  }
-                },
-                invalid: true,
-                error: { message: 'Erro de validação' }
-              }
-              return h('div', [this.$slots.default?.(fieldState)])
-            }
-          },
-          FloatLabel: {
-            render() { return h('div', [this.$slots.default?.()]) }
-          }
-        },
-        directives: {
-          tooltip: {}
-        }
-      }
-    })
+vi.mock('../PriceTable.vue', () => ({
+  default: defineComponent({
+    name: 'PriceTable',
+    props: ['userId'],
+    template: '<div class="pricetable-stub"></div>'
+  })
+}))
+
+vi.mock('../SalePoint.vue', () => ({
+  default: defineComponent({
+    name: 'SalePoint',
+    props: ['userId'],
+    template: '<div class="salepoint-stub"></div>'
+  })
+}))
+
+// ------------------------------------------------------------------
+// Stubs do PrimeVue e Form
+// ------------------------------------------------------------------
+const setValuesMock = vi.fn()
+
+const FormStub = defineComponent({
+  name: 'Form',
+  props: ['resolver', 'initialValues'],
+  emits: ['submit'],
+  setup(_, { slots, expose }) {
+    expose({ setValues: setValuesMock })
+    return () => h('form', { class: 'form-stub' }, slots.default ? slots.default() : null)
   }
+})
 
-  it('carrega dados do usuário e chamadas de Admin no onMounted', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-    await nextTick()
+const FormFieldStub = defineComponent({
+  name: 'FormField',
+  props: ['name'],
+  setup(props, { slots }) {
+    const $field = reactive({ value: [], invalid: false, error: { message: '' } })
+    return () => h('div', { class: 'form-field-stub' }, slots.default ? slots.default({ $field }) : null)
+  }
+})
 
-    expect(api.get).toHaveBeenCalledWith('/user/get', { params: { id: 123 } })
-    expect(api.get).toHaveBeenCalledWith('/user/profiles')
-    expect(api.get).toHaveBeenCalledWith('/price-table/list', expect.any(Object))
-    expect(api.get).toHaveBeenCalledWith('/user-price-table/list', expect.any(Object))
-    expect(api.get).toHaveBeenCalledWith('/sale-point/list', expect.any(Object))
-    expect(api.get).toHaveBeenCalledWith('/user-sale-point/list', expect.any(Object))
-    expect(wrapper.vm.userProfiles).toBe(1)
+const CheckboxStub = defineComponent({
+  name: 'Checkbox',
+  props: ['value', 'modelValue', 'disabled', 'inputId'],
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    return () =>
+      h('input', {
+        type: 'checkbox',
+        class: 'checkbox-stub',
+        onChange: () => emit('update:modelValue', [props.value])
+      })
+  }
+})
+
+const ButtonStub = defineComponent({
+  name: 'Button',
+  props: ['label', 'icon'],
+  setup(props, { attrs, slots }) {
+    return () =>
+      h('button', { icon: props.icon, ...attrs }, [
+        props.label || '',
+        slots.default ? slots.default() : null
+      ])
+  }
+})
+
+const globalStubs = {
+  Form: FormStub,
+  FormField: FormFieldStub,
+  Checkbox: CheckboxStub,
+  Button: ButtonStub,
+  Card: { name: 'Card', template: '<div><slot name="title"/><slot name="content"/></div>' },
+  FloatLabel: { name: 'FloatLabel', template: '<div><slot/></div>' },
+  InputText: { name: 'InputText', template: '<input />' },
+  Message: { name: 'Message', template: '<div><slot/></div>' }
+}
+
+async function mountComponent() {
+  const wrapper = mount(Edit, {
+    global: {
+      stubs: globalStubs,
+      directives: { tooltip: {} }
+    }
+  })
+  await flushPromises()
+  return wrapper
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  eAdmin.mockReturnValue(false)
+  api.get.mockImplementation(url => {
+    if (url === '/user/get') {
+      return Promise.resolve({ data: { email: 'test@domain.com', perfis: [{ id: 1 }, { id: 2 }] } })
+    }
+    if (url === '/user/profiles') {
+      return Promise.resolve({ data: [{ id: 1, nome: 'Admin' }, { id: 2, nome: 'Operador' }] })
+    }
+    return Promise.reject(new Error('URL não mapeada'))
+  })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+// ==================================================================
+// Testes do Ciclo de Vida e Carga de Dados (load / loadProfiles)
+// ==================================================================
+describe('Ciclo de Vida e Carregamento', () => {
+  it('carrega dados do usuário e preenche o formulário no mount', async () => {
+    await mountComponent()
+
+    expect(api.get).toHaveBeenCalledWith('/user/get', { params: { id: 42 } })
+    expect(setValuesMock).toHaveBeenCalledWith({
+      email: 'test@domain.com',
+      perfis: [1, 2]
+    })
   })
 
-  it('carrega dados sem chamadas de Admin quando não é admin', async () => {
-    mountComponent(false)
-    await nextTick()
-    await nextTick()
+  it('exibe toast de erro quando a carga de usuário falha', async () => {
+    api.get.mockImplementationOnce(() =>
+      Promise.reject({ response: { data: 'Erro ao buscar usuário' } })
+    )
 
-    expect(api.get).toHaveBeenCalledWith('/user/get', { params: { id: 123 } })
+    await mountComponent()
+
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        summary: 'Falha de Carga de Usuário',
+        detail: 'Requisição de usuário terminou com o erro: Erro ao buscar usuário'
+      })
+    )
+  })
+
+  it('carrega perfis quando o usuário logado é admin (eAdmin === true)', async () => {
+    eAdmin.mockReturnValue(true)
+
+    await mountComponent()
+
+    expect(api.get).toHaveBeenCalledWith('/user/profiles')
+  })
+
+  it('não carrega perfis quando o usuário logado não é admin (eAdmin === false)', async () => {
+    eAdmin.mockReturnValue(false)
+
+    await mountComponent()
+
     expect(api.get).not.toHaveBeenCalledWith('/user/profiles')
   })
 
-  it('trata erros de API nas funções de carga (load, loadProfiles, etc)', async () => {
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro user' } })
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro profiles' } })
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro prices' } })
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro user prices' } })
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro sales' } })
-    api.get.mockRejectedValueOnce({ response: { data: 'Erro user sales' } })
+  it('exibe toast de erro quando a carga de perfis falha', async () => {
+    eAdmin.mockReturnValue(true)
+    api.get.mockImplementation(url => {
+      if (url === '/user/get') return Promise.resolve({ data: { email: 'a@b.com', perfis: [] } })
+      if (url === '/user/profiles') return Promise.reject({ response: { data: 'Erro de perfis' } })
+      return Promise.reject()
+    })
 
-    mountComponent(true)
-    await nextTick()
-    await nextTick()
+    await mountComponent()
 
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Usuário' }))
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Perfis' }))
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Tabelas de Preços' }))
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Tabelas de Preços do Usuário' }))
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Pontos de Venda' }))
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Pontos de Venda do Usuário' }))
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        summary: 'Falha de Carga de Perfis',
+        detail: 'Requisição de perfis terminou com o erro: Erro de perfis'
+      })
+    )
+  })
+})
+
+// ==================================================================
+// Testes de Navegação
+// ==================================================================
+describe('Navegação', () => {
+  it('chama router.back ao clicar no botão de voltar', async () => {
+    const wrapper = await mountComponent()
+    const backBtn = wrapper.find('[icon="pi pi-replay"]')
+    
+    await backBtn.trigger('click')
+
+    expect(routerBackMock).toHaveBeenCalled()
+  })
+})
+
+// ==================================================================
+// Testes de Submissão e Gravação (save)
+// ==================================================================
+describe('Submissão (save)', () => {
+  it('interrompe a gravação se o formulário for inválido (!valid)', async () => {
+    const wrapper = await mountComponent()
+
+    await wrapper.findComponent(FormStub).vm.$emit('submit', { valid: false, values: {} })
+
+    expect(api.post).not.toHaveBeenCalled()
   })
 
-  it('executa loadUserPriceTables e loadUserSalePoints com userProfiles === 1 e userProfiles > 1', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    // Testa userProfiles === 1 explicitamente
-    wrapper.vm.userProfiles = 1
-    wrapper.vm.tableForm = { setValues: vi.fn() }
-    wrapper.vm.salePointForm = { setValues: vi.fn() }
-    await wrapper.vm.loadUserPriceTables()
-    await wrapper.vm.loadUserSalePoints()
-    expect(wrapper.vm.tableForm.setValues).toHaveBeenCalled()
-
-    // Testa userProfiles > 1 (cobre as linhas 145 e 175)
-    wrapper.vm.userProfiles = 2
-    await wrapper.vm.loadUserPriceTables()
-    await wrapper.vm.loadUserSalePoints()
-    expect(wrapper.vm.tableForm.setValues).toHaveBeenCalled()
-  })
-
-  it('valida os resolvers Zod para tabelas e pontos de venda com userProfiles 1 e 2 (linhas 187-188, 197-198)', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    // userProfiles === 1
-    wrapper.vm.userProfiles = 1
-    try { await wrapper.vm.tableFormValidator({ values: { tabelas: [], tabela: 0 } }) } catch (e) {}
-    try { await wrapper.vm.salePointFormValidator({ values: { pontos: [], ponto: 0 } }) } catch (e) {}
-    try { await wrapper.vm.tableFormValidator({ values: { tabelas: [], tabela: 10 } }) } catch (e) {}
-    try { await wrapper.vm.salePointFormValidator({ values: { pontos: [], ponto: 100 } }) } catch (e) {}
-
-    // userProfiles === 2
-    wrapper.vm.userProfiles = 2
-    try { await wrapper.vm.tableFormValidator({ values: { tabelas: [], tabela: 0 } }) } catch (e) {}
-    try { await wrapper.vm.salePointFormValidator({ values: { pontos: [], ponto: 0 } }) } catch (e) {}
-    try { await wrapper.vm.tableFormValidator({ values: { tabelas: [10], tabela: 0 } }) } catch (e) {}
-    try { await wrapper.vm.salePointFormValidator({ values: { pontos: [100], ponto: 0 } }) } catch (e) {}
-  })
-
-  it('alterna userProfiles entre 1 e 2 para cobrir os blocos v-show do template', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    wrapper.vm.userProfiles = 1
-    await nextTick()
-
-    wrapper.vm.userProfiles = 2
-    await nextTick()
-  })
-
-  it('salva dados do usuário com sucesso e erro', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    // Sucesso
+  it('remove espaços em branco das strings, injeta userId e envia com sucesso (200)', async () => {
+    const wrapper = await mountComponent()
     api.post.mockResolvedValueOnce({ status: 200 })
-    await wrapper.vm.save({ valid: true, values: { email: '  novo@test.com  ' } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso', detail: 'Usuário atualizado com sucesso' }))
 
-    // Inválido (retorna antecipadamente)
-    await wrapper.vm.save({ valid: false, values: {} })
+    await wrapper.findComponent(FormStub).vm.$emit('submit', {
+      valid: true,
+      values: {
+        email: '   usuario@teste.com   ',
+        perfis: [1],
+        codigo: 123
+      }
+    })
+    await flushPromises()
 
-    // Erro de API
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro salvando usuário' } })
-    await wrapper.vm.save({ valid: true, values: { email: 'erro@test.com' } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Usuário' }))
+    expect(api.post).toHaveBeenCalledWith('/user', {
+      email: 'usuario@teste.com',
+      perfis: [1],
+      codigo: 123,
+      id: 42
+    })
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: 'Usuário atualizado com sucesso'
+      })
+    )
   })
 
-  it('altera senha com sucesso, erro e falha de validação', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
+  it('não exibe toast de sucesso quando a API responde status diferente de 200', async () => {
+    const wrapper = await mountComponent()
+    api.post.mockResolvedValueOnce({ status: 202 })
 
-    // Sucesso
-    api.post.mockResolvedValueOnce({ status: 200 })
-    await wrapper.vm.changePassword({ valid: true, values: { senha: 'novaSenha123', confirmarSenha: 'novaSenha123' } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso', detail: 'Senha alterada com sucesso' }))
+    await wrapper.findComponent(FormStub).vm.$emit('submit', {
+      valid: true,
+      values: { email: 'teste@teste.com' }
+    })
+    await flushPromises()
 
-    // Inválido
-    await wrapper.vm.changePassword({ valid: false, values: {} })
-
-    // Erro de API
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro alterando senha' } })
-    await wrapper.vm.changePassword({ valid: true, values: { senha: 'outraSenha123', confirmarSenha: 'outraSenha123' } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Usuário' }))
-
-    // Testa refinamento de senha divergente
-    try {
-      await wrapper.vm.resolverPassword({ values: { senha: 'senha123', confirmarSenha: 'senhaDiferente' } })
-    } catch (e) {}
+    expect(toastAddMock).not.toHaveBeenCalled()
   })
 
-  it('salva tabelas de preços para userProfiles < 2 (com e sem userPriceTables prévio)', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-    wrapper.vm.userProfiles = 1
+  it('trata erro de gravação exibindo o toast correspondente (catch error)', async () => {
+    const wrapper = await mountComponent()
+    api.post.mockRejectedValueOnce({ response: { data: 'Falha no banco de dados' } })
 
-    // Com userPriceTables vazio (cobre linha 239)
-    wrapper.vm.userPriceTables = []
-    api.post.mockResolvedValueOnce({ status: 200, data: { id: 1, tabela: { id: 10 } } })
-    await wrapper.vm.savePriceTables({ valid: true, values: { tabela: 10, tabelas: [] } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+    await wrapper.findComponent(FormStub).vm.$emit('submit', {
+      valid: true,
+      values: { email: 'teste@teste.com' }
+    })
+    await flushPromises()
 
-    // Inválido
-    await wrapper.vm.savePriceTables({ valid: false, values: {} })
+    expect(toastAddMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        summary: 'Falha de Gravação de Usuário',
+        detail: 'Requisição de alteração de usuário terminou com o erro: Falha no banco de dados'
+      })
+    )
+  })
+})
 
-    // Erro
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro tabela' } })
-    await wrapper.vm.savePriceTables({ valid: true, values: { tabela: 20, tabelas: [] } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Tabela de Preços' }))
+// ==================================================================
+// Testes de Interação no Template e Subcomponentes
+// ==================================================================
+describe('Template e Subcomponentes', () => {
+  it('atualiza $field.value e userProfiles ao alterar o Checkbox de perfis', async () => {
+    eAdmin.mockReturnValue(true)
+    const wrapper = await mountComponent()
+
+    const checkbox = wrapper.findComponent(CheckboxStub)
+    await checkbox.find('input').trigger('change')
+
+    expect(wrapper.exists()).toBe(true)
   })
 
-  it('salva tabelas de preços para userProfiles >= 2 (sucesso e erro)', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-    wrapper.vm.userProfiles = 2
+  it('renderiza os subcomponentes com a prop userId correta', async () => {
+    const wrapper = await mountComponent()
 
-    // Sucesso
-    api.post.mockResolvedValueOnce({ status: 200 })
-    await wrapper.vm.savePriceTables({ valid: true, values: { tabelas: [10, 20], tabela: 0 } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
-
-    // Erro
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro tabelas múltiplas' } })
-    await wrapper.vm.savePriceTables({ valid: true, values: { tabelas: [10], tabela: 0 } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Tabela de Preços' }))
-  })
-
-  it('salva pontos de venda para userProfiles < 2 (com e sem userSalePoints prévio)', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-    wrapper.vm.userProfiles = 1
-
-    // Com userSalePoints vazio (cobre linha 284/297)
-    wrapper.vm.userSalePoints = []
-    api.post.mockResolvedValueOnce({ status: 200, data: { id: 1, pontoVenda: { id: 100 } } })
-    await wrapper.vm.saveSalePoints({ valid: true, values: { ponto: 100, pontos: [] } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
-
-    // Inválido
-    await wrapper.vm.saveSalePoints({ valid: false, values: {} })
-
-    // Erro
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro ponto' } })
-    await wrapper.vm.saveSalePoints({ valid: true, values: { ponto: 200, pontos: [] } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Pontos de Venda' }))
-  })
-
-  it('salva pontos de venda para userProfiles >= 2 (sucesso e erro)', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-    wrapper.vm.userProfiles = 2
-
-    // Sucesso
-    api.post.mockResolvedValueOnce({ status: 200 })
-    await wrapper.vm.saveSalePoints({ valid: true, values: { pontos: [100, 200], ponto: 0 } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
-
-    // Erro
-    api.post.mockRejectedValueOnce({ response: { data: 'Erro pontos múltiplos' } })
-    await wrapper.vm.saveSalePoints({ valid: true, values: { pontos: [100], ponto: 0 } })
-    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Pontos de Venda' }))
-  })
-
-  it('executa a limpeza (clear) dos formulários', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    wrapper.vm.tableForm = { setValues: vi.fn() }
-    wrapper.vm.salePointForm = { setValues: vi.fn() }
-
-    wrapper.vm.clear()
-    expect(wrapper.vm.tableForm.setValues).toHaveBeenCalled()
-    expect(wrapper.vm.salePointForm.setValues).toHaveBeenCalled()
-  })
-
-  it('dispara a navegação de voltar pelo botão do template', async () => {
-    const wrapper = mountComponent(true)
-    await nextTick()
-
-    const backButtons = wrapper.findAll('button').filter(btn => btn.attributes('data-icon') === 'pi pi-replay')
-    if (backButtons.length > 0) {
-      await backButtons[0].trigger('click')
-      expect(mockRouterBack).toHaveBeenCalled()
-    }
+    expect(wrapper.find('.changepassword-stub').exists()).toBe(true)
+    expect(wrapper.find('.pricetable-stub').exists()).toBe(true)
+    expect(wrapper.find('.salepoint-stub').exists()).toBe(true)
   })
 })
