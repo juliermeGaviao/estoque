@@ -108,6 +108,13 @@ describe('util.js', () => {
       expect(onlyDigits('123.456.789-00')).toBe('12345678900')
       expect(onlyDigits('ABC-123')).toBe('123')
     })
+
+    it('retorna string vazia quando o valor é falso, nulo ou indefinido', () => {
+      expect(onlyDigits('')).toBe('')
+      expect(onlyDigits(null)).toBe('')
+      expect(onlyDigits(undefined)).toBe('')
+      expect(onlyDigits(0)).toBe('')
+    })
   })
 
   describe('formatNumber()', () => {

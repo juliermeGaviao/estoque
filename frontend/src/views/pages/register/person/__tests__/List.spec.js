@@ -381,4 +381,5 @@ describe('person/List.vue', () => {
       })
     })
   })
+
 })

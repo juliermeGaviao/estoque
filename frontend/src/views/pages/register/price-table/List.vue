@@ -25,10 +25,10 @@ async function load() {
     size: size.value
   }
 
-  if (sortField.value) {
+  if (sortField?.value) {
     params.sort = sortField.value
 
-    if (sortOrder) {
+    if (sortOrder?.value) {
       params.sort += sortOrder.value === 1 ? ',asc' : ',desc'
     }
   }

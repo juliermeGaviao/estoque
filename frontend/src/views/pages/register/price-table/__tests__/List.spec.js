@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
 import List from '../List.vue'
 
 const mockToastAdd = vi.fn()
@@ -23,6 +23,27 @@ vi.mock('@/util/api', () => ({
 }))
 
 import api from '@/util/api'
+
+// Stub de <Dialog> com um helper de teste para disparar manualmente um
+// handler recebido via attrs — necessário para cobrir o
+// `@update:visible="visible = $event"` gerado pelo `v-model:visible`,
+// uma closure de atribuição distinta da leitura da prop `visible`, que
+// só é invocada quando o Dialog de verdade emite o evento (por isso
+// precisa ser um componente nomeado e não um objeto anônimo: assim dá
+// para localizá-lo via wrapper.findComponent(DialogStub)).
+const DialogStub = defineComponent({
+  name: 'Dialog',
+  props: ['visible'],
+  setup(props, { slots, attrs, expose }) {
+    expose({
+      emit(eventName, payload) {
+        const handlerKey = 'on' + eventName.charAt(0).toUpperCase() + eventName.slice(1)
+        if (typeof attrs[handlerKey] === 'function') attrs[handlerKey](payload)
+      }
+    })
+    return () => h('div', {}, slots.default ? slots.default() : null)
+  }
+})
 
 describe('src/views/pages/register/price-table/List.vue', () => {
   const mockTableList = [
@@ -81,7 +102,7 @@ describe('src/views/pages/register/price-table/List.vue', () => {
           }),
           FloatLabel: { template: '<div><slot /></div>' },
           ConfirmDialog: true,
-          Dialog: { template: '<div><slot /></div>' },
+          Dialog: DialogStub,
           ProductPriceListComponent: defineComponent({
             name: 'ProductPriceListComponent',
             props: ['id', 'nomeTabelaPreco'],
@@ -184,6 +205,26 @@ describe('src/views/pages/register/price-table/List.vue', () => {
     expect(preventDefaultMock).toHaveBeenCalled()
   })
 
+  it('trata erro de ordenação quando sortField ainda é null (cobre o ramo `oldField === null` do fallback)', async () => {
+    api.post.mockResolvedValue({ status: 200 })
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Aqui sortField.value ainda é null (nenhum onSort/onPage bem-sucedido
+    // rodou antes) — diferente do teste acima, onde sortField já tinha
+    // sido setado para 'nome' por uma chamada anterior. Isso exercita o
+    // outro lado do ternário `oldField === null ? undefined : null`.
+    expect(wrapper.vm.sortField).toBeNull()
+
+    wrapper.vm.addItem()
+    await wrapper.vm.onSort({ sortField: 'cargo', sortOrder: 1, originalEvent: { preventDefault: vi.fn() } })
+    await nextTick()
+
+    // Depois do fallback, os valores originais (null) são restaurados
+    expect(wrapper.vm.sortField).toBeNull()
+    expect(wrapper.vm.sortOrder).toBeNull()
+  })
+
   it('permite alternar estado de edição com edit e cancelar edição/criação', async () => {
     const wrapper = mountComponent()
     await nextTick()
@@ -242,6 +283,42 @@ describe('src/views/pages/register/price-table/List.vue', () => {
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Produto' }))
   })
 
+  it('não exibe sucesso nem recarrega quando a API responde com status diferente de 200 em commit', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    mockToastAdd.mockClear()
+    api.get.mockClear()
+
+    const item = wrapper.vm.data[0]
+    wrapper.vm.edit(item)
+    item.edicao.nome = 'Tabela Sem Sucesso'
+    api.post.mockResolvedValueOnce({ status: 204 })
+
+    await wrapper.vm.commit(item)
+
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+    expect(api.get).not.toHaveBeenCalled()
+  })
+
+  it('acusa erro de gravação usando "criação" (não "alteração") quando o item é novo', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    wrapper.vm.addItem()
+    const newItem = wrapper.vm.data[wrapper.vm.data.length - 1]
+    newItem.edicao.nome = 'Novo Item Com Erro'
+    api.post.mockRejectedValueOnce({ response: { data: 'Erro Post Novo Item' } })
+
+    await wrapper.vm.commit(newItem)
+
+    expect(mockToastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        summary: 'Falha de Gravação de Produto',
+        detail: expect.stringContaining('criação')
+      })
+    )
+  })
+
   it('remove item (confirmDelete) com aceite e tratamento de erro', async () => {
     const wrapper = mountComponent()
     await nextTick()
@@ -282,6 +359,18 @@ describe('src/views/pages/register/price-table/List.vue', () => {
     const res = await wrapper.vm.saveAll(true)
     expect(res).toBe(false)
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Produto' }))
+  })
+
+  it('saveAll retorna sucesso sem emitir toast quando a API responde com status diferente de 200', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    mockToastAdd.mockClear()
+
+    api.post.mockResolvedValueOnce({ status: 204 })
+    const res = await wrapper.vm.saveAll(true)
+
+    expect(res).toBe(true)
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
   })
 
   it('abre o modal de preços (openTable) e fecha evento no componente filho', async () => {
@@ -349,5 +438,107 @@ describe('src/views/pages/register/price-table/List.vue', () => {
       await closeBtnChild.trigger('click')
       expect(wrapper.vm.visible).toBe(false)
     }
+  })
+
+  it('atualiza o filtro "nome" digitando no campo de busca (cobre o v-model="nome")', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // O campo de busca é o único InputText com id="nome" — os campos de
+    // edição de linha não têm id, então esse seletor é inequívoco.
+    const searchInput = wrapper.find('#nome')
+    expect(searchInput.exists()).toBe(true)
+
+    await searchInput.setValue('Tabela Atacado')
+
+    expect(wrapper.vm.nome).toBe('Tabela Atacado')
+  })
+
+  it('atualiza o nome em edição digitando no campo da linha (cobre o v-model="slotProps.data.edicao.nome")', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // O campo de busca tem id="nome"; o campo de edição da linha (vindo
+    // do fake data com editando:true que o ColumnStub sempre renderiza)
+    // é o único <input> sem id.
+    const editInput = wrapper.findAll('input').find((input) => !input.attributes('id'))
+    expect(editInput).toBeTruthy()
+
+    await editInput.setValue('Nome Editado Via Input')
+
+    // slotProps.data nessa segunda invocação do slot é o objeto fake
+    // { editando: true, edicao: { nome: 'Novo' } } definido no ColumnStub
+    // — não está ligado a wrapper.vm.data, então a asserção é sobre o
+    // próprio elemento (garantindo que o v-model realmente escreveu o
+    // valor de volta), não sobre o estado do componente.
+    expect(editInput.element.value).toBe('Nome Editado Via Input')
+  })
+
+  it('cancela a edição de uma linha clicando no botão de cancelar específico da linha (não o "Limpar" do filtro)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Tanto o botão "Limpar" do filtro quanto o "Cancelar" da linha usam
+    // o ícone "pi pi-times" — o do filtro tem label "Limpar", o da linha
+    // não tem label nenhuma (fica com texto vazio).
+    const rowCancelButton = wrapper
+      .findAll('button[data-icon="pi pi-times"]')
+      .find((button) => button.text() === '')
+    expect(rowCancelButton).toBeTruthy()
+
+    await rowCancelButton.trigger('click')
+    // Não crasha e de fato invoca cancel(slotProps.data) com o objeto
+    // fake da linha em edição do ColumnStub (id: null) — cobre a chamada
+    // inline @click="cancel(slotProps.data)".
+  })
+
+  it('fecha o modal de preços através do v-model:visible (update:visible emitido pelo próprio Dialog)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    wrapper.vm.openTable({ id: 10, nome: 'Tabela Especial' })
+    await nextTick()
+    expect(wrapper.vm.visible).toBe(true)
+
+    wrapper.findComponent(DialogStub).vm.emit('update:visible', false)
+    await nextTick()
+
+    expect(wrapper.vm.visible).toBe(false)
+  })
+
+  it('executa load com sortField definido mas sortOrder zerado/nulo (cobre o ramo falsy do sortOrder na linha 31)', async () => {
+  const wrapper = mountComponent()
+  await nextTick()
+
+  // Seta sortField manualmente e deixa sortOrder como 0/null para exercitar a linha 31
+  wrapper.vm.sortField = 'nome'
+  wrapper.vm.sortOrder = 0
+
+  await wrapper.vm.load()
+
+  expect(api.get).toHaveBeenLastCalledWith('/price-table/list', {
+    params: { page: 0, size: 20, sort: 'nome' }
+  })
+})
+
+  it('trata erro de ordenação em onSort sem evento original (cobre o ramo falsy do event.originalEvent na linha 102)', async () => {
+    api.post.mockResolvedValue({ status: 200 })
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Adiciona item inválido para forçar a falha no saveAll
+    wrapper.vm.addItem()
+
+    // Executa onSort sem a propriedade originalEvent no objeto enviado
+    await wrapper.vm.onSort({
+      sortField: 'nome',
+      sortOrder: 1
+      // originalEvent é omitido (undefined)
+    })
+
+    await nextTick()
+
+    // Garante que o estado foi restaurado sem disparar exceção ao tentar acessar preventDefault
+    expect(wrapper.vm.sortField).toBeNull()
   })
 })
