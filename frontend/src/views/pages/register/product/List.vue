@@ -23,10 +23,10 @@ async function load(params) {
     size: size.value,
   }
 
-  if (sortField.value) {
+  if (sortField?.value) {
     query.sort = sortField.value
 
-    if (sortOrder) {
+    if (sortOrder?.value) {
       query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
   }

@@ -215,6 +215,52 @@ describe('List.vue - src/views/pages/register/product/List.vue', () => {
     expect(preventDefaultMock).toHaveBeenCalled()
   })
 
+  it('trata erro de ordenação quando sortField ainda é null (cobre o ramo `oldField === null` do fallback)', async () => {
+    api.post.mockResolvedValue({ status: 200 })
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Diferente do teste acima, aqui sortField.value ainda é null
+    // (nenhum onSort bem-sucedido rodou antes) — exercita o outro lado
+    // do ternário `oldField === null ? undefined : null`.
+    expect(wrapper.vm.sortField).toBeNull()
+
+    wrapper.vm.addItem()
+    wrapper.vm.data[0].edicao.nome = ''
+    await wrapper.vm.onSort({ sortField: 'referencia', sortOrder: 1, originalEvent: { preventDefault: vi.fn() } })
+    await nextTick()
+
+    expect(wrapper.vm.sortField).toBeNull()
+    expect(wrapper.vm.sortOrder).toBeNull()
+  })
+
+  it('carrega com sortField preenchido mas sortOrder ausente (cobre o ramo falso do "if (sortOrder?.value)")', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    api.get.mockClear()
+
+    wrapper.vm.sortField = 'nome'
+    wrapper.vm.sortOrder = null
+    await wrapper.vm.load()
+
+    expect(api.get).toHaveBeenLastCalledWith('/product/list', {
+      params: expect.objectContaining({ sort: 'nome' })
+    })
+  })
+
+  it('trata erro de ordenação sem originalEvent (cobre o ramo falso do "if (event.originalEvent)")', async () => {
+    api.post.mockResolvedValue({ status: 200 })
+    const wrapper = mountComponent()
+    await nextTick()
+
+    wrapper.vm.addItem()
+    wrapper.vm.data[0].edicao.nome = ''
+
+    // Sem originalEvent no evento — não deve lançar erro tentando chamar
+    // preventDefault de algo inexistente.
+    await expect(wrapper.vm.onSort({ sortField: 'nome', sortOrder: 1 })).resolves.not.toThrow()
+  })
+
   it('permite alternar estado de edição com edit e cancelar alteração/criação', async () => {
     const wrapper = mountComponent()
     await nextTick()
@@ -268,6 +314,42 @@ describe('List.vue - src/views/pages/register/product/List.vue', () => {
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Produto' }))
   })
 
+  it('não exibe sucesso nem recarrega quando a API responde com status diferente de 200 em commit', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    mockToastAdd.mockClear()
+    api.get.mockClear()
+
+    const item = wrapper.vm.data[0]
+    wrapper.vm.edit(item)
+    item.edicao.peso = 600
+    api.post.mockResolvedValueOnce({ status: 204 })
+
+    await wrapper.vm.commit(item)
+
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+    expect(api.get).not.toHaveBeenCalled()
+  })
+
+  it('acusa erro de gravação usando "criação" (não "alteração") quando o item é novo', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    wrapper.vm.addItem()
+    const newItem = wrapper.vm.data[0]
+    newItem.edicao = { nome: 'Novo Com Erro', idTipoProduto: 101, idFornecedor: 201, referencia: 'R2', peso: 100, estoque: 5 }
+    api.post.mockRejectedValueOnce({ response: { data: 'Erro Post Novo Item' } })
+
+    await wrapper.vm.commit(newItem)
+
+    expect(mockToastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        summary: 'Falha de Gravação de Produto',
+        detail: expect.stringContaining('criação')
+      })
+    )
+  })
+
   it('exclui produto via confirmDelete com sucesso e falha', async () => {
     const wrapper = mountComponent()
     await nextTick()
@@ -319,6 +401,31 @@ describe('List.vue - src/views/pages/register/product/List.vue', () => {
     res = await wrapper.vm.saveAll(true)
     expect(res).toBe(false)
     expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação de Produto' }))
+  })
+
+  it('saveAll retorna sucesso sem emitir toast quando a API responde com status diferente de 200', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    mockToastAdd.mockClear()
+
+    api.post.mockResolvedValueOnce({ status: 204 })
+    const res = await wrapper.vm.saveAll(true)
+
+    expect(res).toBe(true)
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+  })
+
+  it('clickAndSaveAll não recarrega a lista quando saveAll falha (cobre o ramo falso do "if (result)")', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    api.get.mockClear()
+
+    // Estoque nulo faz a validação de saveAll falhar antes de chamar a API
+    wrapper.vm.data[0].edicao.estoque = null
+
+    await wrapper.vm.clickAndSaveAll()
+
+    expect(api.get).not.toHaveBeenCalled()
   })
 
   it('carrega o estoque detalhado do ponto de venda no togglePopover com sucesso e erro', async () => {
@@ -378,5 +485,56 @@ describe('List.vue - src/views/pages/register/product/List.vue', () => {
     api.post.mockResolvedValueOnce({ status: 200 })
     const saveBtn = wrapper.findAll('button').find((b) => b.text().includes('Salvar'))
     if (saveBtn) await saveBtn.trigger('click')
+  })
+
+  it('digita/seleciona nos campos de edição inline da linha (cobre os v-model das linhas 389, 397, 405, 413 e 421)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Os campos do filtro têm id (nome, referencia, minPeso, maxPeso) ou,
+    // no caso dos Selects, vêm ANTES dos da linha em edição no DOM — os
+    // <input> sem id, na ordem das colunas, são: nome, referência, peso
+    // da linha em edição (fake data com editando:true do ColumnStub).
+    const rowInputs = wrapper.findAll('input').filter((input) => !input.attributes('id'))
+    expect(rowInputs.length).toBe(3)
+    const [nomeInput, referenciaInput, pesoInput] = rowInputs
+
+    await nomeInput.setValue('Nome Editado Via Input')
+    expect(nomeInput.element.value).toBe('Nome Editado Via Input')
+
+    await referenciaInput.setValue('REF-EDITADA')
+    expect(referenciaInput.element.value).toBe('REF-EDITADA')
+
+    await pesoInput.setValue(999)
+    expect(Number(pesoInput.element.value)).toBe(999)
+
+    // Os dois primeiros <select> são os do filtro (idTipoProduto,
+    // idFornecedor); os dois últimos são os da linha em edição.
+    const selects = wrapper.findAll('select')
+    expect(selects.length).toBe(8)
+    const [, , tipoSelect, fornecedorSelect] = selects
+
+    await tipoSelect.setValue('102')
+    expect(tipoSelect.element.value).toBe('102')
+
+    await fornecedorSelect.setValue('202')
+    expect(fornecedorSelect.element.value).toBe('202')
+  })
+
+  it('cancela a edição de uma linha clicando no botão de cancelar específico da linha (não o "Limpar" do filtro, cobre a linha 441)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Tanto o "Limpar" do filtro quanto o "Cancelar" da linha usam o
+    // ícone "pi pi-times" — o do filtro tem label "Limpar", o da linha
+    // não tem label nenhuma (fica com texto vazio).
+    const rowCancelButton = wrapper
+      .findAll('button[data-icon="pi pi-times"]')
+      .find((button) => button.text() === '')
+    expect(rowCancelButton).toBeTruthy()
+
+    await rowCancelButton.trigger('click')
+    // Invoca cancel(slotProps.data) com o objeto fake (id: null) da linha
+    // em edição do ColumnStub — não crasha, cobre a chamada inline.
   })
 })
