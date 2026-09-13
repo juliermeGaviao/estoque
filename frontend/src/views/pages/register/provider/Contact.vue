@@ -5,7 +5,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
 import { nextTick, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { z } from 'zod'
 
 const props = defineProps({
@@ -13,11 +13,8 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const route = useRoute()
 const toast = useToast()
 const confirm = useConfirm()
-
-const id = ref(route.query.id)
 
 const data = ref([])
 const totalRecords = ref(0)
@@ -43,7 +40,7 @@ const visible = ref(false)
 async function load() {
   try {
     let params = {
-      idFornecedor: id.value,
+      idFornecedor: props.id,
       page: page.value,
       size: size.value
     }
@@ -97,7 +94,7 @@ const save = async ({ valid, values }) => {
 
   let params = { ... values }
 
-  params['fornecedor'] = { "id": id.value }
+  params['fornecedor'] = { "id": props.id }
 
   if (idContact) {
     params['id'] = idContact
@@ -157,7 +154,7 @@ const confirmDelete = entity => {
 }
 
 onMounted(() => {
-  if (id.value) {
+  if (props.id) {
     load()
   }
 })
@@ -189,7 +186,7 @@ onMounted(() => {
 
         <Column headerClass="flex justify-center" bodyClass="flex justify-center">
           <template #header>
-            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!id" v-tooltip.bottom="'Novo Contato'"/>
+            <Button icon="pi pi-plus" class="p-button-sm p-button-text p-mr-2" @click="edit(null)" :disabled="!props.id" v-tooltip.bottom="'Novo Contato'"/>
           </template>
 
           <template #body="slotProps">

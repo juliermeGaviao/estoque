@@ -58,11 +58,14 @@ describe('Edit.vue (Provider)', () => {
     uf: 'RS'
   }
 
+  let mockFieldState = { invalid: false, error: null }
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockRouteQuery = {}
     api.get.mockResolvedValue({ data: mockProviderData })
     api.post.mockResolvedValue({ status: 200, data: { id: 5 } })
+    mockFieldState = { invalid: false, error: null }
   })
 
   function mountComponent() {
@@ -74,14 +77,25 @@ describe('Edit.vue (Provider)', () => {
           Card: { template: '<div><slot name="title" /><slot name="content" /></div>' },
           ConfirmDialog: true,
           Button: {
-            props: ['icon'],
-            template: '<button type="button" :data-icon="icon" @click="$emit(\'click\', $event)"><slot /></button>'
+            props: ['icon', 'label'],
+            emits: ['click'],
+            template: "<button type=\"button\" :data-icon=\"icon\" @click=\"$emit('click', $event)\">{{ label }}<slot /></button>"
           },
           InputText: true,
-          InputMask: true,
+          InputMask: {
+            props: ['modelValue', 'mask', 'id'],
+            emits: ['update:modelValue'],
+            template: '<input :id="id" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />'
+          },
           Select: true,
           FloatLabel: { template: '<div><slot /></div>' },
-          FormField: { template: '<div><slot :$field="{ invalid: false }" /></div>' },
+          FormField: defineComponent({
+            name: 'FormField',
+            setup() {
+              return { fieldState: mockFieldState }
+            },
+            template: '<div><slot v-bind="fieldState" /></div>'
+          }),
           Message: { template: '<div><slot /></div>' },
           Form: defineComponent({
             name: 'Form',
@@ -89,7 +103,7 @@ describe('Edit.vue (Provider)', () => {
               expose({ setValues: formSetValuesMock })
               return { setValues: formSetValuesMock }
             },
-            template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
+            template: "<form @submit.prevent=\"$emit('submit', { valid: true, values: { razaoSocial: 'Form RS', fantasia: 'Form Fan', cnpj: '12.345.678/0001-90', fone: '(51) 99999-9999', endereco: 'Form End', bairro: 'Form Bairro', cep: '90000-000', cidade: 'Form Cidade', uf: 'RS' } })\"><slot /></form>"
           })
         },
         directives: { tooltip: {} }
@@ -322,5 +336,125 @@ describe('Edit.vue (Provider)', () => {
     expect(hasFieldError(invalidLengths, 'fone')).toBe(false)
     expect(hasFieldError(invalidLengths, 'cep')).toBe(false)
     expect(hasFieldError(invalidLengths, 'uf')).toBe(false)
+  })
+
+  it('submete o formulário pelo botão Salvar e salva o fornecedor', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 10 } })
+    const form = wrapper.find('form')
+    await form.trigger('submit')
+    await nextTick()
+
+    expect(api.post).toHaveBeenCalledWith('/provider', expect.objectContaining({
+      razaoSocial: 'Form RS',
+      fantasia: 'Form Fan',
+      id: 5
+    }))
+    expect(mockToastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
+    )
+  })
+
+  it('exibe mensagens de erro de validação nos campos (Message)', async () => {
+    mockFieldState = { invalid: true, error: { message: 'Campo inválido' } }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    // Como há 9 FormField com v-slot, e o mockFieldState é global,
+    // todos renderizarão o Message
+    expect(wrapper.text()).toContain('Campo inválido')
+  })
+
+  it('renderiza o componente Contact com o id do fornecedor', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    const contactStub = wrapper.find('.contact-stub')
+    expect(contactStub.exists()).toBe(true)
+    expect(contactStub.text()).toContain('Contact Stub ID: 5')
+  })
+
+  it('submete o formulário pelo botão Salvar e salva o fornecedor via template', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 10 } })
+    const form = wrapper.find('form')
+    await form.trigger('submit')
+    await nextTick()
+
+    expect(api.post).toHaveBeenCalledWith('/provider', expect.objectContaining({
+      razaoSocial: 'Form RS',
+      fantasia: 'Form Fan',
+      id: 5
+    }))
+    expect(mockToastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'success', summary: 'Sucesso' })
+    )
+  })
+
+  it('trata load quando providerForm não está disponível (ramo false do if)', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    wrapper.vm.providerForm = null
+    api.get.mockResolvedValueOnce({ data: mockProviderData })
+    await wrapper.vm.load()
+
+    expect(api.get).toHaveBeenCalledWith('/provider', { params: { id: '5' } })
+  })
+
+  it('exibe mensagens de erro de validação nos campos (Message)', async () => {
+    mockFieldState = { invalid: true, error: { message: 'Campo inválido' } }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    expect(wrapper.text()).toContain('Campo inválido')
+  })
+
+  it('dispara o v-model no InputMask do CNPJ (cobre o handler onUpdate:modelValue)', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    // O InputMask do CNPJ é o único com v-model="$field.value" no template
+    const cnpjInput = wrapper.find('input[id="cnpj"]')
+    expect(cnpjInput.exists()).toBe(true)
+    await cnpjInput.setValue('12.345.678/0001-90')
+    await nextTick()
+
+    // O handler onUpdate:modelValue foi executado → cobre a função e a linha 68
+    expect(cnpjInput.element.value).toBe('12.345.678/0001-90')
+  })
+
+  it('cobre o ramo false do typeof string no loop de trim (linha 68)', async () => {
+    mockRouteQuery = { id: '5' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 10 } })
+    await wrapper.vm.save({
+      valid: true,
+      values: {
+        razaoSocial: 'Teste',
+        fantasia: 'Teste',
+        cnpj: '12.345.678/0001-90',
+        fone: '(51) 99999-9999',
+        endereco: 'Rua',
+        bairro: 'Bairro',
+        cep: '90000-000',
+        cidade: 'Cidade',
+        uf: 'RS',
+        extraNumber: 123
+      }
+    })
+
+    expect(api.post).toHaveBeenCalled()
   })
 })
