@@ -69,28 +69,30 @@ describe('List.vue - src/views/pages/register/sale-point/List.vue', () => {
             }
           },
           DataTable: {
-            props: ['value'],
+            name: 'DataTable',
+            props: ['value', 'first', 'sortField', 'sortOrder'],
+            emits: ['page', 'sort'],
             render() {
-              return h('div', [
-                this.$slots.default?.(),
-                (this.value || []).map((item, index) =>
-                  h('div', { key: index, class: 'data-table-row' }, [
-                    this.$slots.default?.({ data: item })
+              return h('div', [this.$slots.default?.()])
+            }
+          },
+          Column: {
+            props: ['field', 'header'],
+            render() {
+              const items = this.$parent?.value || []
+              return h('div', { class: 'column-stub' }, [
+                this.$slots.header?.(),
+                ...items.map((item, index) =>
+                  h('div', { key: index, class: 'column-body-row' }, [
+                    this.$slots.body?.({ data: item })
                   ])
                 )
               ])
             }
           },
-          Column: {
-            render() {
-              return h('div', { class: 'column-stub' }, [
-                this.$slots.header?.(),
-                this.$slots.body?.({ data: { id: 1, nome: 'Ponto A', empresa: { id: 10, nome: 'Empresa A' }, editando: false, edicao: { nome: 'Ponto A', idEmpresa: 10 } } })
-              ])
-            }
-          },
           Button: {
             props: ['label', 'icon', 'disabled'],
+            emits: ['click'],
             render() {
               return h('button', {
                 type: 'button',
@@ -347,5 +349,259 @@ describe('List.vue - src/views/pages/register/sale-point/List.vue', () => {
     }
 
     expect(api.get).toHaveBeenCalled()
+  })
+
+  it('cobre o ramo true de idEmpresa no commit (linhas 217-218)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    const item = wrapper.vm.data[0]
+    wrapper.vm.edit(item)
+    item.edicao.nome = 'Ponto com Empresa'
+    item.edicao.idEmpresa = 10
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 1, empresa: { id: 10, nome: 'Empresa A' } } })
+
+    // Spy no api.post para verificar se params inclui empresa
+    await wrapper.vm.commit(item)
+
+    const postCall = api.post.mock.calls.find(c => c[0] === '/sale-point')
+    expect(postCall).toBeTruthy()
+    expect(postCall[1]).toHaveProperty('empresa', { id: 10 })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+  })
+
+  it('cobre o ramo false de originalEvent no onSort (linha 297)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Primeiro: estabelecer sortField não-nulo
+    api.post.mockResolvedValueOnce({ status: 200 })
+    await wrapper.vm.onSort({ sortField: 'nome', sortOrder: 1 })
+    expect(wrapper.vm.sortField).toBe('nome')
+
+    // Agora: bloquear com item em edição, SEM originalEvent
+    wrapper.vm.data[0].editando = true
+    wrapper.vm.data[0].edicao.nome = ''
+    await wrapper.vm.onSort({ sortField: 'celular', sortOrder: -1 })
+    // Sem originalEvent → preventDefault não é chamado (ramo false)
+    expect(wrapper.vm.sortField).toBe('nome') // restaurado
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Dados Insuficientes' }))
+  })
+
+  it('cobre o ramo true de idEmpresa no saveAll (linha 317)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Colocar um item em edição com idEmpresa preenchido
+    wrapper.vm.data[0].editando = true
+    wrapper.vm.data[0].edicao.nome = 'Ponto Editado'
+    wrapper.vm.data[0].edicao.idEmpresa = 20
+
+    api.post.mockResolvedValueOnce({ status: 200 })
+    await wrapper.vm.saveAll(true)
+
+    const postCall = api.post.mock.calls.find(c => c[0] === '/sale-point/save-all')
+    expect(postCall).toBeTruthy()
+    // O item em edição deve ter nome atualizado e editando=false
+    expect(wrapper.vm.data[0].nome).toBe('Ponto Editado')
+    expect(wrapper.vm.data[0].editando).toBe(false)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+  })
+
+  it('aciona os botões de ação da coluna via clique no template (cobre handlers e linha 305)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    const trashButtons = wrapper.findAll('button[data-icon="pi pi-trash"]')
+    expect(trashButtons.length).toBeGreaterThan(0)
+
+    const trashButton = trashButtons[trashButtons.length - 1]
+    await trashButton.trigger('click')
+    expect(mockConfirmRequire).toHaveBeenCalled()
+
+    const plusButton = wrapper.find('button[data-icon="pi pi-plus"]')
+    await plusButton.trigger('click')
+    expect(wrapper.vm.data.length).toBe(3)
+
+    const timesButtons = wrapper.findAll('button[data-icon="pi pi-times"]')
+    const cancelButton = timesButtons[timesButtons.length - 1]
+    await cancelButton.trigger('click')
+    expect(wrapper.vm.data.length).toBe(2)
+
+    const pencilButtons = wrapper.findAll('button[data-icon="pi pi-pencil"]')
+    const pencilButton = pencilButtons[pencilButtons.length - 1]
+    await pencilButton.trigger('click')
+    expect(wrapper.vm.data[wrapper.vm.data.length - 1].editando).toBe(true)
+
+    const editItem = wrapper.vm.data.find(item => item.editando)
+    editItem.edicao.nome = 'Ponto Consolidado'
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: editItem.id || 1, empresa: { id: 10 } } })
+    const checkButton = wrapper.find('button[data-icon="pi pi-check"]')
+    await checkButton.trigger('click')
+    await nextTick()
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+  })
+
+  it('emite eventos page e sort via DataTable no template (cobre handlers @page e @sort)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    api.post.mockResolvedValue({ status: 200 })
+
+    const dataTable = wrapper.findComponent({ name: 'DataTable' })
+    expect(dataTable.exists()).toBe(true)
+
+    // @page handler — dispara o wrapper compilado do template
+    await dataTable.vm.$emit('page', { page: 1, rows: 20, first: 20 })
+    await nextTick()
+    expect(wrapper.vm.page).toBe(1)
+
+    // @sort handler — dispara o wrapper compilado do template
+    await dataTable.vm.$emit('sort', { sortField: 'nome', sortOrder: 1 })
+    await nextTick()
+    expect(wrapper.vm.sortField).toBe('nome')
+  })
+
+  it('dispara v-model handlers do InputText e Select no Column (cobre linhas 297 e 305)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    // InputText com v-model="slotProps.data.edicao.nome" no Column "nome"
+    const columnInputs = wrapper.findAll('.column-body-row input')
+    expect(columnInputs.length).toBeGreaterThan(0)
+    for (const input of columnInputs) {
+      await input.trigger('input')
+    }
+
+    // Select com v-model="slotProps.data.edicao.idEmpresa" no Column "idEmpresa"
+    const columnSelects = wrapper.findAll('.column-body-row select')
+    expect(columnSelects.length).toBeGreaterThan(0)
+    for (const select of columnSelects) {
+      await select.trigger('change')
+    }
+  })
+
+  it('cobre os ramos falsy e truthy dos ternários de empresa no load e no edit (linha 29)', async () => {
+    // Carrega um item COM empresa e outro SEM empresa na mesma resposta
+    api.get
+      .mockResolvedValueOnce({
+        data: {
+          content: [
+            { id: 1, nome: 'Com Empresa', empresa: { id: 10, nome: 'Empresa A' } },
+            { id: 2, nome: 'Sem Empresa', empresa: null }
+          ],
+          totalElements: 2
+        }
+      })
+      .mockResolvedValueOnce({
+        data: { content: [{ id: 10, nome: 'Empresa A' }], totalElements: 1 }
+      })
+
+    const wrapper = mountComponent()
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    // load(): ramo truthy → idEmpresa = 10
+    expect(wrapper.vm.data[0].edicao.idEmpresa).toBe(10)
+    // load(): ramo falsy → idEmpresa = null (ternário retorna null, NÃO undefined)
+    expect(wrapper.vm.data[1].edicao.idEmpresa).toBe(null)
+
+    // edit(): ramo falsy — item sem empresa
+    wrapper.vm.edit(wrapper.vm.data[1])
+    expect(wrapper.vm.data[1].editando).toBe(true)
+    expect(wrapper.vm.data[1].edicao.idEmpresa).toBe(null)
+
+    // edit(): ramo truthy — item com empresa
+    wrapper.vm.edit(wrapper.vm.data[0])
+    expect(wrapper.vm.data[0].edicao.idEmpresa).toBe(10)
+  })
+
+  it('cobre o ramo false de status !== 200 no saveAll (linhas 180-188)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    api.post.mockResolvedValueOnce({ status: 201 })
+    const result = await wrapper.vm.saveAll(true)
+    expect(result).toBe(true)
+  })
+
+  it('cobre o ternário criado e status não-200 no commit (linha 225)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    wrapper.vm.addItem()
+    const newItem = wrapper.vm.data[wrapper.vm.data.length - 1]
+    newItem.edicao.nome = 'Novo Ponto'
+    api.post.mockResolvedValueOnce({ status: 200, data: { id: 99, empresa: { id: 10 } } })
+    await wrapper.vm.commit(newItem)
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({
+      detail: 'Ponto de venda criado com sucesso'
+    }))
+
+    const existingItem = wrapper.vm.data[0]
+    wrapper.vm.edit(existingItem)
+    existingItem.edicao.nome = 'Teste não-200'
+    api.post.mockResolvedValueOnce({ status: 201 })
+    await wrapper.vm.commit(existingItem)
+  })
+
+  it('cobre o ramo desc do ternario sortOrder no load (linha 24)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // Estabelece sortField e sortOrder=-1 com saveAll bem-sucedido
+    api.post.mockResolvedValueOnce({ status: 200 })
+    await wrapper.vm.onSort({ sortField: 'nome', sortOrder: -1 })
+    await nextTick()
+
+    // Verifica que o sort foi montado com ",desc"
+    expect(api.get).toHaveBeenLastCalledWith(
+      '/sale-point/list',
+      expect.objectContaining({ params: expect.objectContaining({ sort: 'nome,desc' }) })
+    )
+  })
+
+  it('cobre o ramo falsy de entity.empresa no edit (linha 29)', async () => {
+    api.get
+      .mockResolvedValueOnce({
+        data: {
+          content: [{ id: 3, nome: 'Ponto sem Empresa', empresa: null }],
+          totalElements: 1
+        }
+      })
+      .mockResolvedValueOnce({
+        data: { content: [{ id: 10, nome: 'Empresa A' }], totalElements: 1 }
+      })
+
+    const wrapper = mountComponent()
+    await nextTick()
+    await nextTick()
+    await nextTick()
+
+    const item = wrapper.vm.data[0]
+    expect(item.empresa).toBeNull()
+
+    wrapper.vm.edit(item)
+    expect(item.editando).toBe(true)
+    expect(item.edicao.idEmpresa).toBe(null)
+  })
+
+  it('cobre o ramo false de sortOrder.value no load (linha 29)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+
+    // sortField='nome' (truthy) + sortOrder=0 (falsy) → query.sort fica só 'nome', sem sufixo
+    api.post.mockResolvedValueOnce({ status: 200 })
+    await wrapper.vm.onSort({ sortField: 'nome', sortOrder: 0 })
+
+    expect(api.get).toHaveBeenLastCalledWith(
+      '/sale-point/list',
+      expect.objectContaining({ params: expect.objectContaining({ sort: 'nome' }) })
+    )
   })
 })

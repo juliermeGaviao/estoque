@@ -23,10 +23,10 @@ async function load(params) {
     size: size.value,
   }
 
-  if (sortField?.value) {
+  if (sortField.value) {
     query.sort = sortField.value
 
-    if (sortOrder?.value) {
+    if (sortOrder.value) {
       query.sort += sortOrder.value === 1 ? ",asc" : ",desc"
     }
   }
@@ -37,7 +37,7 @@ async function load(params) {
     data.value = response.data.content.map(item => ({
       ...item,
       editando: false,
-      edicao: { nome: item.nome, idEmpresa: item.empresa?.id }
+      edicao: { nome: item.nome, idEmpresa: item.empresa ? item.empresa.id : null }
     }))
 
     totalRecords.value = response.data.totalElements
@@ -102,7 +102,7 @@ async function onSort(event) {
 
 function edit(entity) {
   entity.edicao.nome = entity.nome
-  entity.edicao.idEmpresa = entity.empresa?.id
+  entity.edicao.idEmpresa = entity.empresa ? entity.empresa.id : null
   entity.editando = true
 }
 
