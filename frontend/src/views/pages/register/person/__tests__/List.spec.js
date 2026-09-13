@@ -319,9 +319,14 @@ describe('person/List.vue', () => {
     expect(formatDate).toHaveBeenCalledWith('1990-05-15')
   })
 
-  it('interage com os botoes de acao no template (cobertura linhas 256 e 257)', async () => {
+  it('interage com os botoes de acao no template (cobertura linhas 252, 256 e 257)', async () => {
     const wrapper = mountComponent()
     await nextTick()
+
+    const btnPlus = wrapper.find('button[data-icon="pi pi-plus"]')
+    expect(btnPlus.exists()).toBe(true)
+    await btnPlus.trigger('click')
+    expect(mockRouterPush).toHaveBeenCalledWith('/register/person/edit')
 
     const btnPencil = wrapper.find('button[data-icon="pi pi-pencil"]')
     expect(btnPencil.exists()).toBe(true)

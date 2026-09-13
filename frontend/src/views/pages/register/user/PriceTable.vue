@@ -20,7 +20,7 @@ async function load() {
 
     userProfiles.value = res.data.perfis.length
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -41,7 +41,7 @@ async function loadPriceTables() {
 
     priceTables.value = response.data.content
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços', detail: 'Requisição de lista de tabelas de preços terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços', detail: 'Requisição de lista de tabelas de preços terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -59,7 +59,7 @@ async function loadUserPriceTables() {
       tableForm.value.setValues({ tabelas: userPriceTables.value.map(record => record.tabela.id), tabela: 0 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços do Usuário', detail: 'Requisição de carga de tabelas de preços do usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Tabelas de Preços do Usuário', detail: 'Requisição de carga de tabelas de preços do usuário terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -92,7 +92,7 @@ const save = async ({ valid, values }) => {
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Tabela de Preços salva com sucesso', life: 10000 })
       }
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error?.response?.data, life: 10000 })
     }
   } else {
     const tables = []
@@ -110,7 +110,7 @@ const save = async ({ valid, values }) => {
         loadUserPriceTables()
       }
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error.response.data, life: 10000 })
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Tabela de Preços', detail: 'Requisição de gravação da seleção de Tabela de Preços terminou com o erro: ' + error?.response?.data, life: 10000 })
     }
   }
 }

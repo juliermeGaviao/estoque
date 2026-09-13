@@ -20,7 +20,7 @@ async function load() {
 
     userProfiles.value = res.data.perfis.length
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Usuário', detail: 'Requisição de usuário terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -41,7 +41,7 @@ async function loadSalePoints() {
     salePoints.value = response.data.content
     loadUserSalePoints()
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda', detail: 'Requisição de lista de pontos de venda terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -59,7 +59,7 @@ async function loadUserSalePoints() {
       form.value.setValues({ pontos: userSalePoints.value.map(record => record.pontoVenda.id), ponto: 0 })
     }
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda do Usuário', detail: 'Requisição de carga dos pontos de venda do usuário terminou com o erro: ' + error.response.data, life: 10000 })
+    toast.add({ severity: 'error', summary: 'Falha de Carga de Pontos de Venda do Usuário', detail: 'Requisição de carga dos pontos de venda do usuário terminou com o erro: ' + error?.response?.data, life: 10000 })
   }
 }
 
@@ -92,7 +92,7 @@ const save = async ({ valid, values }) => {
         toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Seleção de Pontos de Venda salva com sucesso', life: 10000 })
       }
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error?.response?.data, life: 10000 })
     }
   } else {
     const points = []
@@ -110,7 +110,7 @@ const save = async ({ valid, values }) => {
         loadUserSalePoints()
       }
     } catch (error) {
-      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error.response.data, life: 10000 })
+      toast.add({ severity: 'error', summary: 'Falha de Gravação da seleção de Pontos de Venda', detail: 'Requisição de gravação da seleção de Pontos de Venda terminou com o erro: ' + error?.response?.data, life: 10000 })
     }
   }
 }

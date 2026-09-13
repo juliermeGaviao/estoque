@@ -3,7 +3,7 @@ import api from '@/util/api'
 import { onlyDigits } from '@/util/util'
 import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, nextTick } from 'vue'
+import { defineComponent, h, inject, nextTick, provide, reactive } from 'vue'
 import Edit from '../Edit.vue'
 
 const mockToastAdd = vi.fn()
@@ -45,6 +45,110 @@ vi.mock('../Contact.vue', () => ({
   })
 }))
 
+// ------------------------------------------------------------------
+// Stub de <Form> (@primevue/forms) — implementa de fato
+// states/setValues/setFieldValue/reset (o stub anterior expunha um
+// setValues vi.fn() sem estado, e o FormField hardcodeava invalid:false
+// sempre — por isso as 8 mensagens de erro nunca podiam aparecer).
+// ------------------------------------------------------------------
+const FormStub = defineComponent({
+  name: 'Form',
+  props: ['resolver', 'validateOn', 'initialValues'],
+  emits: ['submit', 'reset'],
+  setup(props, { slots, expose, emit }) {
+    const values = reactive({ ...(props.initialValues || {}) })
+    const invalidMap = reactive({})
+
+    function setValues(newValues) {
+      Object.assign(values, newValues)
+    }
+    function setFieldValue(key, val) {
+      values[key] = val
+    }
+    function reset() {
+      Object.keys(values).forEach((key) => {
+        values[key] = (props.initialValues || {})[key] ?? null
+      })
+    }
+    function setFieldInvalid(key, message = 'Campo inválido.') {
+      invalidMap[key] = message
+    }
+    function clearFieldInvalid(key) {
+      delete invalidMap[key]
+    }
+    function submitWith(payload) {
+      emit('submit', payload)
+    }
+
+    const states = new Proxy(
+      {},
+      {
+        get(_t, key) {
+          if (typeof key !== 'string') return undefined
+          return {
+            get value() {
+              return values[key]
+            },
+            set value(v) {
+              values[key] = v
+            },
+            get invalid() {
+              return Boolean(invalidMap[key])
+            },
+            get error() {
+              return invalidMap[key] ? { message: invalidMap[key] } : null
+            }
+          }
+        }
+      }
+    )
+
+    provide('__formStubCtx', { values, invalidMap })
+    expose({ states, setValues, setFieldValue, reset, setFieldInvalid, clearFieldInvalid, submitWith, values })
+
+    return () =>
+      h(
+        'form',
+        {
+          onSubmit: (event) => {
+            event.preventDefault()
+            emit('submit', { valid: true, values: { ...values } })
+          },
+          onReset: () => {
+            reset()
+            emit('reset')
+          }
+        },
+        slots.default ? slots.default() : null
+      )
+  }
+})
+
+// Stub de <FormField> — repassa invalid/error de verdade (lidos do Form
+// pai via provide/inject), em vez do { invalid: false } fixo.
+const FormFieldStub = defineComponent({
+  name: 'FormField',
+  props: ['name'],
+  setup(props, { slots }) {
+    const ctx = inject('__formStubCtx', null)
+    return () => {
+      const field = ctx
+        ? {
+            get value() {
+              return props.name ? ctx.values[props.name] : undefined
+            },
+            set value(v) {
+              if (props.name) ctx.values[props.name] = v
+            },
+            invalid: Boolean(props.name && ctx.invalidMap[props.name]),
+            error: props.name && ctx.invalidMap[props.name] ? { message: ctx.invalidMap[props.name] } : null
+          }
+        : { value: undefined, invalid: false, error: null }
+      return slots.default ? slots.default(field) : null
+    }
+  }
+})
+
 describe('Edit.vue', () => {
   const mockClientData = {
     nome: 'João Silva',
@@ -84,8 +188,6 @@ describe('Edit.vue', () => {
   })
 
   function mountComponent(customStubs = {}) {
-    let formSetValuesMock = vi.fn()
-
     const wrapper = mount(Edit, {
       global: {
         stubs: {
@@ -101,16 +203,9 @@ describe('Edit.vue', () => {
           DatePicker: true,
           Select: true,
           FloatLabel: { template: '<div><slot /></div>' },
-          FormField: { template: '<div><slot :$field="{ invalid: false }" /></div>' },
+          FormField: FormFieldStub,
           Message: { template: '<div><slot /></div>' },
-          Form: defineComponent({
-            name: 'Form',
-            setup(props, { expose }) {
-              expose({ setValues: formSetValuesMock })
-              return { setValues: formSetValuesMock }
-            },
-            template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
-          }),
+          Form: FormStub,
           ...customStubs
         },
         directives: {
@@ -119,7 +214,7 @@ describe('Edit.vue', () => {
       }
     })
 
-    return { wrapper, formSetValuesMock }
+    return { wrapper }
   }
 
   it('carrega empresas e estados ao montar (modo criação - sem id)', async () => {
@@ -136,25 +231,21 @@ describe('Edit.vue', () => {
 
   it('carrega dados do cliente ao montar quando possui id e preenche o formulário', async () => {
     mockRouteQuery = { id: '10' }
-    const { formSetValuesMock } = mountComponent()
+    const { wrapper } = mountComponent()
     await nextTick()
     await nextTick()
 
     expect(api.get).toHaveBeenCalledWith('/client', { params: { id: '10' } })
-    expect(formSetValuesMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        nome: 'João Silva',
-        idEmpresa: 2,
-        cracha: '12345',
-        limite: 1000,
-        fone: '(51) 99999-9999',
-        endereco: 'Rua A',
-        bairro: 'Centro',
-        cep: '90000-000',
-        cidade: 'Porto Alegre',
-        uf: 'RS'
-      })
-    )
+    expect(wrapper.vm.form.states.nome.value).toBe('João Silva')
+    expect(wrapper.vm.form.states.idEmpresa.value).toBe(2)
+    expect(wrapper.vm.form.states.cracha.value).toBe('12345')
+    expect(wrapper.vm.form.states.limite.value).toBe(1000)
+    expect(wrapper.vm.form.states.fone.value).toBe('(51) 99999-9999')
+    expect(wrapper.vm.form.states.endereco.value).toBe('Rua A')
+    expect(wrapper.vm.form.states.bairro.value).toBe('Centro')
+    expect(wrapper.vm.form.states.cep.value).toBe('90000-000')
+    expect(wrapper.vm.form.states.cidade.value).toBe('Porto Alegre')
+    expect(wrapper.vm.form.states.uf.value).toBe('RS')
   })
 
   it('trata erro no carregamento do cliente', async () => {
@@ -176,6 +267,15 @@ describe('Edit.vue', () => {
         detail: 'Requisição de pessoa cliente terminou com o erro: Erro ao buscar cliente'
       })
     )
+  })
+
+  it('não faz nada em load() se o formulário ainda não estiver disponível', async () => {
+    mockRouteQuery = { id: '10' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+    wrapper.vm.form = null
+
+    await expect(wrapper.vm.load()).resolves.not.toThrow()
   })
 
   it('trata erro no carregamento da lista de empresas', async () => {
@@ -272,6 +372,18 @@ describe('Edit.vue', () => {
     expect(api.post.mock.calls[0][1].empresa).toBeUndefined()
   })
 
+  it('não exibe sucesso quando a API responde com status diferente de 200', async () => {
+    mockRouteQuery = { id: '10' }
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    api.post.mockResolvedValueOnce({ status: 204, data: {} })
+
+    await wrapper.vm.save({ valid: true, values: { nome: 'Sem Sucesso' } })
+
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+  })
+
   it('trata erro no salvamento do cliente', async () => {
     mockRouteQuery = { id: '10' }
     const { wrapper } = mountComponent()
@@ -309,16 +421,17 @@ describe('Edit.vue', () => {
 
     const resolver = wrapper.vm.formValidator
 
-    const hasFieldError = (res, fieldName) => {
-      if (!res || !res.errors) return false
-      if (res.errors[fieldName]) return true
-      if (Array.isArray(res.errors)) {
-        return res.errors.some(e => e.field === fieldName || e.path === fieldName)
-      }
-      return false
+    // O zodResolver real espera { values, name } — passar os campos soltos
+    // (como o teste fazia antes) faz `values` chegar `undefined` dentro do
+    // resolver, e o parseAsync falha genericamente sem nunca exercitar o
+    // .refine() de dataAniversario (linhas 29-38). Por isso os testes
+    // anteriores esperavam `toBe(false)` mesmo para dados claramente
+    // inválidos — a validação de verdade nunca tinha rodado.
+    async function validate(values) {
+      return resolver({ values })
     }
 
-    const validRes = await resolver({
+    const validRes = await validate({
       nome: 'Maria Silva',
       idEmpresa: 1,
       cracha: '123',
@@ -331,48 +444,70 @@ describe('Edit.vue', () => {
       cidade: 'Porto Alegre',
       uf: 'RS'
     })
-    expect(Object.keys(validRes.errors || {})).toHaveLength(0)
+    expect(validRes.errors).toEqual({})
 
-    const validStringDateRes = await resolver({
+    // dataAniversario como string de data válida (cobre `typeof val === 'string'` -> true)
+    const validStringDateRes = await validate({
       nome: 'Maria Silva',
       dataAniversario: '1995-08-20'
     })
-    expect(Object.keys(validStringDateRes.errors || {})).toHaveLength(0)
+    expect(validStringDateRes.errors).toEqual({})
 
-    const invalidNameRes = await resolver({
+    // nome só com espaços (trim().min(1) falha)
+    const invalidNameRes = await validate({
       nome: '   ',
       dataAniversario: new Date()
     })
-    expect(hasFieldError(invalidNameRes, 'nome')).toBe(false)
+    expect(invalidNameRes.errors.nome[0].message).toBe('Nome é obrigatório.')
 
-    const emptyStrDateRes = await resolver({
+    // dataAniversario === '' (cobre `val === ''` -> false)
+    const emptyStrDateRes = await validate({
       nome: 'Maria',
       dataAniversario: ''
     })
-    expect(hasFieldError(emptyStrDateRes, 'dataAniversario')).toBe(false)
+    expect(emptyStrDateRes.errors.dataAniversario[0].message).toBe('Data de aniversário é obrigatória.')
 
-    const nullDateRes = await resolver({
+    // dataAniversario null (cobre `!val` -> false)
+    const nullDateRes = await validate({
       nome: 'Maria',
       dataAniversario: null
     })
-    expect(hasFieldError(nullDateRes, 'dataAniversario')).toBe(false)
+    expect(nullDateRes.errors.dataAniversario[0].message).toBe('Data de aniversário é obrigatória.')
 
-    const invalidDateObjRes = await resolver({
+    // Date inválida (cobre `val instanceof Date && !Number.isNaN(...)` -> false,
+    // caindo até o `return false` final, já que não é string)
+    const invalidDateObjRes = await validate({
       nome: 'Maria',
       dataAniversario: new Date('Data Invalida')
     })
-    expect(hasFieldError(invalidDateObjRes, 'dataAniversario')).toBe(false)
+    expect(invalidDateObjRes.errors.dataAniversario[0].message).toBe('Data de aniversário é obrigatória.')
 
-    const invalidDateStrRes = await resolver({
+    // String que não é uma data válida (cobre `typeof val === 'string'` -> true,
+    // mas `!Number.isNaN(date.getTime())` -> false)
+    const invalidDateStrRes = await validate({
       nome: 'Maria',
       dataAniversario: 'texto-invalido'
     })
-    expect(hasFieldError(invalidDateStrRes, 'dataAniversario')).toBe(false)
+    expect(invalidDateStrRes.errors.dataAniversario[0].message).toBe('Data de aniversário é obrigatória.')
 
-    const invalidTypeDateRes = await resolver({
+    // Tipo totalmente diferente (cobre o `return false` final do refine)
+    const invalidTypeDateRes = await validate({
       nome: 'Maria',
       dataAniversario: 12345
     })
-    expect(hasFieldError(invalidTypeDateRes, 'dataAniversario')).toBe(false)
+    expect(invalidTypeDateRes.errors.dataAniversario[0].message).toBe('Data de aniversário é obrigatória.')
+  })
+
+  it('exibe a mensagem de erro de todos os campos com Message no formulário quando estão inválidos', async () => {
+    const { wrapper } = mountComponent()
+    await nextTick()
+
+    const campos = ['nome', 'fone', 'dataAniversario', 'endereco', 'bairro', 'cep', 'cidade', 'uf']
+    campos.forEach((campo) => wrapper.vm.form.setFieldInvalid(campo, `${campo} inválido`))
+    await nextTick()
+
+    campos.forEach((campo) => {
+      expect(wrapper.text()).toContain(`${campo} inválido`)
+    })
   })
 })
