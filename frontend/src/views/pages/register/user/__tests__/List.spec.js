@@ -243,4 +243,12 @@ describe('List.vue - src/views/pages/register/user/List.vue', () => {
     expect(mockRouterPush).toHaveBeenCalled()
     expect(mockConfirmRequire).toHaveBeenCalled()
   })
+
+  it('atualiza o v-model de email ao digitar no campo (cobre a linha 123 e o handler)', async () => {
+    const wrapper = mountComponent()
+    await nextTick()
+    const input = wrapper.find('input')
+    await input.setValue('busca@teste.com')
+    expect(wrapper.vm.email).toBe('busca@teste.com')
+  })
 })
