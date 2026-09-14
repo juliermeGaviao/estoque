@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import ChangePassword from '../ChangePassword.vue'
+import { passwordSchema } from '../passwordSchema'
 
 const mockToastAdd = vi.fn()
 const mockRouterBack = vi.fn()
@@ -32,7 +33,7 @@ describe('ChangePassword.vue', () => {
     api.post.mockResolvedValue({ status: 200 })
   })
 
-  function mountComponent(props = { userId: 10 }) {
+  function mountComponent(props = { userId: 10 }, stubOverrides = {}) {
     return mount(ChangePassword, {
       props,
       global: {
@@ -44,12 +45,13 @@ describe('ChangePassword.vue', () => {
           },
           Password: true,
           FloatLabel: { template: '<div><slot /></div>' },
-          FormField: { template: '<div><slot :$field="{ invalid: false }" /></div>' },
+          FormField: { template: '<div><slot :invalid="false" /></div>' },
           Message: { template: '<div><slot /></div>' },
           Form: defineComponent({
             name: 'Form',
-            template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
-          })
+            template: '<form @submit.prevent="$emit(\'submit\', { valid: true, values: { senha: \'senhaTemplate123\', confirmarSenha: \'senhaTemplate123\' } })"><slot /></form>'
+          }),
+          ...stubOverrides
         },
         directives: { tooltip: {} }
       }
@@ -198,5 +200,56 @@ describe('ChangePassword.vue', () => {
       confirmarSenha: 'senhaDiferente123'
     })
     expect(hasFieldError(mismatchRes, 'confirmarSenha')).toBe(false)
+  })
+
+  it('submete o formulário via template (cobre o handler @submit)', async () => {
+    const wrapper = mountComponent({ userId: 15 })
+    await nextTick()
+    await wrapper.find('form').trigger('submit')
+    expect(sha256Hex).toHaveBeenCalledWith('senhaTemplate123')
+    expect(api.post).toHaveBeenCalledWith('/user/password', {
+      id: 15,
+      senha: 'hashed_senhaTemplate123'
+    })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+  })
+
+  it('exibe mensagens de erro quando os campos são inválidos (cobre v-if do Message)', async () => {
+    const wrapper = mountComponent({ userId: 10 }, {
+      FormField: {
+        template: '<div><slot :invalid="true" :error="{ message: \'Erro de validação\' }" /></div>'
+      }
+    })
+    await nextTick()
+    expect(wrapper.text()).toContain('Erro de validação')
+  })
+
+  it('valida o schema de senha diretamente via safeParse (cobre o refine e todas as regras)', () => {
+    // 1. Dados válidos → refine passa
+    const ok = passwordSchema.safeParse({
+      senha: 'senhaSegura123',
+      confirmarSenha: 'senhaSegura123'
+    })
+    expect(ok.success).toBe(true)
+
+    // 2. Senha vazia → min(1) falha
+    const emptySenha = passwordSchema.safeParse({ senha: '   ', confirmarSenha: '   ' })
+    expect(emptySenha.success).toBe(false)
+
+    // 3. Senha curta → min(8) falha
+    const shortSenha = passwordSchema.safeParse({ senha: '12345', confirmarSenha: '12345' })
+    expect(shortSenha.success).toBe(false)
+
+    // 4. Confirmação vazia → min(1) falha
+    const emptyConfirm = passwordSchema.safeParse({ senha: 'senhaSegura123', confirmarSenha: '   ' })
+    expect(emptyConfirm.success).toBe(false)
+
+    // 5. Senhas diferentes → refine falha em confirmarSenha
+    const mismatch = passwordSchema.safeParse({
+      senha: 'senhaSegura123',
+      confirmarSenha: 'senhaDiferente123'
+    })
+    expect(mismatch.success).toBe(false)
+    expect(mismatch.error.issues[0].path).toEqual(['confirmarSenha'])
   })
 })

@@ -4,7 +4,7 @@ import { sha256Hex } from '@/util/auth'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { useRouter } from 'vue-router'
-import { z } from 'zod'
+import { passwordSchema } from './passwordSchema'
 
 const props = defineProps({
   userId: { type: [Number, String], default: null }
@@ -13,15 +13,7 @@ const props = defineProps({
 const router = useRouter()
 const toast = useToast()
 
-const resolver = zodResolver(
-  z.object({
-    senha: z.string().trim().min(1, { message: 'Senha é obrigatória.' }).min(8, { message: 'Senha deve ter no mínimo 8 caracteres.' }),
-    confirmarSenha: z.string().trim().min(1, { message: 'Confirmação de senha é obrigatória.' })
-  }).refine(data => data.senha === data.confirmarSenha, {
-    message: 'As senhas não coincidem.',
-    path: ['confirmarSenha']
-  })
-)
+const resolver = zodResolver(passwordSchema)
 
 const changePassword = async ({ valid, values }) => {
   if (!valid) return
