@@ -126,10 +126,10 @@ const globalStubs = {
   Message: { name: 'Message', template: '<div><slot/></div>' }
 }
 
-async function mountComponent() {
+async function mountComponent(stubOverrides = {}) {
   const wrapper = mount(Edit, {
     global: {
-      stubs: globalStubs,
+      stubs: { ...globalStubs, ...stubOverrides },
       directives: { tooltip: {} }
     }
   })
@@ -309,25 +309,34 @@ describe('Submissão (save)', () => {
   })
 })
 
-// ==================================================================
-// Testes de Interação no Template e Subcomponentes
-// ==================================================================
 describe('Template e Subcomponentes', () => {
   it('atualiza $field.value e userProfiles ao alterar o Checkbox de perfis', async () => {
     eAdmin.mockReturnValue(true)
     const wrapper = await mountComponent()
-
     const checkbox = wrapper.findComponent(CheckboxStub)
     await checkbox.find('input').trigger('change')
-
     expect(wrapper.exists()).toBe(true)
   })
 
   it('renderiza os subcomponentes com a prop userId correta', async () => {
     const wrapper = await mountComponent()
-
     expect(wrapper.find('.changepassword-stub').exists()).toBe(true)
     expect(wrapper.find('.pricetable-stub').exists()).toBe(true)
     expect(wrapper.find('.salepoint-stub').exists()).toBe(true)
+  })
+
+  it('exibe mensagem de erro quando o campo é inválido (cobre o v-if do Message e a linha 111)', async () => {
+    const wrapper = await mountComponent({
+      FormField: defineComponent({
+        name: 'FormField',
+        props: ['name'],
+        setup(props, { slots }) {
+          return () => h('div', { class: 'form-field-stub' }, slots.default
+            ? slots.default({ value: [], invalid: true, error: { message: 'E-mail inválido.' } })
+            : null)
+        }
+      })
+    })
+    expect(wrapper.text()).toContain('E-mail inválido.')
   })
 })
