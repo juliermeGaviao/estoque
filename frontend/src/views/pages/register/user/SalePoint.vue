@@ -5,7 +5,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { z } from 'zod'
+import { createSalePointSchema } from './salePointSchema'
 
 const props = defineProps({
   userId: { type: [Number, String], default: null }
@@ -66,12 +66,8 @@ async function loadUserSalePoints() {
 const form = ref(null)
 const formValues = ref({ pontos: [], ponto: 0 })
 
-const formValidator = zodResolver(
-  z.object({
-    pontos: z.array(z.number()).refine(data => userProfiles.value === 1 || data.length, { message: 'É necessário marcar ao menos um ponto de vendas.' }),
-    ponto: z.number().refine(data => userProfiles.value === 2 || data > 0, { message: 'Um Ponto de Venda deve ser escolhida.' })
-  })
-)
+const formSchema = createSalePointSchema(() => userProfiles.value)
+const formValidator = zodResolver(formSchema)
 
 const userProfiles = ref(0)
 

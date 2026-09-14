@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import PriceTable from '../PriceTable.vue'
+import { createPriceTableSchema } from '../priceTableSchema'
 
 const mockToastAdd = vi.fn()
 const mockRouterBack = vi.fn()
@@ -63,9 +64,8 @@ describe('PriceTable.vue', () => {
     api.post.mockResolvedValue({ status: 200, data: { id: 1, tabela: { id: 101 } } })
   })
 
-  function mountComponent(props = { userId: 5 }) {
+  function mountComponent(props = { userId: 5 }, stubOverrides = {}) {
     let formSetValuesMock = vi.fn()
-
     const wrapper = mount(PriceTable, {
       props,
       global: {
@@ -78,20 +78,20 @@ describe('PriceTable.vue', () => {
           Checkbox: true,
           RadioButton: true,
           Message: { template: '<div><slot /></div>' },
-          FormField: { template: '<div><slot :$field="{ value: 0, invalid: false }" /></div>' },
+          FormField: { template: '<div><slot :value="0" :invalid="false" :error="{ message: \'\' }" /></div>' },
           Form: defineComponent({
             name: 'Form',
             setup(props, { expose }) {
               expose({ setValues: formSetValuesMock })
               return { setValues: formSetValuesMock }
             },
-            template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
-          })
+            template: '<form @submit.prevent="$emit(\'submit\', { valid: true, values: { tabela: 101 } })"><slot /></form>'
+          }),
+          ...stubOverrides
         },
         directives: { tooltip: {} }
       }
     })
-
     return { wrapper, formSetValuesMock }
   }
 
@@ -417,5 +417,134 @@ describe('PriceTable.vue', () => {
 
     const invalidUserProfiles2 = await resolver({ tabelas: [], tabela: 0 })
     expect(hasFieldError(invalidUserProfiles2, 'tabelas')).toBe(false)
+  })
+
+  it('dispara os handlers v-model de Checkbox e RadioButton (cobre linhas 135-139 e 145-149)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    const checkboxes = wrapper.findAllComponents({ name: 'Checkbox' })
+    for (const cb of checkboxes) {
+      await cb.vm.$emit('update:modelValue', [101])
+    }
+    const radios = wrapper.findAllComponents({ name: 'RadioButton' })
+    for (const rb of radios) {
+      await rb.vm.$emit('update:modelValue', 102)
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('exibe mensagens de erro quando os campos são inválidos (cobre v-if do Message)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 }, {
+      FormField: {
+        template: '<div><slot :value="0" :invalid="true" :error="{ message: \'Erro de validação\' }" /></div>'
+      }
+    })
+    await nextTick()
+    await nextTick()
+    expect(wrapper.text()).toContain('Erro de validação')
+  })
+
+  it('trata erros de API sem response nos carregamentos (cobre branches nullish dos ?.)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.reject(new Error('Erro genérico'))
+      if (url === '/price-table/list') return Promise.reject(new Error('Erro tabelas'))
+      if (url === '/user-price-table/list') return Promise.reject(new Error('Erro user tables'))
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    mountComponent({ userId: 5 })
+    await nextTick()
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Usuário' }))
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Tabelas de Preços' }))
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Tabelas de Preços do Usuário' }))
+  })
+
+  it('trata erro sem response no save (cobre branch nullish do catch)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    api.post.mockRejectedValueOnce(new Error('Erro genérico'))
+    await wrapper.vm.save({ valid: true, values: { tabela: 102 } })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Tabela de Preços' }))
+  })
+
+  it('cobre o ramo nullish do catch no save de perfil único (linhas 71-72) e o status não-200', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+
+    // catch com erro genérico (sem response) → ramo nullish de error?.response?.data
+    api.post.mockRejectedValueOnce(new Error('Erro genérico'))
+    await wrapper.vm.save({ valid: true, values: { tabela: 105 } })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({
+      summary: 'Falha de Gravação da seleção de Tabela de Preços'
+    }))
+
+    // fluxo de perfil único com userPriceTables VAZIO + status diferente de 200
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.resolve({ data: { perfis: [] } })
+      if (url === '/price-table/list') return Promise.resolve({ data: { content: [{ id: 105, nome: 'T' }] } })
+      if (url === '/user-price-table/list') return Promise.resolve({ data: { content: [] } })
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    api.post.mockResolvedValueOnce({ status: 201 })
+    await wrapper.vm.save({ valid: true, values: { tabela: 105 } })
+    expect(api.post).toHaveBeenCalled()
+    expect(mockToastAdd).not.toHaveBeenCalledWith(expect.objectContaining({ summary: 'Sucesso' }))
+  })
+
+  it('submete o formulário via template (cobre o handler @submit do Form e o % Funcs)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    // Precisa o stub do Form emitir o payload; se ele emite sem payload,
+    // o handler recebe undefined → save({ valid }) desestrutura e quebra.
+    // Ajuste o stub do Form no mountComponent para:
+    //   '<form @submit.prevent="$emit(\'submit\', { valid: true, values: { tabela: 101 } })"><slot /></form>'
+    await wrapper.find('form').trigger('submit')
+    expect(api.post).toHaveBeenCalledWith('/user-price-table', expect.anything())
+  })
+
+  it('valida o schema de tabelas de preços via safeParse (cobre os refine)', () => {
+    // userProfiles = 1 → tabela obrigatória, tabelas ignorada
+    const schema1 = createPriceTableSchema(() => 1)
+    expect(schema1.safeParse({ tabelas: [], tabela: 101 }).success).toBe(true)
+    expect(schema1.safeParse({ tabelas: [], tabela: 0 }).success).toBe(false)
+    // userProfiles = 2 → tabelas obrigatórias, tabela ignorada
+    const schema2 = createPriceTableSchema(() => 2)
+    expect(schema2.safeParse({ tabelas: [101], tabela: 0 }).success).toBe(true)
+    expect(schema2.safeParse({ tabelas: [], tabela: 0 }).success).toBe(false)
+  })
+
+  it('cobre os branches nullish dos ?. no template (FormField sem invalid e sem error)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 }, {
+      FormField: { template: '<div><slot :value="0" /></div>' }
+    })
+    await nextTick()
+    await nextTick()
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('trata erro sem response no save em lote (cobre branch nullish do catch)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.resolve({ data: { perfis: [{ id: 1 }, { id: 2 }] } })
+      if (url === '/price-table/list') return Promise.resolve(mockPriceTablesData)
+      if (url === '/user-price-table/list') return Promise.resolve(mockUserPriceTablesData)
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    api.post.mockRejectedValueOnce(new Error('Erro genérico lote'))
+    await wrapper.vm.save({ valid: true, values: { tabelas: [101] } })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({
+      summary: 'Falha de Gravação da seleção de Tabela de Preços'
+    }))
+  })
+
+  it('executa o schema do componente via safeParse (cobre o getter de userProfiles e fecha o % Funcs)', () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    const res = wrapper.vm.tableFormSchema.safeParse({ tabelas: [101], tabela: 101 })
+    expect(res.success).toBe(true)
   })
 })

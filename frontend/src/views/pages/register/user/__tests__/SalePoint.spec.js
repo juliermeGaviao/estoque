@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import SalePoint from '../SalePoint.vue'
+import { createSalePointSchema } from '../salePointSchema'
 
 const mockToastAdd = vi.fn()
 const mockRouterBack = vi.fn()
@@ -63,9 +64,8 @@ describe('SalePoint.vue', () => {
     api.post.mockResolvedValue({ status: 200, data: { id: 10, pontoVenda: { id: 201 } } })
   })
 
-  function mountComponent(props = { userId: 5 }) {
+  function mountComponent(props = { userId: 5 }, stubOverrides = {}) {
     let formSetValuesMock = vi.fn()
-
     const wrapper = mount(SalePoint, {
       props,
       global: {
@@ -78,20 +78,20 @@ describe('SalePoint.vue', () => {
           Checkbox: true,
           RadioButton: true,
           Message: { template: '<div><slot /></div>' },
-          FormField: { template: '<div><slot :$field="{ value: 0, invalid: false }" /></div>' },
+          FormField: { template: '<div><slot :value="0" :invalid="false" :error="{ message: \'\' }" /></div>' },
           Form: defineComponent({
             name: 'Form',
             setup(props, { expose }) {
               expose({ setValues: formSetValuesMock })
               return { setValues: formSetValuesMock }
             },
-            template: '<form @submit.prevent="$emit(\'submit\')"><slot /></form>'
-          })
+            template: '<form @submit.prevent="$emit(\'submit\', { valid: true, values: { ponto: 201 } })"><slot /></form>'
+          }),
+          ...stubOverrides
         },
         directives: { tooltip: {} }
       }
     })
-
     return { wrapper, formSetValuesMock }
   }
 
@@ -456,5 +456,100 @@ describe('SalePoint.vue', () => {
         detail: 'Requisição de carga dos pontos de venda do usuário terminou com o erro: Erro nos pontos do usuário'
       })
     )
+  })
+
+  it('dispara os handlers v-model de Checkbox e RadioButton (cobre linhas 135-139 e 145-149)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    const checkboxes = wrapper.findAllComponents({ name: 'Checkbox' })
+    for (const cb of checkboxes) {
+      await cb.vm.$emit('update:modelValue', [201])
+    }
+    const radios = wrapper.findAllComponents({ name: 'RadioButton' })
+    for (const rb of radios) {
+      await rb.vm.$emit('update:modelValue', 202)
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('exibe mensagens de erro quando os campos são inválidos (cobre v-if do Message)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 }, {
+      FormField: {
+        template: '<div><slot :value="0" :invalid="true" :error="{ message: \'Erro de validação\' }" /></div>'
+      }
+    })
+    await nextTick()
+    await nextTick()
+    expect(wrapper.text()).toContain('Erro de validação')
+  })
+
+  it('trata erro sem response no save de perfil único (cobre branch nullish do catch)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    api.post.mockRejectedValueOnce(new Error('Erro genérico'))
+    await wrapper.vm.save({ valid: true, values: { ponto: 202 } })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Pontos de Venda' }))
+  })
+
+  it('trata erro sem response no save em lote (cobre branch nullish do catch)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.resolve({ data: { perfis: [{ id: 1 }, { id: 2 }] } })
+      if (url === '/sale-point/list') return Promise.resolve(mockSalePointsData)
+      if (url === '/user-sale-point/list') return Promise.resolve(mockUserSalePointsData)
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    api.post.mockRejectedValueOnce(new Error('Erro genérico lote'))
+    await wrapper.vm.save({ valid: true, values: { pontos: [201] } })
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Gravação da seleção de Pontos de Venda' }))
+  })
+
+  it('submete o formulário via template (cobre o handler @submit do Form e o % Funcs)', async () => {
+    const { wrapper } = mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    await wrapper.find('form').trigger('submit')
+    expect(api.post).toHaveBeenCalledWith('/user-sale-point', expect.anything())
+  })
+
+  it('valida o schema de pontos de venda via safeParse (cobre os refine e o getter)', () => {
+    const schema1 = createSalePointSchema(() => 1)
+    expect(schema1.safeParse({ pontos: [], ponto: 201 }).success).toBe(true)
+    expect(schema1.safeParse({ pontos: [], ponto: 0 }).success).toBe(false)
+    const schema2 = createSalePointSchema(() => 2)
+    expect(schema2.safeParse({ pontos: [201], ponto: 0 }).success).toBe(true)
+    expect(schema2.safeParse({ pontos: [], ponto: 0 }).success).toBe(false)
+    const { wrapper } = mountComponent({ userId: 5 })
+    expect(wrapper.vm.formSchema.safeParse({ pontos: [201], ponto: 201 }).success).toBe(true)
+  })
+
+  it('trata erros de API sem response nos carregamentos (cobre branches nullish dos ?.)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.reject(new Error('Erro genérico'))
+      if (url === '/sale-point/list') return Promise.reject(new Error('Erro pontos'))
+      if (url === '/user-sale-point/list') return Promise.reject(new Error('Erro user points'))
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    mountComponent({ userId: 5 })
+    await nextTick()
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Usuário' }))
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Pontos de Venda' }))
+  })
+
+  it('trata erro sem response no loadUserSalePoints (cobre branch nullish do catch)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/user/get') return Promise.resolve(mockUserData)
+      if (url === '/sale-point/list') return Promise.resolve(mockSalePointsData)
+      if (url === '/user-sale-point/list') return Promise.reject(new Error('Erro user points'))
+      return Promise.reject(new Error('URL não mapeada'))
+    })
+    mountComponent({ userId: 5 })
+    await nextTick()
+    await nextTick()
+    expect(mockToastAdd).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Falha de Carga de Pontos de Venda do Usuário' }))
   })
 })

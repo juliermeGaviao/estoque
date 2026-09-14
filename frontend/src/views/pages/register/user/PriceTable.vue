@@ -5,7 +5,7 @@ import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { z } from 'zod'
+import { createPriceTableSchema } from './priceTableSchema'
 
 const props = defineProps({
   userId: { type: [Number, String], default: null }
@@ -66,12 +66,8 @@ async function loadUserPriceTables() {
 const tableForm = ref(null)
 const tableFormValues = ref({ tabelas: [], tabela: 0 })
 
-const tableFormValidator = zodResolver(
-  z.object({
-    tabelas: z.array(z.number()).refine(data => userProfiles.value === 1 || data.length, { message: 'É necessário marcar ao menos uma tabela de preços.' }),
-    tabela: z.number().refine(data => userProfiles.value === 2 || data > 0, { message: 'Uma Tabela de Preços deve ser escolhida.' })
-  })
-)
+const tableFormSchema = createPriceTableSchema(() => userProfiles.value)
+const tableFormValidator = zodResolver(tableFormSchema)
 
 const userProfiles = ref(0)
 
