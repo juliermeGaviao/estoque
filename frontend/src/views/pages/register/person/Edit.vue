@@ -1,7 +1,7 @@
 <script setup>
 import { StateService } from '@/service/StateService'
 import api from '@/util/api'
-import { onlyDigits } from '@/util/util'
+import { formatDate, onlyDigits, toDate } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useToast } from 'primevue/usetoast'
 import { onMounted, ref } from 'vue'
@@ -59,7 +59,7 @@ async function load() {
         cracha: res.data.cracha,
         limite: res.data.limite,
         fone: res.data.fone,
-        dataAniversario: new Date(res.data.dataAniversario),
+        dataAniversario: formatDate(toDate(res.data.dataAniversario)),
         endereco: res.data.endereco,
         bairro: res.data.bairro,
         cep: res.data.cep,

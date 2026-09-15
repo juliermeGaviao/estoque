@@ -1,6 +1,6 @@
 <script setup>
 import api from '@/util/api'
-import { formatPhone, onlyDigits } from '@/util/util'
+import { formatDate, formatPhone, onlyDigits, toDate } from '@/util/util'
 import { zodResolver } from '@primevue/forms/resolvers/zod'
 import { useConfirm } from "primevue/useconfirm"
 import { useToast } from 'primevue/usetoast'
@@ -26,7 +26,7 @@ const sortField = ref(null)
 const sortOrder = ref(null)
 
 const form = ref(null)
-const formValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: '', observacoes: '' })
+const formValues = ref({ nome: '', cargo: '', fone: '', ramal: '', celular: '', email: '', dataAniversario: null, observacoes: '' })
 
 const formValidator = zodResolver(
   z.object({
@@ -36,7 +36,7 @@ const formValidator = zodResolver(
     ramal: z.string().trim().optional(),
     celular: z.string().optional(),
     email: z.string().trim().min(1, { message: 'E-mail é obrigatório.' }).email({ message: 'E-mail inválido.' }),
-    dataAniversario: z.date().optional(),
+    dataAniversario: z.any().optional(),
     observacoes: z.string().trim().optional()
   })
 )
@@ -97,7 +97,7 @@ function edit(contact) {
         ramal: contact.ramal,
         celular: contact.celular,
         email: contact.email,
-        dataAniversario: new Date(contact.dataAniversario),
+        dataAniversario: formatDate(toDate(contact.dataAniversario)),
         observacoes: contact.observacoes
       })
     } else {
@@ -277,7 +277,7 @@ const modalHeader = () => {
         </div>
 
         <div class="col-span-4">
-          <FormField v-slot="$field" name="dataAniversario" initialValue="">
+          <FormField v-slot="$field" name="dataAniversario">
             <FloatLabel variant="on" class="flex-1">
               <DatePicker dateFormat="dd/mm/yy" showIcon :manualInput="false" fluid/>
               <label for="dataAniversario">Data de Aniversário</label>
