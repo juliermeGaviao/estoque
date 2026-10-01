@@ -32,9 +32,13 @@ vi.mock('@/util/api', () => ({
   }
 }))
 
-vi.mock('@/util/util', () => ({
-  onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
-}))
+vi.mock('@/util/util', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
+  }
+})
 
 // Stub do componente filho Contact
 vi.mock('../Contact.vue', () => ({

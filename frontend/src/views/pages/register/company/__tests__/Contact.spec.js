@@ -24,10 +24,14 @@ vi.mock('@/util/api', () => ({
   }
 }))
 
-vi.mock('@/util/util', () => ({
-  formatPhone: vi.fn((v) => (v ? `fmt(${v})` : '')),
-  onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
-}))
+vi.mock('@/util/util', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    formatPhone: vi.fn((v) => (v ? `fmt(${v})` : '')),
+    onlyDigits: vi.fn((v) => (v ? String(v).replace(/\D/g, '') : ''))
+  }
+})
 
 const toastAddMock = vi.fn()
 vi.mock('primevue/usetoast', () => ({
